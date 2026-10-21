@@ -24,11 +24,20 @@
 - [x] Client WebSocket hook (`web/src/hooks/useGatewayWs.ts`) wired to `VITE_GATEWAY_WS_URL`:
   - Dispatches and receives all canonical event types from `contracts/ws_events.md`.
   - Controls active speaker spotlight, speech slip, thread drawing, and Minutes tabs.
+- [x] **Voice-Focused 3D Cinematic Experience (`ThreeTableScene` + `CinematicTable`):**
+  - Replaced planetary concept with **"The Table"**: top-down and 3D round table session where each AI expert and the user are seated at custom chairs with acoustic voice orbs.
+  - **Voice-Driven Camera Focus:** Instead of scrolling, live voice events (`speaker_active`, user speech) smoothly glide the camera across the table to frame the active speaker with intimate cinematic perspective and dynamic FOV zoom (30° close-up, 42° overview).
+  - **GLSL Audio-Reactive Avatar Shaders:** Ethereal acoustic spheres sitting in chairs ripple with procedural noise displacement in each agent's signature palette (Alex: oxblood, Sam: brass/ochre, Maya: plum, You: ivory/green).
+  - **Studio Lighting & Spotlight:** Overhead fill with a moving warm spotlight (`THREE.SpotLight`) with soft shadow that dynamically tracks the active speaker.
+  - **Sci-Fi / Studio Targeting Reticle Cursor:** Smooth custom cursor with spinning locked corner brackets on focus.
+  - **Typewriter Speech Telemetry HUD:** Streaming character-by-character live speech subtitle card with blinking block cursor (`█`).
+  - **Web Audio Room Acoustics Engine:** Subtle room tone drone (lowpass filtered 55Hz) with acoustic chime feedback on focus shift.
+  - **View Switcher:** Segmented toggle between `3D Voice Focus` and `2D Table Blueprint`.
 - [x] **Acceptance Check B2:**
   - Mock gateway starts on `ws://localhost:8000/ws` and passes `/health`.
   - UI connects and executes complete interactive lifecycle across all fixture types (`start`, `normal_turn`, `barge_in`, `unknown_target`, `no_speech`, `disconnect`, `end`).
   - Persistent ink-on-brass "MOCK DATA" banner active.
-  - Browser subagent verified all flows, screens, and Minutes drawer tabs (recording saved).
+  - Browser subagent verified all flows, screens, 3D voice focus camera glides, and Minutes drawer tabs (recordings saved).
 
 ---
 

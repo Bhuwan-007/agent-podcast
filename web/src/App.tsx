@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
 import { Header } from './components/Header'
 import { RoundTable } from './components/RoundTable'
+import { CinematicTable } from './components/CinematicTable'
 import { MinutesDrawer } from './components/MinutesDrawer'
 import { TableCard } from './components/TableCard'
 import { Slip } from './components/Slip'
@@ -35,6 +36,7 @@ export const App: React.FC = () => {
     endSession,
     triggerMockEvent,
     dismissNotice,
+    simulateSpeaker,
   } = useGatewayWs()
 
   const selectedTopic = TOPICS.find((t) => t.topic_id === selectedTopicId) || DEFAULT_TOPIC
@@ -157,6 +159,7 @@ export const App: React.FC = () => {
 
                 <div className="inscription-cta-col">
                   <button
+                    id="btn-join-roundtable"
                     type="button"
                     className="join-roundtable-btn"
                     onClick={handleStartSession}
@@ -177,18 +180,72 @@ export const App: React.FC = () => {
               <div className="table-stage-area">
                 {/* Dev Mock Trigger Controls */}
                 <aside className="dev-gateway-controls" aria-label="Dev Gateway Triggers">
-                  <span className="dev-tag">MOCK DEV TRIGGERS:</span>
+                  <span className="dev-tag">VOICE FOCUS DEV TRIGGERS:</span>
                   <button
+                    id="btn-speak-alex"
+                    type="button"
+                    className="dev-btn"
+                    onClick={() =>
+                      simulateSpeaker(
+                        'ai_engineer',
+                        'The economics of software development are shifting. When code generation cost drops toward zero, architectural judgment becomes the primary differentiator.'
+                      )
+                    }
+                  >
+                    Speak: Alex
+                  </button>
+                  <button
+                    id="btn-speak-sam"
+                    type="button"
+                    className="dev-btn"
+                    onClick={() =>
+                      simulateSpeaker(
+                        'software_developer',
+                        'From a team and labor policy standpoint, senior engineers will direct synthetic agents, but the entry-level career progression path requires formal rethinking.'
+                      )
+                    }
+                  >
+                    Speak: Sam
+                  </button>
+                  <button
+                    id="btn-speak-maya"
+                    type="button"
+                    className="dev-btn"
+                    onClick={() =>
+                      simulateSpeaker(
+                        'oss_maintainer',
+                        'Autonomous code commit pipelines present unaccountable failure loops. Security telemetry must be verified before deployment.'
+                      )
+                    }
+                  >
+                    Speak: Maya
+                  </button>
+                  <button
+                    id="btn-barge-in"
+                    type="button"
+                    className="dev-btn"
+                    onClick={handleBargeIn}
+                  >
+                    Barge-in: You
+                  </button>
+                  <button
+                    id="btn-overview"
+                    type="button"
+                    className="dev-btn"
+                    onClick={() => simulateSpeaker(null)}
+                  >
+                    Reset Overview
+                  </button>
+                  <button
+                    id="btn-replay-debate"
                     type="button"
                     className="dev-btn"
                     onClick={() => startSession(selectedTopic.topic_id)}
                   >
-                    Replay Start & Debate
-                  </button>
-                  <button type="button" className="dev-btn" onClick={handleBargeIn}>
-                    Trigger Barge-In
+                    Replay Gateway Fixtures
                   </button>
                   <button
+                    id="btn-mock-unknown"
                     type="button"
                     className="dev-btn"
                     onClick={() => triggerMockEvent('unknown_target')}
@@ -196,13 +253,7 @@ export const App: React.FC = () => {
                     Unknown Target
                   </button>
                   <button
-                    type="button"
-                    className="dev-btn"
-                    onClick={() => triggerMockEvent('no_speech')}
-                  >
-                    No Speech
-                  </button>
-                  <button
+                    id="btn-mock-disconnect"
                     type="button"
                     className="dev-btn"
                     onClick={() => triggerMockEvent('disconnect')}
@@ -211,8 +262,8 @@ export const App: React.FC = () => {
                   </button>
                 </aside>
 
-                {/* The Round Table component */}
-                <RoundTable
+                {/* The Cinematic Voice-Focused Round Table */}
+                <CinematicTable
                   topic={selectedTopic}
                   activeSpeakerId={activeSpeakerId}
                   addressedAgentId={addressedAgentId}

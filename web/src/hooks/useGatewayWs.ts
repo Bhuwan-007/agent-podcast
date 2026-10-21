@@ -301,6 +301,19 @@ export function useGatewayWs() {
     setNotices((prev) => prev.filter((_, i) => i !== index))
   }, [])
 
+  const simulateSpeaker = useCallback((agentId: string | null, text?: string) => {
+    setActiveSpeakerId(agentId)
+    if (agentId) {
+      setSessionState('agent_speaking')
+      if (text) {
+        setSpeechSlip({ text, final: false })
+      }
+    } else {
+      setSessionState('waiting_first_speaker')
+      setSpeechSlip(null)
+    }
+  }, [])
+
   return {
     connected,
     sessionState,
@@ -323,5 +336,6 @@ export function useGatewayWs() {
     endSession,
     triggerMockEvent,
     dismissNotice,
+    simulateSpeaker,
   }
 }

@@ -32,6 +32,7 @@ export const ScreenSwitcher: React.FC<ScreenSwitcherProps> = ({
           {screens.map((s) => (
             <button
               key={s.id}
+              id={`screen-tab-${s.id.toLowerCase()}`}
               type="button"
               className={`switcher-btn ${currentScreen === s.id ? 'active' : ''}`}
               onClick={() => {
