@@ -14,6 +14,8 @@ interface CinematicTableProps {
   isUserListening: boolean
   isUserProcessing: boolean
   micOn: boolean
+  speakerAudioLevel?: number
+  micAudioLevel?: number
   onAddressAgent: (agentId: string | null) => void
   onMicToggle: () => void
   onBargeIn: () => void
@@ -28,6 +30,8 @@ export const CinematicTable: React.FC<CinematicTableProps> = ({
   isUserListening,
   isUserProcessing,
   micOn,
+  speakerAudioLevel = 0,
+  micAudioLevel = 0,
   onAddressAgent,
   onMicToggle,
   onBargeIn,
@@ -279,6 +283,8 @@ export const CinematicTable: React.FC<CinematicTableProps> = ({
             activeThread={activeThread}
             isUserSpeaking={isUserListening}
             isUserProcessing={isUserProcessing}
+            speakerAudioLevel={speakerAudioLevel}
+            micAudioLevel={micAudioLevel}
             onSelectAgent={handleAgentSelect}
             onHoverAgent={setHoveredAgentId}
           />
@@ -293,6 +299,7 @@ export const CinematicTable: React.FC<CinematicTableProps> = ({
               isUserListening={isUserListening}
               isUserProcessing={isUserProcessing}
               micOn={micOn}
+              micAudioLevel={micAudioLevel}
               onAddressAgent={handleAgentSelect}
               onMicToggle={onMicToggle}
               onBargeIn={onBargeIn}
@@ -364,13 +371,12 @@ export const CinematicTable: React.FC<CinematicTableProps> = ({
         .cinematic-table-wrapper {
           position: relative;
           width: 100%;
-          min-height: 640px;
+          height: 100%;
+          flex: 1;
           display: flex;
           flex-direction: column;
-          background: #17120F;
-          border-radius: var(--radius-card, 4px);
+          background: #090611;
           overflow: hidden;
-          box-shadow: 0 16px 40px rgba(0, 0, 0, 0.65);
         }
 
         /* Sci-Fi Targeting Cursor inside the table */
@@ -388,16 +394,16 @@ export const CinematicTable: React.FC<CinematicTableProps> = ({
         #table-cursor-dot {
           width: 5px;
           height: 5px;
-          background: #EADFC8;
+          background: #F43F5E;
           border-radius: 50%;
-          box-shadow: 0 0 8px rgba(234, 223, 200, 0.8);
+          box-shadow: 0 0 10px rgba(244, 63, 94, 0.9);
         }
 
         #table-cursor-ring {
           width: 34px;
           height: 34px;
           border-radius: 50%;
-          border: 1px solid rgba(234, 223, 200, 0.35);
+          border: 1px solid rgba(192, 132, 252, 0.45);
           transition: width 0.3s, height 0.3s, border-radius 0.3s, border 0.3s;
         }
 
@@ -407,14 +413,14 @@ export const CinematicTable: React.FC<CinematicTableProps> = ({
           border-radius: 0;
           border: none;
           background: 
-            linear-gradient(to right, #D69E2E 2px, transparent 2px) 0 0,
-            linear-gradient(to right, #D69E2E 2px, transparent 2px) 0 100%,
-            linear-gradient(to left, #D69E2E 2px, transparent 2px) 100% 0,
-            linear-gradient(to left, #D69E2E 2px, transparent 2px) 100% 100%,
-            linear-gradient(to bottom, #D69E2E 2px, transparent 2px) 0 0,
-            linear-gradient(to bottom, #D69E2E 2px, transparent 2px) 100% 0,
-            linear-gradient(to top, #D69E2E 2px, transparent 2px) 0 100%,
-            linear-gradient(to top, #D69E2E 2px, transparent 2px) 100% 100%;
+            linear-gradient(to right, #F43F5E 2px, transparent 2px) 0 0,
+            linear-gradient(to right, #F43F5E 2px, transparent 2px) 0 100%,
+            linear-gradient(to left, #F43F5E 2px, transparent 2px) 100% 0,
+            linear-gradient(to left, #F43F5E 2px, transparent 2px) 100% 100%,
+            linear-gradient(to bottom, #F43F5E 2px, transparent 2px) 0 0,
+            linear-gradient(to bottom, #F43F5E 2px, transparent 2px) 100% 0,
+            linear-gradient(to top, #F43F5E 2px, transparent 2px) 0 100%,
+            linear-gradient(to top, #F43F5E 2px, transparent 2px) 100% 100%;
           background-repeat: no-repeat;
           background-size: 12px 12px;
           animation: reticleSpin 10s linear infinite;
@@ -426,39 +432,39 @@ export const CinematicTable: React.FC<CinematicTableProps> = ({
           }
         }
 
-        /* Top Controls Bar */
+        /* Top Floating Controls Bar */
         .cinematic-controls-bar {
+          position: absolute;
+          top: 16px;
+          left: 20px;
           display: flex;
           align-items: center;
-          justify-content: space-between;
-          padding: 6px 14px;
-          background: rgba(18, 14, 12, 0.9);
-          border-bottom: 1px solid rgba(138, 106, 75, 0.2);
-          z-index: 20;
-          backdrop-filter: blur(12px);
+          gap: 8px;
+          z-index: 25;
         }
 
         .view-mode-toggle {
           display: inline-flex;
-          background: rgba(26, 19, 15, 0.85);
-          border: 1px solid rgba(138, 106, 75, 0.25);
+          background: rgba(19, 12, 32, 0.78);
+          border: 1px solid rgba(168, 85, 247, 0.28);
           border-radius: 9999px;
-          padding: 2px;
-          gap: 2px;
+          padding: 3px;
+          gap: 3px;
+          backdrop-filter: blur(16px);
+          box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
         }
 
         .view-toggle-btn {
           display: inline-flex;
           align-items: center;
           gap: 5px;
-          font-family: var(--font-control, system-ui);
-          font-size: 10px;
+          font-family: var(--font-sans);
+          font-size: 11px;
           font-weight: 600;
-          letter-spacing: 0.04em;
-          text-transform: uppercase;
-          padding: 3px 10px;
+          letter-spacing: 0.03em;
+          padding: 5px 12px;
           background: transparent;
-          color: #8A7563;
+          color: #B8B0CC;
           border: none;
           border-radius: 9999px;
           cursor: pointer;
@@ -466,70 +472,77 @@ export const CinematicTable: React.FC<CinematicTableProps> = ({
         }
 
         .view-toggle-btn:hover {
-          color: #EADFC8;
+          color: #FDFCFE;
         }
 
         .view-toggle-btn.active {
-          background: rgba(138, 106, 75, 0.35);
-          color: #FAF5EB;
-          border: 1px solid rgba(214, 158, 46, 0.4);
+          background: #A855F7;
+          color: #FFFFFF;
+          box-shadow: 0 2px 12px rgba(168, 85, 247, 0.45);
         }
 
         .studio-audio-btn {
           display: inline-flex;
           align-items: center;
           gap: 6px;
-          font-family: var(--font-mono, monospace);
-          font-size: 10px;
-          letter-spacing: 0.04em;
-          text-transform: uppercase;
-          background: rgba(30, 22, 17, 0.7);
-          color: #B3A18F;
-          border: 1px solid rgba(138, 106, 75, 0.25);
-          padding: 4px 10px;
+          font-family: var(--font-sans);
+          font-size: 11px;
+          font-weight: 600;
+          letter-spacing: 0.03em;
+          background: rgba(19, 12, 32, 0.78);
+          color: #C084FC;
+          border: 1px solid rgba(168, 85, 247, 0.28);
+          padding: 5px 12px;
           border-radius: 9999px;
           cursor: pointer;
+          backdrop-filter: blur(16px);
           transition: all 160ms ease;
         }
 
         .studio-audio-btn:hover {
-          border-color: rgba(214, 158, 46, 0.5);
-          color: #FAF5EB;
+          border-color: #C084FC;
+          color: #FDFCFE;
         }
 
         .studio-audio-btn.audio-online {
-          background: rgba(46, 92, 60, 0.35);
-          color: #8CE6A8;
-          border-color: rgba(85, 221, 136, 0.45);
+          background: rgba(192, 132, 252, 0.22);
+          color: #FCE7F3;
+          border-color: #C084FC;
         }
 
-        /* Telemetry HUD */
+        /* Top Right Voice Telemetry HUD */
         .voice-telemetry-hud {
+          position: absolute;
+          top: 16px;
+          right: 20px;
           display: flex;
           align-items: center;
-          justify-content: space-between;
-          padding: 6px 14px;
-          background: rgba(16, 12, 10, 0.65);
-          border-bottom: 1px solid rgba(255, 255, 255, 0.03);
-          z-index: 15;
+          gap: 8px;
+          z-index: 25;
         }
 
         .telemetry-badge {
           display: inline-flex;
           align-items: center;
           gap: 8px;
+          padding: 6px 14px;
+          background: rgba(19, 12, 32, 0.78);
+          border: 1px solid rgba(168, 85, 247, 0.25);
+          border-radius: 9999px;
+          backdrop-filter: blur(16px);
+          box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
         }
 
         .status-beacon {
           width: 8px;
           height: 8px;
           border-radius: 50%;
-          background: var(--muted, #8A7563);
+          background: #7E7497;
         }
 
         .status-beacon.beacon-pulse {
-          background: var(--inlay-line, #D69E2E);
-          box-shadow: 0 0 10px rgba(214, 158, 46, 0.8);
+          background: #F43F5E;
+          box-shadow: 0 0 10px rgba(244, 63, 94, 0.9);
           animation: beaconPulse 1.4s ease-in-out infinite;
         }
 
@@ -541,31 +554,33 @@ export const CinematicTable: React.FC<CinematicTableProps> = ({
         .telemetry-text {
           font-family: var(--font-mono, monospace);
           font-size: 11px;
-          letter-spacing: 0.06em;
-          color: var(--muted-light, #B3A18F);
+          letter-spacing: 0.04em;
+          color: #B8B0CC;
         }
 
         .telemetry-text.agent-focus {
-          color: #F8E7C9;
-          font-weight: 500;
-        }
-
-        .telemetry-text.user-focus {
-          color: #8CE6A8;
+          color: #FDFCFE;
           font-weight: 600;
         }
 
+        .telemetry-text.user-focus {
+          color: #F43F5E;
+          font-weight: 700;
+        }
+
         .addressed-badge {
-          font-family: var(--font-mono, monospace);
+          font-family: var(--font-sans);
           font-size: 11px;
-          color: var(--inlay-line, #D69E2E);
-          background: rgba(42, 31, 25, 0.7);
-          border: 1px solid rgba(214, 158, 46, 0.4);
-          padding: 2px 8px;
-          border-radius: 3px;
+          font-weight: 600;
+          color: #FDFCFE;
+          background: rgba(244, 63, 94, 0.25);
+          border: 1px solid #F43F5E;
+          padding: 4px 10px;
+          border-radius: 9999px;
           display: inline-flex;
           align-items: center;
           gap: 6px;
+          backdrop-filter: blur(16px);
         }
 
         .clear-target-btn {
@@ -577,12 +592,13 @@ export const CinematicTable: React.FC<CinematicTableProps> = ({
           font-size: 14px;
         }
 
-        /* Viewport Centerpiece */
+        /* Viewport Centerpiece - Fills Stage 100% */
         .table-viewport-container {
-          flex: 1;
-          min-height: 540px;
-          height: 560px;
-          position: relative;
+          position: absolute;
+          inset: 0;
+          width: 100%;
+          height: 100%;
+          overflow: hidden;
         }
 
         .twod-table-center {
@@ -591,30 +607,27 @@ export const CinematicTable: React.FC<CinematicTableProps> = ({
           justify-content: center;
           width: 100%;
           height: 100%;
-          min-height: 540px;
+          padding: 60px 20px 100px;
+          overflow: auto;
         }
 
-        /* Floating Subtitles & Speech Slip Dock (always visible on canvas) */
+        /* Floating Subtitles & Speech Slip Dock (Glassmorphism bottom centerpiece) */
         .cinematic-subtitles-dock {
           position: absolute;
-          bottom: 16px;
-          left: 24px;
-          right: 24px;
-          max-width: 860px;
-          margin: 0 auto;
-          padding: 12px 18px;
-          background: rgba(23, 18, 15, 0.92);
-          border: 1px solid rgba(138, 106, 75, 0.4);
-          border-radius: var(--radius-card, 6px);
-          box-shadow: 0 12px 32px rgba(0, 0, 0, 0.75);
+          bottom: 24px;
+          left: 50%;
+          transform: translateX(-50%);
+          width: min(880px, calc(100% - 32px));
+          padding: 14px 20px;
+          background: rgba(20, 13, 34, 0.88);
+          border: 1px solid rgba(168, 85, 247, 0.28);
+          border-radius: 16px;
+          box-shadow: 0 20px 48px rgba(0, 0, 0, 0.8);
           z-index: 30;
-          backdrop-filter: blur(12px);
+          backdrop-filter: blur(24px);
         }
 
         .live-speech-card {
-          padding: 12px 16px;
-          border-radius: var(--radius-slip, 2px);
-          box-shadow: 0 6px 18px rgba(0, 0, 0, 0.5);
           animation: slipFade 220ms ease-out;
         }
 
@@ -622,7 +635,7 @@ export const CinematicTable: React.FC<CinematicTableProps> = ({
           display: flex;
           align-items: center;
           justify-content: space-between;
-          margin-bottom: 6px;
+          margin-bottom: 8px;
         }
 
         .speaker-identity {
@@ -632,67 +645,67 @@ export const CinematicTable: React.FC<CinematicTableProps> = ({
         }
 
         .speaker-role-chip {
-          font-family: var(--font-mono, monospace);
+          font-family: var(--font-sans);
           font-size: 11px;
-          font-weight: 600;
+          font-weight: 700;
           letter-spacing: 0.05em;
-          color: #1C1612;
+          color: #F43F5E;
         }
 
         .draft-beacon {
           font-family: var(--font-mono, monospace);
           font-size: 9px;
-          padding: 1px 6px;
-          border-radius: 2px;
-          background: rgba(42, 31, 25, 0.15);
-          color: #5A3F2E;
+          padding: 2px 7px;
+          border-radius: 9999px;
+          background: rgba(168, 85, 247, 0.2);
+          color: #C084FC;
           letter-spacing: 0.08em;
           font-weight: 600;
         }
 
         .typewriter-speech-text {
-          font-family: var(--font-body, serif);
-          font-size: 1.08rem;
-          line-height: 1.45;
-          color: #1C1612;
+          font-family: var(--font-sans);
+          font-size: 1.06rem;
+          line-height: 1.5;
+          color: #FDFCFE;
           margin: 0;
+          font-weight: 400;
         }
 
         .pull-chair-btn {
           display: inline-flex;
           align-items: center;
           gap: 6px;
-          font-family: var(--font-control, system-ui);
+          font-family: var(--font-sans);
           font-size: 12px;
-          font-weight: 600;
+          font-weight: 700;
           letter-spacing: 0.03em;
-          background: #5A3F2E;
-          color: #EADFC8;
-          border: 1px solid #8A6A4B;
-          padding: 6px 12px;
-          border-radius: 4px;
+          background: #E11D48;
+          color: #FFFFFF;
+          border: 1px solid #F43F5E;
+          padding: 6px 14px;
+          border-radius: 9999px;
           cursor: pointer;
+          box-shadow: 0 4px 14px rgba(225, 29, 72, 0.4);
           transition: all 180ms ease;
         }
 
         .pull-chair-btn:hover {
-          background: #73513C;
+          background: #F43F5E;
+          transform: translateY(-1px);
         }
 
         .pull-chair-btn.chair-pulled {
-          background: #2E5C3C;
-          border-color: #8CE6A8;
-          color: #8CE6A8;
+          background: #9F1239;
+          border-color: #FB7185;
+          color: #FFFFFF;
         }
 
         .idle-telemetry-card {
           display: flex;
           align-items: center;
           justify-content: space-between;
-          padding: 8px 12px;
-          background: rgba(34, 24, 19, 0.6);
-          border: 1px dashed rgba(138, 106, 75, 0.3);
-          border-radius: 4px;
+          gap: 12px;
         }
 
         .idle-hint-row {
@@ -702,21 +715,41 @@ export const CinematicTable: React.FC<CinematicTableProps> = ({
         }
 
         .idle-dot {
-          width: 6px;
-          height: 6px;
+          width: 7px;
+          height: 7px;
           border-radius: 50%;
-          background: rgba(234, 223, 200, 0.5);
+          background: #F43F5E;
+          box-shadow: 0 0 8px rgba(244, 63, 94, 0.8);
         }
 
         .idle-label {
-          font-family: var(--font-control, system-ui);
+          font-family: var(--font-sans);
           font-size: 12px;
-          color: var(--muted-light, #B3A18F);
+          color: #B8B0CC;
         }
 
         .pull-chair-btn.inline-barge {
-          padding: 5px 12px;
-          font-size: 11px;
+          padding: 6px 14px;
+          font-size: 12px;
+        }
+
+        @media (max-width: 768px) {
+          .cinematic-controls-bar {
+            top: 10px;
+            left: 10px;
+          }
+          .voice-telemetry-hud {
+            top: 10px;
+            right: 10px;
+          }
+          .cinematic-subtitles-dock {
+            bottom: 12px;
+            padding: 10px 14px;
+            width: calc(100% - 20px);
+          }
+          .typewriter-speech-text {
+            font-size: 0.95rem;
+          }
         }
       `}</style>
     </div>

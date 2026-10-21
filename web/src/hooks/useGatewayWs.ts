@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { CLIENT_CONFIG } from '../config/clientConfig'
 import { AudioPlayer } from '../audio/AudioPlayer'
+import { ClientVad } from '../audio/ClientVad'
 import type {
   SessionStateName,
   SessionMode,
@@ -43,12 +44,21 @@ export function useGatewayWs() {
   const [addressedAgentId, setAddressedAgentId] = useState<string | null>(null)
   const [activeThread, setActiveThread] = useState<ActiveThread | null>(null)
   const [micState, setMicState] = useState<MicState>('off')
+  const [micAudioLevel, setMicAudioLevel] = useState<number>(0)
+  const [speakerAudioLevel, setSpeakerAudioLevel] = useState<number>(0)
 
   const wsRef = useRef<WebSocket | null>(null)
   const threadTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const epochRef = useRef<number>(1)
   const mediaStreamRef = useRef<MediaStream | null>(null)
   const audioPlayerRef = useRef<AudioPlayer | null>(null)
+  const clientVadRef = useRef<ClientVad | null>(null)
+  const sessionStateRef = useRef<SessionStateName>('ready')
+
+  // Keep sessionStateRef in sync
+  useEffect(() => {
+    sessionStateRef.current = sessionState
+  }, [sessionState])
 
   // Client-clock metric timestamps
   const tVadStartRef = useRef<number | null>(null)
@@ -101,6 +111,29 @@ export function useGatewayWs() {
       player.close()
     }
   }, [send])
+
+  // Sample real-time speaker audio energy from AnalyserNode
+  useEffect(() => {
+    let animId: number
+    const sampleSpeakerEnergy = () => {
+      animId = requestAnimationFrame(sampleSpeakerEnergy)
+      const analyser = audioPlayerRef.current?.getAnalyser()
+      if (analyser && activeSpeakerId) {
+        const data = new Uint8Array(analyser.frequencyBinCount)
+        analyser.getByteFrequencyData(data)
+        let sum = 0
+        for (let i = 0; i < data.length; i++) {
+          sum += data[i]
+        }
+        const avg = sum / (data.length * 255)
+        setSpeakerAudioLevel(avg)
+      } else {
+        setSpeakerAudioLevel(0)
+      }
+    }
+    sampleSpeakerEnergy()
+    return () => cancelAnimationFrame(animId)
+  }, [activeSpeakerId])
 
   // Connect to WebSocket
   const connect = useCallback(() => {
@@ -358,6 +391,9 @@ export function useGatewayWs() {
       if (mediaStreamRef.current) {
         mediaStreamRef.current.getTracks().forEach((track) => track.stop())
       }
+      if (clientVadRef.current) {
+        clientVadRef.current.stop()
+      }
       if (audioPlayerRef.current) {
         audioPlayerRef.current.close()
       }
@@ -433,16 +469,18 @@ export function useGatewayWs() {
       available: true,
     })
 
-    // Simulate user finish after a short duration in mock mode
-    setTimeout(() => {
-      const tEnd = performance.now()
-      tVadEndRef.current = tEnd
-      send({
-        type: 'vad',
-        state: 'end',
-        t_client_ms: tEnd,
-      })
-    }, 1200)
+    // Fallback simulation timer if VAD mic is not active
+    if (!clientVadRef.current) {
+      setTimeout(() => {
+        const tEnd = performance.now()
+        tVadEndRef.current = tEnd
+        send({
+          type: 'vad',
+          state: 'end',
+          t_client_ms: tEnd,
+        })
+      }, 1200)
+    }
   }, [send, activeTurnId])
 
   // Direct Addressing (RULE-10, RULE-12)
@@ -470,14 +508,19 @@ export function useGatewayWs() {
     })
   }, [send])
 
-  // Microphone toggle with real browser getUserMedia
+  // Microphone toggle with real browser getUserMedia + Client VAD
   const toggleMic = useCallback(async () => {
     if (micState === 'on') {
+      if (clientVadRef.current) {
+        clientVadRef.current.stop()
+        clientVadRef.current = null
+      }
       if (mediaStreamRef.current) {
         mediaStreamRef.current.getTracks().forEach((track) => track.stop())
         mediaStreamRef.current = null
       }
       setMicState('off')
+      setMicAudioLevel(0)
       send({ type: 'mic_state', state: 'off' })
       return
     }
@@ -509,12 +552,52 @@ export function useGatewayWs() {
       setMicState('on')
       send({ type: 'mic_state', state: 'on' })
       setNotices((prev) => prev.filter((n) => n.code !== 'mic_denied'))
+
+      // Start Client VAD for automated voice barge-in
+      const vad = new ClientVad({
+        onSpeechStart: (_tStart) => {
+          if (sessionStateRef.current !== 'user_speaking') {
+            bargeIn()
+          }
+        },
+        onSpeechEnd: (tEnd) => {
+          tVadEndRef.current = tEnd
+          send({
+            type: 'vad',
+            state: 'end',
+            t_client_ms: tEnd,
+          })
+          setSessionState('processing_user')
+        },
+        onAudioLevel: (lvl) => {
+          setMicAudioLevel(lvl)
+        },
+        onUtterance: (text, isFinal, targetHint) => {
+          setSpeechSlip({ text, final: isFinal })
+          if (targetHint) {
+            setAddressedAgentId(targetHint)
+            send({ type: 'address_agent', agent_id: targetHint })
+          }
+          send({
+            type: 'user_utterance',
+            utterance_id: `u_${Date.now()}`,
+            text,
+            final: isFinal,
+            input_mode: 'voice',
+            confidence: 0.95,
+            target_hint: targetHint,
+          })
+        },
+      })
+      vad.start(stream)
+      clientVadRef.current = vad
     } catch (err: unknown) {
       const error = err as { name?: string }
       console.warn('[useGatewayWs] Mic permission error:', error)
       const isDenied = error?.name === 'NotAllowedError' || error?.name === 'PermissionDeniedError'
       const stateVal: MicState = isDenied ? 'denied' : 'unavailable'
       setMicState(stateVal)
+      setMicAudioLevel(0)
       send({ type: 'mic_state', state: stateVal })
       setNotices((prev) => [
         ...prev,
@@ -526,7 +609,7 @@ export function useGatewayWs() {
         },
       ])
     }
-  }, [micState, send])
+  }, [micState, send, bargeIn])
 
   const triggerMockEvent = useCallback(
     (action: 'unknown_target' | 'no_speech' | 'disconnect') => {
@@ -570,6 +653,8 @@ export function useGatewayWs() {
     addressedAgentId,
     activeThread,
     micState,
+    micAudioLevel,
+    speakerAudioLevel,
     startSession,
     bargeIn,
     addressAgent,
