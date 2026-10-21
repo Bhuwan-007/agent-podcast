@@ -1,0 +1,7 @@
+{
+  "mocked": false,
+  "http_status": 401,
+  "api_key_account_has_paid_tier": null,
+  "subscription_active": null,
+  "credits_available": null
+}
