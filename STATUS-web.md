@@ -67,7 +67,28 @@
 
 ---
 
-## Next Phase: Phase B5 — Full Integration & Polish with Person A Backend
-- Connect live to Lane A's streaming ElevenLabs gateway endpoint.
-- Verify end-to-end multi-agent voice podcast generation with live human interruptions in real time.
+## Phase B5: Full Integration & Polish with Person A Backend — COMPLETED (PASSED)
+
+### Completed
+- [x] **Sentence-Level Chunk Assembly & MP3 Streaming ([AudioPlayer.ts](file:///c:/multiagent-podcast/web/src/audio/AudioPlayer.ts)):**
+  - Chunks stream and assemble per `(turnId, sentenceIdx)` by `seq` into contiguous binary buffers before Web Audio decoding.
+  - Automatically flushes preceding sentences on sentence index increment and flushes the final sentence on `turn_end(completed)`.
+- [x] **Authoritative Epoch Alignment:**
+  - Initialized to gateway's starting epoch 0 (accommodating A1 backend without dropping opening audio chunks).
+  - Explicit `reset(0)` and `setEpoch(newEpoch)` advance epoch cleanly without dropping in-flight valid audio.
+- [x] **Protocol Playback ACKs & Speaker Gating:**
+  - `playback_started` emitted per sentence with accurate high-res `t_client_ms`.
+  - `playback_progress` emitted at 200ms intervals.
+  - `playback_stopped(reason: "finished")` strictly deferred until the entire turn queue is drained (preventing premature speaker highlight loss or camera jerkiness).
+- [x] **Interactive Text Inquiry Bar ([CinematicTable.tsx](file:///c:/multiagent-podcast/web/src/components/CinematicTable.tsx)):**
+  - Added sleek, responsive question bar into the floating dock with "Ask Alex" action button and keyboard Enter trigger.
+  - Emits canonical `user_utterance` (`input_mode: "text"`, `final: true`, `target_hint: "ai_engineer"`).
+- [x] **Full Automated Testing:**
+  - `web/test/audio.test.mjs` & `web/test/protocol.test.mjs`: 12/12 passing.
+  - `eval/check_mock_gateway.mjs` & `eval/test_a1_player.mjs`: 5/5 passing.
+  - `oxlint`: 0 errors, 0 warnings.
+  - `npm run build`: built in 686ms with zero TypeScript errors.
+- [x] **Live Browser Verification:**
+  - Verified typed question submission, telemetry transitions, subtitles typewriter rendering, and smooth 3D camera crane movement.
+
 

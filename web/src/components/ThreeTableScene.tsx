@@ -79,10 +79,10 @@ export const ThreeTableScene: React.FC<ThreeTableSceneProps> = ({
     const container = mountRef.current
     if (!container) return
 
-    // Scene setup with cyber-luxe cosmic background
+    // Scene setup with titanium charcoal studio background (no purple)
     const scene = new THREE.Scene()
-    scene.background = new THREE.Color(0x090611)
-    scene.fog = new THREE.FogExp2(0x090611, 0.008)
+    scene.background = new THREE.Color(0x0c0a0e)
+    scene.fog = new THREE.FogExp2(0x0c0a0e, 0.008)
 
     const width = container.clientWidth || 800
     const height = container.clientHeight || 650
@@ -97,11 +97,11 @@ export const ThreeTableScene: React.FC<ThreeTableSceneProps> = ({
     renderer.toneMappingExposure = 1.25
     container.appendChild(renderer.domElement)
 
-    // Lighting: Cyberpunk Studio Setup
-    const ambientLight = new THREE.AmbientLight(0x3a1d5c, 0.65)
+    // Lighting: Warm Titanium & Rose Studio Setup
+    const ambientLight = new THREE.AmbientLight(0x383035, 0.65)
     scene.add(ambientLight)
 
-    const overheadLight = new THREE.DirectionalLight(0xfff0f5, 0.85)
+    const overheadLight = new THREE.DirectionalLight(0xfff2f5, 0.85)
     overheadLight.position.set(0, 45, 12)
     overheadLight.castShadow = true
     overheadLight.shadow.mapSize.width = 1024
@@ -133,7 +133,7 @@ export const ThreeTableScene: React.FC<ThreeTableSceneProps> = ({
     floor.receiveShadow = true
     scene.add(floor)
 
-    // Violet Atmospheric Stardust Particles
+    // Rose Gold Stardust Particles
     const particleCount = 200
     const particleGeo = new THREE.BufferGeometry()
     const particlePositions = new Float32Array(particleCount * 3)
@@ -144,7 +144,7 @@ export const ThreeTableScene: React.FC<ThreeTableSceneProps> = ({
     }
     particleGeo.setAttribute('position', new THREE.BufferAttribute(particlePositions, 3))
     const particleMat = new THREE.PointsMaterial({
-      color: 0xc084fc,
+      color: 0xfb7185,
       size: 0.28,
       transparent: true,
       opacity: 0.45,
@@ -157,11 +157,11 @@ export const ThreeTableScene: React.FC<ThreeTableSceneProps> = ({
     const tableGroup = new THREE.Group()
     scene.add(tableGroup)
 
-    // Table Top (Dark Obsidian composite)
+    // Table Top (Dark Titanium Obsidian composite)
     const tableRadius = 16
     const tableTopGeo = new THREE.CylinderGeometry(tableRadius, tableRadius + 0.4, 1.2, 64)
     const tableMat = new THREE.MeshStandardMaterial({
-      color: 0x120c22,
+      color: 0x18151c,
       roughness: 0.38,
       metalness: 0.4,
     })
@@ -170,13 +170,13 @@ export const ThreeTableScene: React.FC<ThreeTableSceneProps> = ({
     tableTop.receiveShadow = true
     tableGroup.add(tableTop)
 
-    // Table Rim (Radiant Amethyst Glow)
+    // Table Rim (Velvet Crimson Ruby Rim)
     const rimGeo = new THREE.TorusGeometry(tableRadius + 0.3, 0.45, 16, 64)
     const rimMat = new THREE.MeshStandardMaterial({
-      color: 0x9333ea,
+      color: 0xbe123c,
       roughness: 0.3,
       metalness: 0.7,
-      emissive: 0x240742,
+      emissive: 0x4c0519,
     })
     const rim = new THREE.Mesh(rimGeo, rimMat)
     rim.rotation.x = Math.PI / 2
@@ -186,20 +186,20 @@ export const ThreeTableScene: React.FC<ThreeTableSceneProps> = ({
     // Table Center Inlay (Carbon Velvet)
     const inlayGeo = new THREE.CylinderGeometry(7.5, 7.5, 1.25, 64)
     const inlayMat = new THREE.MeshStandardMaterial({
-      color: 0x07040d,
+      color: 0x0b090c,
       roughness: 0.9,
     })
     const inlay = new THREE.Mesh(inlayGeo, inlayMat)
     inlay.position.y = 0.02
     tableGroup.add(inlay)
 
-    // Inlay Amethyst Ring
+    // Inlay Rose Gold Ring
     const brassRingGeo = new THREE.TorusGeometry(7.6, 0.12, 16, 64)
     const brassRingMat = new THREE.MeshStandardMaterial({
-      color: 0xa855f7,
+      color: 0xf43f5e,
       roughness: 0.2,
-      metalness: 0.8,
-      emissive: 0x3d0b66,
+      metalness: 0.85,
+      emissive: 0x5c091d,
     })
     const brassRing = new THREE.Mesh(brassRingGeo, brassRingMat)
     brassRing.rotation.x = Math.PI / 2
@@ -256,9 +256,10 @@ export const ThreeTableScene: React.FC<ThreeTableSceneProps> = ({
       (330 * Math.PI) / 180,
     ]
 
-    const seatColors = [0xf43f5e, 0xa855f7, 0xc084fc]
-    const seatColorHex = ['#F43F5E', '#A855F7', '#C084FC']
-    const activeGlowColors = [0xff1493, 0xc084fc, 0xe879f9]
+    // Expert Seat Colors (Alex: Vivid Ruby, Sam: Rose Gold Coral, Maya: Deep Wine Crimson)
+    const seatColors = [0xf43f5e, 0xfb7185, 0xbe123c]
+    const seatColorHex = ['#F43F5E', '#FB7185', '#BE123C']
+    const activeGlowColors = [0xff1493, 0xfda4af, 0xe11d48]
 
     // Helper: Create Canvas Nameplate Texture in Dark Glass
     function createNameplateTexture(name: string, role: string, colorHex: string) {
@@ -267,8 +268,8 @@ export const ThreeTableScene: React.FC<ThreeTableSceneProps> = ({
       canvas.height = 256
       const ctx = canvas.getContext('2d')
       if (ctx) {
-        // Deep obsidian glass background
-        ctx.fillStyle = '#140E24'
+        // Deep titanium obsidian glass background
+        ctx.fillStyle = '#18151C'
         ctx.fillRect(0, 0, 512, 256)
 
         // Border line in vibrant accent color
@@ -284,12 +285,12 @@ export const ThreeTableScene: React.FC<ThreeTableSceneProps> = ({
 
         // Name in pure pearl white
         ctx.font = 'bold 54px system-ui, sans-serif'
-        ctx.fillStyle = '#FDFCFE'
+        ctx.fillStyle = '#FFFFFF'
         ctx.fillText(name.toUpperCase(), 95, 96)
 
-        // Role in lavender amethyst
+        // Role in warm titanium platinum
         ctx.font = '500 28px system-ui, sans-serif'
-        ctx.fillStyle = '#C8BEDE'
+        ctx.fillStyle = '#D6D3D1'
         ctx.fillText(role.toUpperCase(), 60, 175)
       }
       const tex = new THREE.CanvasTexture(canvas)
@@ -645,6 +646,10 @@ export const ThreeTableScene: React.FC<ThreeTableSceneProps> = ({
     window.addEventListener('mousemove', onMouseMove)
     window.addEventListener('mouseup', onMouseUp)
 
+    // Stable speaker memory: prevents jerky camera resetting when a speaker transitions between sentences
+    let stableSpeakerId: string | null = null
+    let silenceStartTime: number | null = null
+
     // Clock and animation loop
     const clock = new THREE.Clock()
     let reqId: number
@@ -658,17 +663,34 @@ export const ThreeTableScene: React.FC<ThreeTableSceneProps> = ({
       const isSpeakingHuman = currentProps.isUserSpeaking
       const activeSpk = currentProps.activeSpeakerId
 
+      // Update stable speaker lock
+      if (activeSpk) {
+        stableSpeakerId = activeSpk
+        silenceStartTime = null
+      } else if (isSpeakingHuman) {
+        stableSpeakerId = 'human'
+        silenceStartTime = null
+      } else if (stableSpeakerId) {
+        // Active speaker momentarily null between sentences: wait 1.2s before releasing to overview
+        if (silenceStartTime === null) {
+          silenceStartTime = time
+        } else if (time - silenceStartTime > 1.2) {
+          stableSpeakerId = null
+          silenceStartTime = null
+        }
+      }
+
       // Update particle positions (slow ambient drifting)
       particles.rotation.y = time * 0.02
 
-      // Determine Camera Focus Target based on VOICE / active speaker
-      let focusTargetPos = new THREE.Vector3(0, 36, 32)
-      let focusLookAt = new THREE.Vector3(0, 0.5, 0)
+      // Determine Camera Focus Target based on STABLE SPEAKER (smooth transitions only on real speaker changes)
+      let focusTargetPos = new THREE.Vector3(0, 24, 28)
+      let focusLookAt = new THREE.Vector3(0, 3.2, -6)
       let targetSpotPos = new THREE.Vector3(0, 0, 0)
-      let targetSpotIntensity = 1.6
-      let targetFov = 42
+      let targetSpotIntensity = 1.8
+      let targetFov = 52
 
-      if (isSpeakingHuman) {
+      if (stableSpeakerId === 'human') {
         // Voice focus on You (Host) at 6 o'clock
         focusTargetPos.set(0, 13.5, 12)
         focusLookAt.set(0, 2.2, 21.5)
@@ -676,31 +698,31 @@ export const ThreeTableScene: React.FC<ThreeTableSceneProps> = ({
         targetSpotIntensity = 4.8
         targetFov = 38
 
-        // Mic LED glows vibrant magenta (strictly no green)
+        // Mic LED glows vibrant ruby
         micHeadMat.emissive.setHex(0xf43f5e)
-      } else if (activeSpk) {
+      } else if (stableSpeakerId) {
         const chair = chairMeshes.find(
           (c) =>
-            c.id === activeSpk ||
-            c.id.toLowerCase() === activeSpk?.toLowerCase() ||
-            (c.id === 'ai_engineer' && (activeSpk === 'alex' || activeSpk === 'engineer')) ||
-            (c.id === 'software_developer' && (activeSpk === 'sam' || activeSpk === 'developer')) ||
-            (c.id === 'oss_maintainer' && (activeSpk === 'maya' || activeSpk === 'maintainer'))
+            c.id === stableSpeakerId ||
+            c.id.toLowerCase() === stableSpeakerId?.toLowerCase() ||
+            (c.id === 'ai_engineer' && (stableSpeakerId === 'alex' || stableSpeakerId === 'engineer')) ||
+            (c.id === 'software_developer' && (stableSpeakerId === 'sam' || stableSpeakerId === 'developer')) ||
+            (c.id === 'oss_maintainer' && (stableSpeakerId === 'maya' || stableSpeakerId === 'maintainer'))
         )
         if (chair) {
           const cp = chair.basePosition
 
-          // Studio Broadcast Crane: Camera glides along outer host perimeter arc
+          // Studio Broadcast Crane: Camera glides smoothly to the speaking chair
           if (chair.id === 'ai_engineer') {
-            // Alex on left: Camera sits on right-host arc, angling gently across table
+            // Alex on left
             focusTargetPos.set(8.5, 14, 24)
             focusLookAt.set(-18, 3.2, -10.5)
           } else if (chair.id === 'software_developer') {
-            // Sam on center: Camera sits center host arc, looking straight down table
+            // Sam on center
             focusTargetPos.set(0, 13.5, 25)
             focusLookAt.set(0, 3.2, -21.5)
           } else if (chair.id === 'oss_maintainer') {
-            // Maya on right: Camera sits on left-host arc, angling gently across table
+            // Maya on right
             focusTargetPos.set(-8.5, 14, 24)
             focusLookAt.set(18, 3.2, -10.5)
           } else {
@@ -710,11 +732,11 @@ export const ThreeTableScene: React.FC<ThreeTableSceneProps> = ({
 
           targetSpotPos.set(cp.x, 1, cp.z)
           targetSpotIntensity = 4.8
-          targetFov = 36 // Intimate cinematic broadcast framing
+          targetFov = 36
         }
         micHeadMat.emissive.setHex(0x000000)
       } else {
-        // Table Overview: 3 agents cover the entire width at the same height!
+        // Table Overview: 3 agents cover the entire width at the same height
         focusTargetPos.set(0, 24, 28)
         focusLookAt.set(0, 3.2, -6)
         targetSpotPos.set(0, 0, 0)
@@ -724,18 +746,17 @@ export const ThreeTableScene: React.FC<ThreeTableSceneProps> = ({
       }
 
       // Silky Smooth Dynamic FOV Easing
-      camera.fov += (targetFov - camera.fov) * 0.028
+      camera.fov += (targetFov - camera.fov) * 0.025
       camera.updateProjectionMatrix()
 
       // Smooth Follow-Spotlight Glide
-      spotTarget.position.lerp(targetSpotPos, 0.035)
-      spotlight.intensity += (targetSpotIntensity - spotlight.intensity) * 0.04
+      spotTarget.position.lerp(targetSpotPos, 0.03)
+      spotlight.intensity += (targetSpotIntensity - spotlight.intensity) * 0.035
 
-      // Silky Smooth Camera Glide (Critically damped broadcast crane easing)
-      camTargetPos.lerp(focusTargetPos, 0.032)
-      camTargetLook.lerp(focusLookAt, 0.035)
+      // Silky Smooth Critically-Damped Broadcast Crane Glide
+      camTargetPos.lerp(focusTargetPos, 0.028)
+      camTargetLook.lerp(focusLookAt, 0.03)
 
-      // Apply camera position: pure voice focus unless manual drag is actively used
       if (isDragging || Math.abs(orbitTheta) > 0.05 || Math.abs(orbitPhi - Math.PI / 3.2) > 0.1) {
         const lookAt = camTargetLook
         const dist = camTargetPos.distanceTo(lookAt)
@@ -744,10 +765,11 @@ export const ThreeTableScene: React.FC<ThreeTableSceneProps> = ({
         const finalZ = lookAt.z + Math.sin(orbitPhi) * Math.cos(orbitTheta) * dist
         camera.position.lerp(new THREE.Vector3(finalX, finalY, finalZ), 0.05)
       } else {
-        camera.position.copy(camTargetPos)
+        // Smooth continuous interpolation eliminates all jerks
+        camera.position.lerp(camTargetPos, 0.035)
       }
 
-      currentLookAt.copy(camTargetLook)
+      currentLookAt.lerp(camTargetLook, 0.035)
       camera.lookAt(currentLookAt)
 
       // Animate Chairs leaning in & voice-avatar rippling

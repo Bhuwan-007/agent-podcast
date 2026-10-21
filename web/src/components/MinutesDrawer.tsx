@@ -207,8 +207,8 @@ export const MinutesDrawer: React.FC<MinutesDrawerProps> = ({
           right: 0;
           bottom: 0;
           width: min(440px, 92vw);
-          background: rgba(18, 11, 32, 0.94);
-          border-left: 1px solid rgba(168, 85, 247, 0.28);
+          background: rgba(18, 15, 22, 0.96);
+          border-left: 1px solid rgba(244, 63, 94, 0.28);
           box-shadow: -16px 0 48px rgba(0, 0, 0, 0.85);
           backdrop-filter: blur(28px);
           display: flex;
@@ -226,11 +226,11 @@ export const MinutesDrawer: React.FC<MinutesDrawerProps> = ({
         }
         .drawer-header {
           padding: 14px 18px;
-          border-bottom: 1px solid rgba(168, 85, 247, 0.2);
+          border-bottom: 1px solid rgba(244, 63, 94, 0.2);
           display: flex;
           flex-direction: column;
           gap: 12px;
-          background: rgba(24, 15, 42, 0.7);
+          background: rgba(24, 20, 27, 0.85);
         }
         .header-left {
           display: flex;
@@ -238,7 +238,7 @@ export const MinutesDrawer: React.FC<MinutesDrawerProps> = ({
           justify-content: space-between;
         }
         .toggle-btn {
-          color: #B8B0CC;
+          color: #A8A29E;
           display: flex;
           align-items: center;
           padding: 4px;
@@ -247,7 +247,7 @@ export const MinutesDrawer: React.FC<MinutesDrawerProps> = ({
         }
         .toggle-btn:hover {
           color: #FDFCFE;
-          background: rgba(168, 85, 247, 0.2);
+          background: rgba(244, 63, 94, 0.2);
         }
         .drawer-title {
           font-family: var(--font-sans);
@@ -267,7 +267,7 @@ export const MinutesDrawer: React.FC<MinutesDrawerProps> = ({
           font-family: var(--font-sans);
           font-size: 11px;
           font-weight: 600;
-          color: #B8B0CC;
+          color: #A8A29E;
           padding: 5px 10px;
           border-radius: 9999px;
           white-space: nowrap;
@@ -277,13 +277,13 @@ export const MinutesDrawer: React.FC<MinutesDrawerProps> = ({
         }
         .tab-btn:hover {
           color: #FDFCFE;
-          border-color: rgba(168, 85, 247, 0.3);
+          border-color: rgba(251, 113, 133, 0.3);
         }
         .tab-active {
-          background: #A855F7;
+          background: #E11D48;
           color: #FFFFFF;
-          border-color: #C084FC;
-          box-shadow: 0 2px 10px rgba(168, 85, 247, 0.4);
+          border-color: #FB7185;
+          box-shadow: 0 2px 10px rgba(225, 29, 72, 0.4);
         }
         .drawer-content {
           flex: 1;
@@ -293,7 +293,7 @@ export const MinutesDrawer: React.FC<MinutesDrawerProps> = ({
         .empty-text {
           font-family: var(--font-sans);
           font-size: 13px;
-          color: #7E7497;
+          color: #A8A29E;
           font-style: italic;
           text-align: center;
           padding: 32px 0;
@@ -305,8 +305,8 @@ export const MinutesDrawer: React.FC<MinutesDrawerProps> = ({
         }
         .transcript-entry {
           padding: 10px 14px;
-          background: rgba(26, 17, 46, 0.6);
-          border: 1px solid rgba(168, 85, 247, 0.18);
+          background: rgba(24, 20, 27, 0.7);
+          border: 1px solid rgba(244, 63, 94, 0.18);
           border-radius: 8px;
         }
         .entry-draft {
@@ -341,7 +341,7 @@ export const MinutesDrawer: React.FC<MinutesDrawerProps> = ({
         .entry-turn {
           font-family: var(--font-mono);
           font-size: 10px;
-          color: #7E7497;
+          color: #A8A29E;
         }
         .entry-body {
           font-family: var(--font-sans);
@@ -358,8 +358,8 @@ export const MinutesDrawer: React.FC<MinutesDrawerProps> = ({
         }
         .claim-entry {
           padding: 12px 14px;
-          background: rgba(26, 17, 46, 0.6);
-          border: 1px solid rgba(168, 85, 247, 0.18);
+          background: rgba(24, 20, 27, 0.7);
+          border: 1px solid rgba(244, 63, 94, 0.18);
           border-radius: 8px;
         }
         .claim-meta {
@@ -373,7 +373,7 @@ export const MinutesDrawer: React.FC<MinutesDrawerProps> = ({
         .claim-id {
           font-family: var(--font-mono);
           font-weight: 700;
-          color: #C084FC;
+          color: #FB7185;
         }
         .claim-speaker {
           font-family: var(--font-sans);
@@ -382,8 +382,8 @@ export const MinutesDrawer: React.FC<MinutesDrawerProps> = ({
           text-transform: capitalize;
         }
         .claim-status-badge {
-          background: rgba(168, 85, 247, 0.2);
-          color: #E9D5FF;
+          background: rgba(244, 63, 94, 0.2);
+          color: #FDA4AF;
           padding: 2px 6px;
           border-radius: 4px;
           font-family: var(--font-mono);
@@ -391,7 +391,7 @@ export const MinutesDrawer: React.FC<MinutesDrawerProps> = ({
           text-transform: uppercase;
         }
         .verified-badge {
-          background: #9333EA;
+          background: #E11D48;
           color: #FFFFFF;
           padding: 2px 6px;
           border-radius: 4px;
@@ -411,7 +411,7 @@ export const MinutesDrawer: React.FC<MinutesDrawerProps> = ({
         .claim-quote {
           font-family: var(--font-sans);
           font-size: 12.5px;
-          color: #E9D5FF;
+          color: #FDFCFE;
           margin: 0;
           line-height: 1.45;
         }
@@ -425,8 +425,8 @@ export const MinutesDrawer: React.FC<MinutesDrawerProps> = ({
         }
         .trace-row {
           padding: 8px 10px;
-          background: rgba(26, 17, 46, 0.6);
-          border: 1px solid rgba(168, 85, 247, 0.18);
+          background: rgba(24, 20, 27, 0.7);
+          border: 1px solid rgba(244, 63, 94, 0.18);
           border-radius: 6px;
           display: flex;
           flex-direction: column;
@@ -434,17 +434,17 @@ export const MinutesDrawer: React.FC<MinutesDrawerProps> = ({
         }
         .trace-time {
           font-size: 10px;
-          color: #7E7497;
+          color: #A8A29E;
         }
         .trace-flow {
           font-weight: 600;
           color: #FDFCFE;
         }
         .trace-msgtype {
-          color: #C084FC;
+          color: #FB7185;
         }
         .trace-summary {
-          color: #C8BEDE;
+          color: #D6D3D1;
           word-break: break-word;
         }
         .metrics-mono-table {
@@ -455,29 +455,29 @@ export const MinutesDrawer: React.FC<MinutesDrawerProps> = ({
         }
         .metrics-mono-table th {
           text-align: left;
-          border-bottom: 1px solid rgba(168, 85, 247, 0.25);
+          border-bottom: 1px solid rgba(244, 63, 94, 0.25);
           padding: 8px 6px;
           font-family: var(--font-sans);
           font-size: 11px;
-          color: #B8B0CC;
+          color: #A8A29E;
         }
         .metrics-mono-table td {
           padding: 8px 6px;
-          border-bottom: 1px solid rgba(168, 85, 247, 0.1);
+          border-bottom: 1px solid rgba(244, 63, 94, 0.1);
         }
         .metrics-mono-table .val {
           font-weight: 700;
           color: #FDFCFE;
         }
         .metrics-mono-table .target {
-          color: #C084FC;
+          color: #FB7185;
           font-size: 10px;
         }
         .metrics-disclaimer {
           margin-top: 16px;
           font-family: var(--font-sans);
           font-size: 11px;
-          color: #7E7497;
+          color: #A8A29E;
         }
       `}</style>
     </aside>

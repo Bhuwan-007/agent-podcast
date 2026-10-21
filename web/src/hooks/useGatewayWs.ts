@@ -26,7 +26,7 @@ export function useGatewayWs() {
   const [sessionState, setSessionState] = useState<SessionStateName>('ready')
   const [sessionMode, setSessionMode] = useState<SessionMode>('mock')
   const [sessionId, setSessionId] = useState<string | null>(null)
-  const [currentEpoch, setCurrentEpoch] = useState<number>(1)
+  const [currentEpoch, setCurrentEpoch] = useState<number>(0)
 
   const [activeSpeakerId, setActiveSpeakerId] = useState<string | null>(null)
   const [activeTurnId, setActiveTurnId] = useState<number | null>(null)
@@ -49,7 +49,7 @@ export function useGatewayWs() {
 
   const wsRef = useRef<WebSocket | null>(null)
   const threadTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
-  const epochRef = useRef<number>(1)
+  const epochRef = useRef<number>(0)
   const mediaStreamRef = useRef<MediaStream | null>(null)
   const audioPlayerRef = useRef<AudioPlayer | null>(null)
   const clientVadRef = useRef<ClientVad | null>(null)
@@ -274,14 +274,20 @@ export function useGatewayWs() {
             }
 
             case 'turn_end': {
-              if (data.status === 'completed' || data.status === 'interrupted' || data.status === 'discarded') {
+              if (data.status === 'completed') {
+                audioPlayerRef.current?.endTurn(data.turn_id)
+              } else if (data.status === 'interrupted' || data.status === 'discarded') {
+                audioPlayerRef.current?.stop('barge_in')
                 setActiveSpeakerId(null)
               }
               break
             }
 
             case 'playback_stopped': {
-              setActiveSpeakerId(null)
+              if (data.reason === 'finished' || data.reason === 'barge_in' || data.reason === 'end') {
+                setActiveSpeakerId(null)
+                setSpeakerAudioLevel(0)
+              }
               break
             }
 
@@ -403,9 +409,9 @@ export function useGatewayWs() {
   // Start Session (Local S1 Connecting per R3)
   const startSession = useCallback(
     (topicId: string) => {
-      epochRef.current = 1
-      setCurrentEpoch(1)
-      audioPlayerRef.current?.setEpoch(1)
+      epochRef.current = 0
+      setCurrentEpoch(0)
+      audioPlayerRef.current?.reset(0)
       setSessionState('connecting')
       setTranscripts([])
       setClaims([])
@@ -636,6 +642,27 @@ export function useGatewayWs() {
     }
   }, [])
 
+  // Send typed user utterance (A1/A5 interactive query)
+  const sendUtterance = useCallback(
+    (text: string, targetHint?: string) => {
+      const cleanText = text.trim()
+      if (!cleanText) return
+      setSpeechSlip({ text: cleanText, final: true })
+      const target = targetHint || addressedAgentId || 'ai_engineer'
+      send({
+        type: 'user_utterance',
+        utterance_id: `u_${Date.now()}`,
+        text: cleanText,
+        final: true,
+        input_mode: 'text',
+        confidence: 1.0,
+        target_hint: target,
+      })
+      setSessionState('processing_user')
+    },
+    [send, addressedAgentId]
+  )
+
   return {
     connected,
     sessionState,
@@ -658,6 +685,7 @@ export function useGatewayWs() {
     startSession,
     bargeIn,
     addressAgent,
+    sendUtterance,
     endSession,
     toggleMic,
     triggerMockEvent,

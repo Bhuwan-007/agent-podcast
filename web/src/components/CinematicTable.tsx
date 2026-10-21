@@ -11,6 +11,7 @@ interface CinematicTableProps {
   addressedAgentId: string | null
   activeThread: ActiveThread | null
   speechSlip: { text: string; final: boolean } | null
+  sessionState?: string
   isUserListening: boolean
   isUserProcessing: boolean
   micOn: boolean
@@ -19,6 +20,7 @@ interface CinematicTableProps {
   onAddressAgent: (agentId: string | null) => void
   onMicToggle: () => void
   onBargeIn: () => void
+  onSendUtterance?: (text: string) => void
 }
 
 export const CinematicTable: React.FC<CinematicTableProps> = ({
@@ -27,6 +29,7 @@ export const CinematicTable: React.FC<CinematicTableProps> = ({
   addressedAgentId,
   activeThread,
   speechSlip,
+  sessionState: _sessionState,
   isUserListening,
   isUserProcessing,
   micOn,
@@ -35,10 +38,12 @@ export const CinematicTable: React.FC<CinematicTableProps> = ({
   onAddressAgent,
   onMicToggle,
   onBargeIn,
+  onSendUtterance,
 }) => {
   const [viewMode, setViewMode] = useState<'3d' | '2d'>('3d')
   const [hoveredAgentId, setHoveredAgentId] = useState<string | null>(null)
   const [audioOnline, setAudioOnline] = useState<boolean>(false)
+  const [inputText, setInputText] = useState<string>('')
   const containerRef = useRef<HTMLDivElement>(null)
 
   // Web Audio Studio Engine
@@ -173,6 +178,13 @@ export const CinematicTable: React.FC<CinematicTableProps> = ({
       a.display_name.toLowerCase() === activeSpeakerId?.toLowerCase()
   )
   const isLocked = Boolean(activeSpeakerId || isUserListening || hoveredAgentId)
+
+  const handleSendQuestion = (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!inputText.trim()) return
+    onSendUtterance?.(inputText.trim())
+    setInputText('')
+  }
 
   const handleAgentSelect = (agentId: string | null) => {
     playClickChime()
@@ -353,16 +365,38 @@ export const CinematicTable: React.FC<CinematicTableProps> = ({
             <div className="idle-hint-row">
               <span className="idle-dot" />
               <span className="idle-label">
-                Roundtable Active: Speak into your microphone or click "Interrupt / Pull Chair" to take the floor.
+                {isUserProcessing
+                  ? 'Generating response...'
+                  : isUserListening
+                  ? 'Listening to your voice...'
+                  : 'Alex (AI Engineer) is listening. Ask a question or speak into your mic.'}
               </span>
             </div>
-            <button
-              type="button"
-              className="pull-chair-btn inline-barge"
-              onClick={onBargeIn}
-            >
-              Interrupt / Pull Chair
-            </button>
+
+            <form className="ask-question-form" onSubmit={handleSendQuestion}>
+              <input
+                type="text"
+                className="question-input"
+                placeholder="Ask Alex a question about open weights vs frontier models..."
+                value={inputText}
+                onChange={(e) => setInputText(e.target.value)}
+                disabled={Boolean(activeSpeakerId) || isUserProcessing}
+              />
+              <button
+                type="submit"
+                className="ask-btn"
+                disabled={!inputText.trim() || Boolean(activeSpeakerId) || isUserProcessing}
+              >
+                Ask Alex
+              </button>
+              <button
+                type="button"
+                className={`pull-chair-btn inline-barge ${isUserListening ? 'chair-pulled' : ''}`}
+                onClick={onBargeIn}
+              >
+                {isUserListening ? 'Speaking...' : 'Interrupt / Pull Chair'}
+              </button>
+            </form>
           </div>
         )}
       </div>
@@ -403,7 +437,7 @@ export const CinematicTable: React.FC<CinematicTableProps> = ({
           width: 34px;
           height: 34px;
           border-radius: 50%;
-          border: 1px solid rgba(192, 132, 252, 0.45);
+          border: 1px solid rgba(251, 113, 133, 0.45);
           transition: width 0.3s, height 0.3s, border-radius 0.3s, border 0.3s;
         }
 
@@ -445,13 +479,13 @@ export const CinematicTable: React.FC<CinematicTableProps> = ({
 
         .view-mode-toggle {
           display: inline-flex;
-          background: rgba(19, 12, 32, 0.78);
-          border: 1px solid rgba(168, 85, 247, 0.28);
+          background: rgba(24, 20, 27, 0.88);
+          border: 1px solid rgba(244, 63, 94, 0.28);
           border-radius: 9999px;
           padding: 3px;
           gap: 3px;
           backdrop-filter: blur(16px);
-          box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+          box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
         }
 
         .view-toggle-btn {
@@ -464,7 +498,7 @@ export const CinematicTable: React.FC<CinematicTableProps> = ({
           letter-spacing: 0.03em;
           padding: 5px 12px;
           background: transparent;
-          color: #B8B0CC;
+          color: #A8A29E;
           border: none;
           border-radius: 9999px;
           cursor: pointer;
@@ -476,9 +510,9 @@ export const CinematicTable: React.FC<CinematicTableProps> = ({
         }
 
         .view-toggle-btn.active {
-          background: #A855F7;
+          background: #E11D48;
           color: #FFFFFF;
-          box-shadow: 0 2px 12px rgba(168, 85, 247, 0.45);
+          box-shadow: 0 2px 12px rgba(225, 29, 72, 0.45);
         }
 
         .studio-audio-btn {
@@ -489,9 +523,9 @@ export const CinematicTable: React.FC<CinematicTableProps> = ({
           font-size: 11px;
           font-weight: 600;
           letter-spacing: 0.03em;
-          background: rgba(19, 12, 32, 0.78);
-          color: #C084FC;
-          border: 1px solid rgba(168, 85, 247, 0.28);
+          background: rgba(24, 20, 27, 0.88);
+          color: #FB7185;
+          border: 1px solid rgba(244, 63, 94, 0.28);
           padding: 5px 12px;
           border-radius: 9999px;
           cursor: pointer;
@@ -500,14 +534,14 @@ export const CinematicTable: React.FC<CinematicTableProps> = ({
         }
 
         .studio-audio-btn:hover {
-          border-color: #C084FC;
+          border-color: #FB7185;
           color: #FDFCFE;
         }
 
         .studio-audio-btn.audio-online {
-          background: rgba(192, 132, 252, 0.22);
-          color: #FCE7F3;
-          border-color: #C084FC;
+          background: rgba(251, 113, 133, 0.22);
+          color: #FFF1F2;
+          border-color: #FB7185;
         }
 
         /* Top Right Voice Telemetry HUD */
@@ -526,11 +560,11 @@ export const CinematicTable: React.FC<CinematicTableProps> = ({
           align-items: center;
           gap: 8px;
           padding: 6px 14px;
-          background: rgba(19, 12, 32, 0.78);
-          border: 1px solid rgba(168, 85, 247, 0.25);
+          background: rgba(24, 20, 27, 0.88);
+          border: 1px solid rgba(244, 63, 94, 0.25);
           border-radius: 9999px;
           backdrop-filter: blur(16px);
-          box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+          box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
         }
 
         .status-beacon {
@@ -555,7 +589,7 @@ export const CinematicTable: React.FC<CinematicTableProps> = ({
           font-family: var(--font-mono, monospace);
           font-size: 11px;
           letter-spacing: 0.04em;
-          color: #B8B0CC;
+          color: #A8A29E;
         }
 
         .telemetry-text.agent-focus {
@@ -619,8 +653,8 @@ export const CinematicTable: React.FC<CinematicTableProps> = ({
           transform: translateX(-50%);
           width: min(880px, calc(100% - 32px));
           padding: 14px 20px;
-          background: rgba(20, 13, 34, 0.88);
-          border: 1px solid rgba(168, 85, 247, 0.28);
+          background: rgba(24, 20, 27, 0.92);
+          border: 1px solid rgba(244, 63, 94, 0.28);
           border-radius: 16px;
           box-shadow: 0 20px 48px rgba(0, 0, 0, 0.8);
           z-index: 30;
@@ -657,8 +691,8 @@ export const CinematicTable: React.FC<CinematicTableProps> = ({
           font-size: 9px;
           padding: 2px 7px;
           border-radius: 9999px;
-          background: rgba(168, 85, 247, 0.2);
-          color: #C084FC;
+          background: rgba(244, 63, 94, 0.2);
+          color: #FB7185;
           letter-spacing: 0.08em;
           font-weight: 600;
         }
@@ -725,12 +759,68 @@ export const CinematicTable: React.FC<CinematicTableProps> = ({
         .idle-label {
           font-family: var(--font-sans);
           font-size: 12px;
-          color: #B8B0CC;
+          color: #A8A29E;
         }
 
         .pull-chair-btn.inline-barge {
           padding: 6px 14px;
           font-size: 12px;
+        }
+
+        .ask-question-form {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          width: 100%;
+          margin-top: 8px;
+        }
+
+        .question-input {
+          flex: 1;
+          background: rgba(14, 11, 18, 0.9);
+          border: 1px solid rgba(244, 63, 94, 0.28);
+          color: #FFFFFF;
+          font-family: var(--font-sans);
+          font-size: 13px;
+          padding: 7px 14px;
+          border-radius: 9999px;
+          outline: none;
+          transition: border-color 160ms, box-shadow 160ms;
+        }
+
+        .question-input:focus {
+          border-color: #FB7185;
+          box-shadow: 0 0 10px rgba(244, 63, 94, 0.3);
+        }
+
+        .question-input:disabled {
+          opacity: 0.5;
+          cursor: not-allowed;
+        }
+
+        .ask-btn {
+          background: #E11D48;
+          color: #FFFFFF;
+          font-family: var(--font-sans);
+          font-size: 12px;
+          font-weight: 700;
+          padding: 7px 16px;
+          border-radius: 9999px;
+          border: 1px solid #F43F5E;
+          cursor: pointer;
+          transition: all 160ms ease;
+          white-space: nowrap;
+        }
+
+        .ask-btn:hover:not(:disabled) {
+          background: #F43F5E;
+          transform: translateY(-1px);
+          box-shadow: 0 2px 10px rgba(244, 63, 94, 0.4);
+        }
+
+        .ask-btn:disabled {
+          opacity: 0.4;
+          cursor: not-allowed;
         }
 
         @media (max-width: 768px) {

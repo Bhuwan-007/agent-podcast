@@ -101,29 +101,29 @@ export const RoundTable: React.FC<RoundTableProps> = ({
       {/* SVG Table Top */}
       <svg width={width} height={height} className="table-svg" aria-hidden="true">
         <defs>
-          {/* Subtle two-tone obsidian/amethyst linear gradient */}
+          {/* Subtle two-tone titanium charcoal linear gradient */}
           <linearGradient id="wood-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stopColor="#1B1231" />
-            <stop offset="100%" stopColor="#120A22" />
+            <stop offset="0%" stopColor="#221D26" />
+            <stop offset="100%" stopColor="#161318" />
           </linearGradient>
 
           {/* Inlay radial gradient */}
           <radialGradient id="inlay-gradient" cx="50%" cy="50%" r="50%">
-            <stop offset="0%" stopColor="#0F081D" />
-            <stop offset="100%" stopColor="#080410" />
+            <stop offset="0%" stopColor="#141016" />
+            <stop offset="100%" stopColor="#0C0A0E" />
           </radialGradient>
         </defs>
 
         {/* Outer rim shadow */}
-        <circle cx={centerX} cy={centerY} r={tableRadius + 8} fill="#05030A" opacity="0.8" />
+        <circle cx={centerX} cy={centerY} r={tableRadius + 8} fill="#040305" opacity="0.8" />
 
         {/* Outer rim */}
         <circle
           cx={centerX}
           cy={centerY}
           r={tableRadius + 4}
-          fill="#160D2A"
-          stroke="#9333EA"
+          fill="#18151C"
+          stroke="#BE123C"
           strokeWidth="1.5"
         />
 
@@ -133,7 +133,7 @@ export const RoundTable: React.FC<RoundTableProps> = ({
           cy={centerY}
           r={tableRadius}
           fill="url(#wood-gradient)"
-          stroke="#A855F7"
+          stroke="#F43F5E"
           strokeWidth="1.5"
         />
 
@@ -143,7 +143,7 @@ export const RoundTable: React.FC<RoundTableProps> = ({
           cy={centerY}
           r={tableRadius - 35}
           fill="none"
-          stroke="#C084FC"
+          stroke="#FB7185"
           strokeWidth="1"
           strokeDasharray="6 4"
           opacity="0.6"
@@ -155,7 +155,7 @@ export const RoundTable: React.FC<RoundTableProps> = ({
           cy={centerY}
           r={135}
           fill="url(#inlay-gradient)"
-          stroke="#A855F7"
+          stroke="#F43F5E"
           strokeWidth="1.5"
         />
 
@@ -165,7 +165,7 @@ export const RoundTable: React.FC<RoundTableProps> = ({
           cy={centerY}
           r={120}
           fill="none"
-          stroke="#F43F5E"
+          stroke="#FB7185"
           strokeWidth="0.75"
           opacity="0.5"
         />
