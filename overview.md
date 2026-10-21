@@ -3,7 +3,9 @@
 Read this together with `architecture.md`, `prompts.md` and `workflow/collaboration.md`.
 The team is two people working on separate branches: follow the lane ownership, contract and
 merge rules in `workflow/collaboration.md`. Where documents disagree, use the precedence list
-in its section 9 (brief > architecture.md > prd.md > design.md > rules.md > prompts.md).
+in `workflow/reconciliation.md` section 4. That file also records decisions that amend
+architecture.md and prompts.md; read it right after architecture.md, and treat
+`contracts/ws_events.md` as the canonical event list.
 
 ## 1. Working agreement for the coding agent
 
@@ -86,7 +88,9 @@ Agree on the message schemas in architecture.md section 4 first so lanes do not 
 | 6 | Topic shift | New topic adopted; relevant earlier context retained |
 | 7 | Failure | One agent killed; remaining agents continue |
 
-Record for each: pass/fail, time-to-first-audio, interruption-to-response, notes.
+Use the product doc 06 test ids (AT-01..AT-20) and metric names, per `workflow/reconciliation.md`
+section 5 (what is automated vs manual). Record pass/fail/not-run with evidence; unavailable
+metrics are reported as unavailable, never zero.
 
 ## 7. Live demo script (about 4 minutes)
 

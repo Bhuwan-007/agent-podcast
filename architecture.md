@@ -3,6 +3,10 @@
 > Read this file fully before writing code. If something here conflicts with the
 > hackathon brief, the brief wins. If a library API differs from what is written
 > here, check the library's current docs/README and follow those. Do not guess.
+>
+> **Amended by** `workflow/reconciliation.md` (decisions R1-R15, wins on technical conflicts) and
+> `contracts/ws_events.md` (canonical browser/gateway events). Persona files live in
+> `agents/personas/<topic_id>/`, and topic content in `topics/<topic_id>.json`.
 
 ## 1. Non-negotiables (from the brief)
 

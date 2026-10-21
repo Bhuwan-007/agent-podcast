@@ -18,11 +18,19 @@ never break `main`, merge early and often.
 
 ## 2. Default lanes (swap if you prefer)
 
-| Lane | Owner | Folders / files |
+| Area | Owner | Folders / files |
 |---|---|---|
-| `agents`, `gateway` | Person A (backend) | `agents/`, `gateway/` (moderator, a2a_client, ledger, router, tracing, chaos, voice/tts.py, voice/stt.py), `eval/` |
-| `web` | Person B (frontend) | `web/` (UI, HUD, mic + VAD, playback queue, chaos button), design implementation |
-| `docs` | shared, split by file | A: `architecture.md`, `prompts.md`. B: `design.md`, `prd.md`, demo script, README diagram |
+| Agents and protocol | A | `agents/**` (incl. `agents/personas/**`), `gateway/{moderator,a2a_client,ledger,router,tracing,chaos}.py` |
+| Voice backend and server | A | `gateway/main.py`, `gateway/session.py`, `gateway/voice/tts.py`, `gateway/voice/stt.py` |
+| Eval and technical docs | A | `eval/**`, `docs/eval_results.md`, `docs/protocol.md`, `architecture.md`, `prompts.md`, `STATUS-backend.md`, `requirements.txt`, `.env.example` (B adds vars via tiny PR) |
+| Frontend app | B | `web/**` except `web/src/audio/**`, `web/dev/mock_gateway.py`, `package.json`, `STATUS-web.md` |
+| Client audio (VAD, playback queue, barge-in, acks, metrics) | B, paired with A at the Phase 3/4 checkpoints | `web/src/audio/**` |
+| Topic content | B | `topics/topic_N.json` (verbatim organizer text) |
+| Product docs and tests | B | numbered docs 01-06, `docs/acceptance_results.md`, demo script, demo video, README assembly (A supplies run steps and `docs/protocol.md`) |
+| Contracts and process | joint, `[contract]` PRs | `contracts/*.md`, `workflow/*.md` |
+
+Persona behaviour (`agents/personas/topic_N/*.yaml`, A) and public topic content
+(`topics/topic_N.json`, B) are separate files linked by `agent_id`, so nobody edits the same file.
 
 Barge-in spans both lanes: **B** owns the client half (VAD, instant playback stop, progress acks);
 **A** owns the gateway half (cancel LLM + TTS, spoken_text, routing). They meet at the
@@ -32,13 +40,13 @@ Barge-in spans both lanes: **B** owns the client half (VAD, instant playback sto
 
 1. One person (A) creates the repo, pushes Phase 0 scaffold to `main` (folders, `.gitignore`,
    `.env.example`, `requirements.txt`, empty READMEs). **Nobody branches before this lands.**
-2. Put the existing docs in `docs/`: `design.md`, `rules.md`, `prd.md`, `architecture.md`,
-   `prompts.md`, `workflow/`.
+2. Keep the numbered product docs (01-06) where they are in the repo root. Put `architecture.md`,
+   `prompts.md`, `workflow/` and `contracts/` in the repo as delivered.
 3. Write `contracts/ws_events.md` and `contracts/a2a_messages.md` together (copy the message
    types from architecture.md section 4; add the browser events below).
 4. Both clone, create branches, start.
 
-### Browser <-> gateway events (starting point, put in contracts/ws_events.md)
+### Browser <-> gateway events (SUPERSEDED: the canonical list is contracts/ws_events.md; the block below is only a sketch)
 
 ```
 client -> gateway: start_session{topic} | barge_in{turn_id,sentence_idx,ms} |
@@ -114,12 +122,9 @@ Look at the conflicting files together, keep both sides' intent, run the app, th
 
 ## 9. Document precedence (when documents disagree)
 
-1. The hackathon brief (the PDFs)
-2. `architecture.md` (technical design and contracts)
-3. `prd.md` (product behaviour and scope)
-4. `design.md` (visual design, applies to `web/` only)
-5. `rules.md` (coding conventions; applies unless it contradicts 1-3)
-6. `prompts.md` (build and runtime prompts)
+**Superseded: use `workflow/reconciliation.md` section 4.** In short: brief and organizer topic pack
+first; for technical design `contracts/` > `reconciliation.md` > `architecture.md` > `prompts.md`;
+for product behaviour and copy docs 02 > 03 > 01; doc 04 for `web/` visuals only.
 
 If two documents conflict and it is not obvious which wins, **do not guess**: record the
 question in `DECISIONS.md` and ask the human. Things that must never be overridden by any
@@ -129,8 +134,8 @@ document: real A2A between agents, ElevenLabs for voice, open-source stack other
 Review checklist for `prd.md` / `rules.md` / `design.md` (do this together once):
 - Does anything imply a central controller writing all turns, scripted dialogue, or a non-ElevenLabs voice?
 - Does the scope fit 2 days? Cut anything not in the brief's scoring table.
-- Do naming, folder layout and tooling in `rules.md` match architecture.md section 3? If not,
-  update one of them now, not mid-build.
+- Does the folder layout implied by docs 01-06 match architecture.md section 3? Differences are
+  already resolved in `workflow/reconciliation.md`; add anything new there.
 
 ---
 
@@ -156,7 +161,9 @@ COLLABORATION RULES (two humans, two agents, shared repo)
   proposed resolution first.
 - When a task is done: run its acceptance check from workflow/overview.md, update
   STATUS-<lane>.md, push the branch, and tell the human to open a PR.
-- Document precedence: brief > architecture.md > prd.md > design.md (web/ only) > rules.md >
-  prompts.md. If unclear, write the question to DECISIONS.md and ask instead of guessing.
+- Document precedence: see workflow/reconciliation.md section 4 (brief and topic pack; then
+  contracts > reconciliation > architecture > prompts for technical design; docs 02 > 03 > 01 for
+  product behaviour; doc 04 for web/ visuals). If unclear, write the question to DECISIONS.md
+  and ask instead of guessing.
 - Keep main demoable. Never leave a branch in a state you would not merge without saying so.
 ```
