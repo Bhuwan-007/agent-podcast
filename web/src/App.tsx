@@ -1,19 +1,17 @@
 import React, { useState } from 'react'
 import { Header } from './components/Header'
-import { RoundTable } from './components/RoundTable'
 import { CinematicTable } from './components/CinematicTable'
 import { MinutesDrawer } from './components/MinutesDrawer'
 import { TableCard } from './components/TableCard'
 import { Slip } from './components/Slip'
-import { ScreenSwitcher, type ScreenId } from './components/ScreenSwitcher'
 import { TOPICS, DEFAULT_TOPIC } from './data/topics'
 import { useGatewayWs } from './hooks/useGatewayWs'
 
 export const App: React.FC = () => {
-  const [currentScreen, setCurrentScreen] = useState<ScreenId>('B')
-  const [isMobilePreview, setIsMobilePreview] = useState<boolean>(false)
+  const [currentScreen, setCurrentScreen] = useState<'A' | 'B' | 'F'>('B')
   const [selectedTopicId, setSelectedTopicId] = useState<string>(DEFAULT_TOPIC.topic_id)
-  const [isMinutesOpen, setIsMinutesOpen] = useState<boolean>(true)
+  const [isMinutesOpen, setIsMinutesOpen] = useState<boolean>(false)
+  const [isDevOpen, setIsDevOpen] = useState<boolean>(false)
 
   // Real WebSocket state from gateway/mock gateway
   const {
@@ -55,132 +53,170 @@ export const App: React.FC = () => {
 
   const handleBargeIn = () => {
     bargeIn()
-    if (currentScreen !== 'B' && currentScreen !== 'C') {
-      setCurrentScreen('D')
-    }
   }
 
   return (
-    <div className={`app-root ${isMobilePreview ? 'simulated-mobile-wrap' : ''}`}>
-      {/* Top development screen navigation bar */}
-      <ScreenSwitcher
-        currentScreen={currentScreen}
-        onSelectScreen={setCurrentScreen}
-        isMobilePreview={isMobilePreview}
-        onToggleMobilePreview={() => setIsMobilePreview(!isMobilePreview)}
+    <div className="app-root">
+      {/* Sleek, Unified 56px Broadcast Header */}
+      <Header
+        state={sessionState}
+        mode={sessionMode}
+        activeSpeakerName={
+          sessionState === 'user_speaking'
+            ? 'You'
+            : activeSpeakerDisplayName
+        }
+        connected={connected}
+        showEndButton={currentScreen === 'B'}
+        onEndSession={() => {
+          endSession()
+          setCurrentScreen('F')
+        }}
+        isMinutesOpen={isMinutesOpen}
+        onToggleMinutes={() => setIsMinutesOpen(!isMinutesOpen)}
+        minutesCount={transcripts.length + claims.length}
+        isDevOpen={isDevOpen}
+        onToggleDev={() => setIsDevOpen(!isDevOpen)}
+        micState={micState}
+        onToggleMic={toggleMic}
+        onBargeIn={handleBargeIn}
+        topicTitle={selectedTopic.title}
       />
 
-      <div className={`app-viewport ${isMobilePreview ? 'mobile-frame' : ''}`}>
-        {/* Universal Header with ink on brass Mock banner and paper state plate */}
-        <Header
-          state={sessionState}
-          mode={sessionMode}
-          activeSpeakerName={
-            sessionState === 'user_speaking'
-              ? 'You'
-              : activeSpeakerDisplayName
-          }
-          connected={connected}
-          showEndButton={currentScreen !== 'A' && currentScreen !== 'F'}
-          onEndSession={() => {
-            endSession()
-            setCurrentScreen('F')
-          }}
-        />
+      {/* Global Notices Pinboard */}
+      {notices.length > 0 && (
+        <aside className="notices-pinboard" aria-label="Notices">
+          {notices.map((n, idx) => (
+            <Slip
+              key={`${n.code}-${idx}`}
+              notice={n}
+              onDismiss={() => dismissNotice(idx)}
+              onRetry={() => {
+                if (n.code === 'disconnected') window.location.reload()
+              }}
+              onAddressAgent={addressAgent}
+            />
+          ))}
+        </aside>
+      )}
 
-        {/* Global Notices Pinboard */}
-        {notices.length > 0 && (
-          <aside className="notices-pinboard container" aria-label="Notices">
-            {notices.map((n, idx) => (
-              <Slip
-                key={`${n.code}-${idx}`}
-                notice={n}
-                onDismiss={() => dismissNotice(idx)}
-                onRetry={() => {
-                  if (n.code === 'disconnected') window.location.reload()
-                }}
-                onAddressAgent={addressAgent}
-              />
-            ))}
-          </aside>
+      <main className="table-room-main">
+        {/* ============================================================ */}
+        {/* SCREEN A: LOBBY — CHOOSE A TABLE                             */}
+        {/* ============================================================ */}
+        {currentScreen === 'A' && (
+          <section className="screen-lobby" aria-label="Screen A: Choose a table">
+            <header className="lobby-heading">
+              <span className="lobby-badge">FOSS Forge 2.0 • ElevenLabs Track</span>
+              <h2 className="lobby-title">Choose a Roundtable</h2>
+              <p className="lobby-desc">
+                Three autonomous perspectives. One live room. Listen to continuous voice debate,
+                and pull your chair into the light whenever you wish to interrupt.
+              </p>
+            </header>
+
+            <div className="lobby-tables-row">
+              {TOPICS.map((topic) => (
+                <TableCard
+                  key={topic.topic_id}
+                  topic={topic}
+                  isSelected={selectedTopicId === topic.topic_id}
+                  onSelect={() => setSelectedTopicId(topic.topic_id)}
+                />
+              ))}
+            </div>
+
+            {/* Selected Topic Brief & Opening Inscription */}
+            <div className="table-inscription-panel paper-surface">
+              <div className="inscription-meta">
+                <span className="inscription-tag">Selected Roundtable</span>
+                <h3 className="inscription-title">{selectedTopic.title}</h3>
+                <p className="inscription-background">{selectedTopic.background}</p>
+
+                <div className="opening-quote-box">
+                  <span className="quote-label">Opening prompt:</span>
+                  <blockquote className="quote-text">
+                    "{selectedTopic.opening_prompt}"
+                  </blockquote>
+                </div>
+
+                <div className="disclosure-slip paper-slip">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <circle cx="12" cy="12" r="10" />
+                    <line x1="12" y1="16" x2="12" y2="12" />
+                    <line x1="12" y1="8" x2="12.01" y2="8" />
+                  </svg>
+                  <span>
+                    Live speech synthesized via <strong>ElevenLabs WebSocket</strong>. Microphone echo-cancellation and client VAD active.
+                  </span>
+                </div>
+              </div>
+
+              <div className="inscription-cta-col">
+                <button
+                  id="btn-join-roundtable"
+                  type="button"
+                  className="join-roundtable-btn"
+                  onClick={handleStartSession}
+                >
+                  Join this Roundtable
+                </button>
+                <span className="cta-note">Opens WebSocket session on topic</span>
+              </div>
+            </div>
+          </section>
         )}
 
-        <main className="table-room-main">
-          {/* ============================================================ */}
-          {/* SCREEN A: LOBBY — CHOOSE A TABLE                             */}
-          {/* ============================================================ */}
-          {currentScreen === 'A' && (
-            <section className="screen-lobby container" aria-label="Screen A: Choose a table">
-              <header className="lobby-heading">
-                <span className="lobby-badge">FOSS Forge 2.0 • ElevenLabs Track</span>
-                <h2 className="lobby-title">Choose a Roundtable</h2>
-                <p className="lobby-desc">
-                  Three autonomous perspectives. One live room. Listen to continuous voice debate,
-                  and pull your chair into the light whenever you wish to interrupt.
-                </p>
-              </header>
+        {/* ============================================================ */}
+        {/* SCREEN B: ACTIVE WIDESCREEN SESSION (100% Full Width)        */}
+        {/* ============================================================ */}
+        {currentScreen === 'B' && (
+          <section className="screen-table-stage" aria-label="Screen B: Live Roundtable Table">
+            {/* The Cinematic Voice-Focused Round Table covering full width and height */}
+            <CinematicTable
+              topic={selectedTopic}
+              activeSpeakerId={activeSpeakerId}
+              addressedAgentId={addressedAgentId}
+              activeThread={activeThread}
+              speechSlip={speechSlip}
+              isUserListening={sessionState === 'user_speaking'}
+              isUserProcessing={sessionState === 'processing_user'}
+              micOn={micState === 'on'}
+              speakerAudioLevel={speakerAudioLevel}
+              micAudioLevel={micAudioLevel}
+              onAddressAgent={addressAgent}
+              onMicToggle={toggleMic}
+              onBargeIn={handleBargeIn}
+            />
 
-              <div className="lobby-tables-row">
-                {TOPICS.map((topic) => (
-                  <TableCard
-                    key={topic.topic_id}
-                    topic={topic}
-                    isSelected={selectedTopicId === topic.topic_id}
-                    onSelect={() => setSelectedTopicId(topic.topic_id)}
-                  />
-                ))}
-              </div>
+            {/* Slide-Over Meeting Minutes Drawer */}
+            <MinutesDrawer
+              transcripts={transcripts}
+              claims={claims}
+              traces={traces}
+              metrics={metrics}
+              isOpen={isMinutesOpen}
+              onToggle={() => setIsMinutesOpen(!isMinutesOpen)}
+            />
 
-              {/* Selected Topic Brief & Opening Inscription */}
-              <div className="table-inscription-panel paper-surface">
-                <div className="inscription-meta">
-                  <span className="inscription-tag">Selected Roundtable:</span>
-                  <h3 className="inscription-title">{selectedTopic.title}</h3>
-                  <p className="inscription-background">{selectedTopic.background}</p>
-
-                  <div className="opening-quote-box">
-                    <span className="quote-label">Opening prompt (verbatim from doc 05):</span>
-                    <blockquote className="quote-text">
-                      "{selectedTopic.opening_prompt}"
-                    </blockquote>
+            {/* Floating Collapsible Dev Controls */}
+            {isDevOpen && (
+              <aside className="dev-floating-drawer" aria-label="Dev Gateway Triggers">
+                <div className="dev-drawer-header">
+                  <div className="dev-header-left">
+                    <span className="dev-beacon" />
+                    <span className="dev-drawer-title">⚡ PROTOCOL & GATEWAY DEV LAB</span>
                   </div>
-
-                  <div className="disclosure-slip paper-slip">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <circle cx="12" cy="12" r="10" />
-                      <line x1="12" y1="16" x2="12" y2="12" />
-                      <line x1="12" y1="8" x2="12.01" y2="8" />
-                    </svg>
-                    <span>
-                      Live speech synthesized via <strong>ElevenLabs WebSocket</strong>. Microphone echo-cancellation and client VAD active.
-                    </span>
-                  </div>
-                </div>
-
-                <div className="inscription-cta-col">
                   <button
-                    id="btn-join-roundtable"
                     type="button"
-                    className="join-roundtable-btn"
-                    onClick={handleStartSession}
+                    className="dev-close-btn"
+                    onClick={() => setIsDevOpen(false)}
+                    aria-label="Close Dev Controls"
                   >
-                    Join this Roundtable
+                    ✕
                   </button>
-                  <span className="cta-note">Opens WebSocket session on topic</span>
                 </div>
-              </div>
-            </section>
-          )}
-
-          {/* ============================================================ */}
-          {/* SCREEN B: ACTIVE DESKTOP SESSION — "THE TABLE" (1440x900)   */}
-          {/* ============================================================ */}
-          {currentScreen === 'B' && (
-            <section className="screen-table-desktop" aria-label="Screen B: Live Roundtable Table">
-              <div className="table-stage-area">
-                {/* Dev Mock Trigger Controls */}
-                <aside className="dev-gateway-controls" aria-label="Dev Gateway Triggers">
-                  <span className="dev-tag">VOICE FOCUS DEV TRIGGERS:</span>
+                <div className="dev-buttons-row">
                   <button
                     id="btn-speak-alex"
                     type="button"
@@ -260,591 +296,428 @@ export const App: React.FC = () => {
                   >
                     Disconnect
                   </button>
-                </aside>
+                </div>
+              </aside>
+            )}
+          </section>
+        )}
 
-                {/* The Cinematic Voice-Focused Round Table */}
-                <CinematicTable
-                  topic={selectedTopic}
-                  activeSpeakerId={activeSpeakerId}
-                  addressedAgentId={addressedAgentId}
-                  activeThread={activeThread}
-                  speechSlip={speechSlip}
-                  isUserListening={sessionState === 'user_speaking'}
-                  isUserProcessing={sessionState === 'processing_user'}
-                  micOn={micState === 'on'}
-                  speakerAudioLevel={speakerAudioLevel}
-                  micAudioLevel={micAudioLevel}
-                  onAddressAgent={addressAgent}
-                  onMicToggle={toggleMic}
-                  onBargeIn={handleBargeIn}
-                />
-              </div>
+        {/* ============================================================ */}
+        {/* SCREEN F: CONCLUDED SESSION                                  */}
+        {/* ============================================================ */}
+        {currentScreen === 'F' && (
+          <section className="screen-ended-state" aria-label="Screen F: Session Concluded">
+            <div className="ended-panel paper-surface">
+              <span className="ended-badge">DEBATE ADJOURNED</span>
+              <h2 className="ended-title">Roundtable Adjourned</h2>
+              <p className="ended-desc">
+                The autonomous participants have signed off on the discussion records.
+                The full transcript, claims ledger, and timing telemetry are preserved below.
+              </p>
 
-              {/* The Minutes Drawer */}
+              <button
+                type="button"
+                className="start-new-btn"
+                onClick={() => setCurrentScreen('A')}
+              >
+                Join Another Roundtable
+              </button>
+            </div>
+
+            <div className="ended-minutes-wrap">
               <MinutesDrawer
                 transcripts={transcripts}
                 claims={claims}
                 traces={traces}
                 metrics={metrics}
-                isOpen={isMinutesOpen}
-                onToggle={() => setIsMinutesOpen(!isMinutesOpen)}
+                isOpen={true}
+                onToggle={() => {}}
               />
-            </section>
-          )}
-
-          {/* ============================================================ */}
-          {/* SCREEN C: MOBILE SESSION (390px Viewport)                   */}
-          {/* ============================================================ */}
-          {currentScreen === 'C' && (
-            <section className="screen-mobile-session" aria-label="Screen C: Mobile View">
-              <div className="mobile-table-header">
-                <span className="mobile-tag">Roundtable Session</span>
-                <h2 className="mobile-title">{selectedTopic.title}</h2>
-              </div>
-
-              {/* Mobile Table Arc Representation */}
-              <div className="mobile-arc-wrap">
-                <RoundTable
-                  topic={selectedTopic}
-                  activeSpeakerId={activeSpeakerId}
-                  addressedAgentId={addressedAgentId}
-                  activeThread={activeThread}
-                  speechSlip={speechSlip}
-                  isUserListening={sessionState === 'user_speaking'}
-                  isUserProcessing={sessionState === 'processing_user'}
-                  micOn={micState === 'on'}
-                  micAudioLevel={micAudioLevel}
-                  onAddressAgent={addressAgent}
-                  onMicToggle={toggleMic}
-                  onBargeIn={handleBargeIn}
-                />
-              </div>
-
-              {/* Mobile Minutes Bottom Sheet */}
-              <div className="mobile-minutes-sheet">
-                <MinutesDrawer
-                  transcripts={transcripts}
-                  claims={claims}
-                  traces={traces}
-                  metrics={metrics}
-                  isOpen={true}
-                  onToggle={() => {}}
-                />
-              </div>
-            </section>
-          )}
-
-          {/* ============================================================ */}
-          {/* SCREEN D: INTERRUPTED / LISTENING STATE                     */}
-          {/* ============================================================ */}
-          {currentScreen === 'D' && (
-            <section className="screen-interrupted-state container" aria-label="Screen D: Interrupted">
-              <div className="interrupted-slip-banner paper-surface">
-                <div className="banner-pin" aria-hidden="true" />
-                <div className="banner-content">
-                  <span className="banner-code">[S4: USER_SPEAKING &rarr; S5: PROCESSING_USER]</span>
-                  <h2 className="banner-title">Mid-Sentence Spoken Interruption Detected</h2>
-                  <p className="banner-desc">
-                    Client VAD captured human speech. Prior agent playback halted in 118 ms; floor transferred to you.
-                  </p>
-                </div>
-              </div>
-
-              <div className="interrupted-table-view">
-                <RoundTable
-                  topic={selectedTopic}
-                  activeSpeakerId={null}
-                  addressedAgentId="oss_maintainer"
-                  activeThread={{
-                    from: 'human',
-                    to: 'oss_maintainer',
-                    summary: 'passing floor to Open-Source Maintainer',
-                    ts: 1700000000000,
-                  }}
-                  speechSlip={{
-                    text: 'Wait, Maya, what specific security vulnerabilities are maintainers seeing from generated PRs?',
-                    final: true,
-                  }}
-                  isUserListening={true}
-                  isUserProcessing={false}
-                  micOn={micState === 'on'}
-                  onAddressAgent={addressAgent}
-                  onMicToggle={toggleMic}
-                  onBargeIn={handleBargeIn}
-                />
-              </div>
-            </section>
-          )}
-
-          {/* ============================================================ */}
-          {/* SCREEN E: ERROR & RECOVERY STATES                           */}
-          {/* ============================================================ */}
-          {currentScreen === 'E' && (
-            <section className="screen-recovery-state container" aria-label="Screen E: Recovery">
-              <header className="recovery-header">
-                <h2 className="recovery-title">Resilience & Failure Recovery</h2>
-                <p className="recovery-desc">
-                  Honest error slips pinned to the table rim. Mocks and failures are transparently stated.
-                </p>
-              </header>
-
-              <div className="slips-container">
-                <Slip
-                  notice={{
-                    code: 'mic_denied',
-                    level: 'error',
-                    text: 'Microphone permission blocked. Enable browser mic access to speak or interrupt.',
-                    recoverable: true,
-                  }}
-                  onRetry={() => alert('Requesting mic permissions…')}
-                />
-                <Slip
-                  notice={{
-                    code: 'disconnected',
-                    level: 'warn',
-                    text: 'Connection to gateway was lost. Attempting automatic reconnection…',
-                    recoverable: true,
-                  }}
-                  onRetry={() => window.location.reload()}
-                />
-                <Slip
-                  notice={{
-                    code: 'agent_timeout',
-                    level: 'warn',
-                    text: 'AI Engineer response timed out (>4 s). Seat is marked Away; floor granted to Software Developer.',
-                    recoverable: false,
-                  }}
-                />
-              </div>
-
-              <div className="recovery-table-preview">
-                <RoundTable
-                  topic={selectedTopic}
-                  activeSpeakerId={null}
-                  addressedAgentId={null}
-                  activeThread={null}
-                  speechSlip={null}
-                  isUserListening={false}
-                  isUserProcessing={false}
-                  micOn={micState === 'on'}
-                  onAddressAgent={addressAgent}
-                  onMicToggle={toggleMic}
-                  onBargeIn={handleBargeIn}
-                />
-              </div>
-            </section>
-          )}
-
-          {/* ============================================================ */}
-          {/* SCREEN F: ROUNDTABLE CONCLUDED                              */}
-          {/* ============================================================ */}
-          {currentScreen === 'F' && (
-            <section className="screen-ended-state container" aria-label="Screen F: Ended">
-              <div className="ended-panel paper-surface">
-                <h2 className="ended-title">Roundtable Ended</h2>
-                <p className="ended-desc">
-                  Session closed (S8). Lights down, chairs pushed back, all audio streams and queues discarded.
-                </p>
-                <button
-                  type="button"
-                  className="start-new-btn"
-                  onClick={() => {
-                    setCurrentScreen('A')
-                  }}
-                >
-                  Join Another Roundtable
-                </button>
-              </div>
-
-              <div className="ended-minutes-wrap">
-                <MinutesDrawer
-                  transcripts={transcripts}
-                  claims={claims}
-                  traces={traces}
-                  metrics={metrics}
-                  isOpen={true}
-                  onToggle={() => {}}
-                />
-              </div>
-            </section>
-          )}
-        </main>
-      </div>
+            </div>
+          </section>
+        )}
+      </main>
 
       <style>{`
         .app-root {
           min-height: 100vh;
+          width: 100vw;
           display: flex;
           flex-direction: column;
-          background: var(--room);
-          background: radial-gradient(circle at 45% 45%, var(--room) 0%, var(--room-edge) 100%);
-          color: var(--text);
+          background: #090611;
+          color: #FDFCFE;
+          overflow-x: hidden;
         }
-        .app-viewport {
-          flex: 1;
-          display: flex;
-          flex-direction: column;
-          width: 100%;
-        }
+
         .table-room-main {
           flex: 1;
           display: flex;
           flex-direction: column;
           position: relative;
-        }
-
-        .container {
-          width: 100%;
-          max-width: 1440px;
-          margin: 0 auto;
-          padding: 0 var(--space-4);
+          height: calc(100vh - 56px);
+          overflow: hidden;
         }
 
         .notices-pinboard {
-          padding-top: var(--space-3);
+          position: absolute;
+          top: 64px;
+          left: 50%;
+          transform: translateX(-50%);
+          z-index: 45;
+          display: flex;
+          flex-direction: column;
+          gap: 6px;
+          max-width: 600px;
+          width: calc(100% - 32px);
         }
 
         /* Screen A: Lobby */
         .screen-lobby {
-          padding: var(--space-8) var(--space-4) var(--space-12);
+          flex: 1;
+          overflow-y: auto;
+          padding: 40px 24px 60px;
+          max-width: 1200px;
+          margin: 0 auto;
+          width: 100%;
         }
+
         .lobby-heading {
           text-align: center;
-          margin-bottom: var(--space-8);
+          margin-bottom: 36px;
         }
+
         .lobby-badge {
           font-family: var(--font-mono);
           font-size: 11px;
-          font-weight: 600;
-          color: var(--inlay-line);
-          text-transform: uppercase;
-          letter-spacing: 0.08em;
-          display: inline-block;
-          margin-bottom: var(--space-2);
-        }
-        .lobby-title {
-          font-family: var(--font-display);
-          font-size: 40px;
           font-weight: 700;
-          color: var(--text);
-          margin-bottom: var(--space-2);
+          color: #C084FC;
+          text-transform: uppercase;
+          letter-spacing: 0.1em;
+          display: inline-block;
+          margin-bottom: 8px;
         }
+
+        .lobby-title {
+          font-family: var(--font-sans);
+          font-size: 38px;
+          font-weight: 800;
+          color: #FDFCFE;
+          letter-spacing: -0.02em;
+          margin-bottom: 8px;
+        }
+
         .lobby-desc {
-          font-family: var(--font-body);
-          font-size: 16px;
-          color: var(--text-muted);
-          max-width: 600px;
+          font-family: var(--font-sans);
+          font-size: 15px;
+          color: #B8B0CC;
+          max-width: 620px;
           margin: 0 auto;
-          line-height: 1.5;
+          line-height: 1.6;
         }
+
         .lobby-tables-row {
           display: grid;
           grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-          gap: var(--space-6);
-          margin-bottom: var(--space-8);
+          gap: 20px;
+          margin-bottom: 32px;
         }
+
         .table-inscription-panel {
-          padding: var(--space-6);
+          padding: 24px;
           display: flex;
           justify-content: space-between;
-          gap: var(--space-6);
+          gap: 24px;
           flex-wrap: wrap;
           align-items: center;
+          background: rgba(20, 13, 34, 0.85);
+          border: 1px solid rgba(168, 85, 247, 0.25);
+          border-radius: 16px;
         }
+
         .inscription-meta {
           flex: 1;
           min-width: 300px;
         }
+
         .inscription-tag {
           font-family: var(--font-mono);
           font-size: 11px;
           font-weight: 700;
-          color: #7D6D5F;
+          color: #C084FC;
           text-transform: uppercase;
+          letter-spacing: 0.06em;
         }
+
         .inscription-title {
-          font-family: var(--font-display);
-          font-size: 20px;
-          font-weight: 700;
-          color: var(--ink);
-          margin: 2px 0 var(--space-2);
+          font-family: var(--font-sans);
+          font-size: 22px;
+          font-weight: 800;
+          color: #FDFCFE;
+          margin: 4px 0 10px;
         }
+
         .inscription-background {
-          font-family: var(--font-body);
+          font-family: var(--font-sans);
           font-size: 14px;
-          color: #4A3E36;
-          margin-bottom: var(--space-3);
-          line-height: 1.45;
+          color: #B8B0CC;
+          margin-bottom: 14px;
+          line-height: 1.5;
         }
+
         .opening-quote-box {
-          background: rgba(0, 0, 0, 0.04);
-          border-left: 3px solid var(--inlay-line);
-          padding: 8px 12px;
-          margin-bottom: var(--space-3);
+          background: rgba(168, 85, 247, 0.1);
+          border-left: 3px solid #F43F5E;
+          padding: 10px 14px;
+          margin-bottom: 14px;
+          border-radius: 0 8px 8px 0;
         }
+
         .quote-label {
           display: block;
           font-family: var(--font-mono);
           font-size: 10px;
           font-weight: 700;
-          color: #6C5B4E;
+          color: #C084FC;
           text-transform: uppercase;
-          margin-bottom: 2px;
+          margin-bottom: 4px;
         }
+
         .quote-text {
-          font-family: var(--font-body);
-          font-size: 13px;
-          color: var(--ink);
+          font-family: var(--font-sans);
+          font-size: 13.5px;
+          color: #FDFCFE;
           font-style: italic;
           margin: 0;
-          line-height: 1.4;
+          line-height: 1.45;
         }
+
         .disclosure-slip {
           font-size: 12px;
-          color: #4A3E36;
+          color: #C8BEDE;
+          background: rgba(255, 255, 255, 0.05);
+          border: 1px solid rgba(168, 85, 247, 0.2);
+          border-radius: 6px;
+          padding: 6px 12px;
+          display: inline-flex;
+          align-items: center;
+          gap: 8px;
         }
+
         .inscription-cta-col {
           display: flex;
           flex-direction: column;
           align-items: center;
-          gap: 6px;
+          gap: 8px;
         }
+
         .join-roundtable-btn {
           font-family: var(--font-sans);
           font-size: 15px;
           font-weight: 700;
-          background: var(--ink);
-          color: var(--paper);
-          padding: 12px 28px;
-          border-radius: var(--radius-slip);
-          transition: background var(--transition-fast), transform var(--transition-fast);
+          background: #E11D48;
+          color: #FFFFFF;
+          padding: 14px 32px;
+          border-radius: 9999px;
+          border: 1px solid #F43F5E;
+          box-shadow: 0 4px 20px rgba(225, 29, 72, 0.45);
+          transition: all 160ms ease;
         }
+
         .join-roundtable-btn:hover {
-          background: #362B24;
+          background: #F43F5E;
           transform: translateY(-2px);
+          box-shadow: 0 6px 24px rgba(244, 63, 94, 0.55);
         }
+
         .cta-note {
           font-family: var(--font-mono);
           font-size: 10px;
-          color: #7D6D5F;
+          color: #7E7497;
         }
 
-        /* Screen B: Desktop Session */
-        .screen-table-desktop {
-          flex: 1;
-          display: flex;
-          height: calc(100vh - 80px);
+        /* Screen B: Full Widescreen Stage */
+        .screen-table-stage {
+          position: absolute;
+          inset: 0;
+          width: 100vw;
+          height: 100%;
           overflow: hidden;
         }
-        .table-stage-area {
-          flex: 1;
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          justify-content: center;
-          position: relative;
-          overflow: auto;
-          padding: var(--space-4);
+
+        /* Floating Dev Controls Drawer */
+        .dev-floating-drawer {
+          position: absolute;
+          bottom: 16px;
+          left: 50%;
+          transform: translateX(-50%);
+          width: min(960px, calc(100% - 32px));
+          background: rgba(18, 11, 32, 0.94);
+          border: 1px solid rgba(168, 85, 247, 0.35);
+          border-radius: 14px;
+          box-shadow: 0 16px 48px rgba(0, 0, 0, 0.9);
+          backdrop-filter: blur(24px);
+          padding: 12px 18px;
+          z-index: 45;
+          animation: slideUp 200ms ease-out;
         }
-        .dev-gateway-controls {
+
+        @keyframes slideUp {
+          from { opacity: 0; transform: translate(-50%, 20px); }
+          to { opacity: 1; transform: translate(-50%, 0); }
+        }
+
+        .dev-drawer-header {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          margin-bottom: 10px;
+          padding-bottom: 6px;
+          border-bottom: 1px solid rgba(168, 85, 247, 0.2);
+        }
+
+        .dev-header-left {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+        }
+
+        .dev-beacon {
+          width: 6px;
+          height: 6px;
+          border-radius: 50%;
+          background: #F43F5E;
+          box-shadow: 0 0 8px rgba(244, 63, 94, 0.9);
+        }
+
+        .dev-drawer-title {
+          font-family: var(--font-mono);
+          font-size: 10px;
+          font-weight: 700;
+          letter-spacing: 0.08em;
+          color: #C084FC;
+        }
+
+        .dev-close-btn {
+          color: #7E7497;
+          font-size: 14px;
+          padding: 2px 6px;
+          border-radius: 4px;
+          transition: all 140ms ease;
+        }
+
+        .dev-close-btn:hover {
+          color: #FDFCFE;
+          background: rgba(255, 255, 255, 0.1);
+        }
+
+        .dev-buttons-row {
           display: flex;
           align-items: center;
           gap: 6px;
           flex-wrap: wrap;
-          background: rgba(20, 15, 12, 0.9);
-          border: 1px solid rgba(138, 106, 75, 0.25);
-          padding: 5px 12px;
-          border-radius: 6px;
-          margin-bottom: 10px;
-          width: 100%;
-          max-width: 1100px;
-          z-index: 10;
         }
-        .dev-tag {
-          font-family: var(--font-mono);
-          font-size: 10px;
-          font-weight: 700;
-          color: var(--inlay-line);
-        }
+
         .dev-btn {
           font-family: var(--font-sans);
           font-size: 11px;
           font-weight: 600;
-          background: #2A1F18;
-          color: var(--text-muted);
-          border: 1px solid var(--wood-edge);
-          padding: 3px 8px;
-          border-radius: var(--radius-slip);
+          background: rgba(28, 18, 48, 0.85);
+          color: #C8BEDE;
+          border: 1px solid rgba(168, 85, 247, 0.28);
+          padding: 5px 10px;
+          border-radius: 6px;
+          transition: all 140ms ease;
         }
+
         .dev-btn:hover {
-          color: var(--paper);
-          border-color: var(--inlay-line);
+          color: #FFFFFF;
+          border-color: #C084FC;
+          background: rgba(168, 85, 247, 0.25);
         }
 
-        /* Screen C: Mobile View */
-        .simulated-mobile-wrap {
-          background: #080605;
-          align-items: center;
-        }
-        .mobile-frame {
-          max-width: 390px !important;
-          min-height: 844px;
-          border: 4px solid var(--wood-edge);
-          border-radius: 36px;
-          margin: var(--space-4) auto;
-          overflow: hidden;
-          background: var(--room);
-          box-shadow: 0 20px 60px rgba(0, 0, 0, 0.9);
-        }
-        .screen-mobile-session {
-          padding: var(--space-3);
-          display: flex;
-          flex-direction: column;
-          gap: var(--space-3);
-        }
-        .mobile-table-header {
-          text-align: center;
-        }
-        .mobile-tag {
-          font-family: var(--font-mono);
-          font-size: 10px;
-          color: var(--inlay-line);
-          text-transform: uppercase;
-        }
-        .mobile-title {
-          font-family: var(--font-display);
-          font-size: 16px;
-          font-weight: 700;
-          margin: 0;
-        }
-        .mobile-arc-wrap {
-          transform: scale(0.5);
-          transform-origin: top center;
-          height: 380px;
-          margin-bottom: -160px;
-        }
-        .mobile-minutes-sheet {
-          flex: 1;
-        }
-
-        /* Screen D: Interrupted */
-        .screen-interrupted-state {
-          padding: var(--space-6) var(--space-4);
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          gap: var(--space-6);
-        }
-        .interrupted-slip-banner {
-          max-width: 600px;
-          padding: var(--space-4);
-          border-left: 4px solid var(--seat-1);
-          display: flex;
-          gap: 12px;
-        }
-        .banner-pin {
-          width: 8px;
-          height: 8px;
-          border-radius: 50%;
-          background: var(--seat-1);
-          margin-top: 4px;
-        }
-        .banner-content {
-          display: flex;
-          flex-direction: column;
-          gap: 2px;
-        }
-        .banner-code {
-          font-family: var(--font-mono);
-          font-size: 10px;
-          font-weight: 700;
-          color: #7D6D5F;
-        }
-        .banner-title {
-          font-family: var(--font-display);
-          font-size: 18px;
-          font-weight: 700;
-          color: var(--ink);
-          margin: 0;
-        }
-        .banner-desc {
-          font-family: var(--font-body);
-          font-size: 13px;
-          color: #4A3E36;
-          margin: 0;
-        }
-
-        /* Screen E: Recovery */
-        .screen-recovery-state {
-          padding: var(--space-6) var(--space-4);
-        }
-        .recovery-header {
-          text-align: center;
-          margin-bottom: var(--space-4);
-        }
-        .recovery-title {
-          font-family: var(--font-display);
-          font-size: 28px;
-          color: var(--text);
-          margin-bottom: 4px;
-        }
-        .recovery-desc {
-          font-family: var(--font-body);
-          color: var(--text-muted);
-          font-size: 14px;
-        }
-        .slips-container {
-          max-width: 680px;
-          margin: 0 auto var(--space-6);
-          display: flex;
-          flex-direction: column;
-          gap: 6px;
-        }
-
-        /* Screen F: Ended */
+        /* Screen F: Ended State */
         .screen-ended-state {
-          padding: var(--space-8) var(--space-4);
+          flex: 1;
+          overflow-y: auto;
+          padding: 40px 20px;
           display: flex;
           flex-direction: column;
           align-items: center;
-          gap: var(--space-6);
+          gap: 24px;
         }
+
         .ended-panel {
-          padding: var(--space-8);
-          max-width: 500px;
+          padding: 32px;
+          max-width: 540px;
           text-align: center;
           display: flex;
           flex-direction: column;
           align-items: center;
-          gap: var(--space-3);
+          gap: 12px;
+          background: rgba(20, 13, 34, 0.9);
+          border: 1px solid rgba(168, 85, 247, 0.3);
+          border-radius: 16px;
         }
-        .ended-title {
-          font-family: var(--font-display);
-          font-size: 26px;
+
+        .ended-badge {
+          font-family: var(--font-mono);
+          font-size: 10px;
           font-weight: 700;
-          color: var(--ink);
+          letter-spacing: 0.1em;
+          color: #F43F5E;
+          background: rgba(244, 63, 94, 0.15);
+          padding: 2px 8px;
+          border-radius: 9999px;
+        }
+
+        .ended-title {
+          font-family: var(--font-sans);
+          font-size: 26px;
+          font-weight: 800;
+          color: #FDFCFE;
           margin: 0;
         }
+
         .ended-desc {
-          font-family: var(--font-body);
+          font-family: var(--font-sans);
           font-size: 14px;
-          color: #4A3E36;
+          color: #B8B0CC;
           margin: 0;
+          line-height: 1.5;
         }
+
         .start-new-btn {
           font-family: var(--font-sans);
           font-size: 14px;
           font-weight: 700;
-          background: var(--ink);
-          color: var(--paper);
-          padding: 10px 22px;
-          border-radius: var(--radius-slip);
-          margin-top: var(--space-2);
+          background: #E11D48;
+          color: #FFFFFF;
+          padding: 10px 24px;
+          border-radius: 9999px;
+          border: 1px solid #F43F5E;
+          margin-top: 8px;
+          transition: all 160ms ease;
         }
+
+        .start-new-btn:hover {
+          background: #F43F5E;
+          transform: translateY(-1px);
+        }
+
         .ended-minutes-wrap {
           width: 100%;
-          max-width: 700px;
-          height: 400px;
+          max-width: 800px;
+          height: 480px;
+          position: relative;
+        }
+
+        .ended-minutes-wrap .minutes-drawer {
+          position: static;
+          width: 100%;
+          height: 100%;
+          transform: none;
+          border-radius: 16px;
+          border: 1px solid rgba(168, 85, 247, 0.25);
         }
       `}</style>
     </div>

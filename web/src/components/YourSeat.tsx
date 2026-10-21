@@ -145,7 +145,7 @@ export const YourSeat: React.FC<YourSeatProps> = ({
         }
         .wave-bar {
           width: 2.5px;
-          background: #55DD88;
+          background: #F43F5E;
           border-radius: 1px;
           transition: height 0.08s ease;
         }
@@ -154,14 +154,14 @@ export const YourSeat: React.FC<YourSeatProps> = ({
           font-size: 9px;
           font-weight: 700;
           text-transform: uppercase;
-          background: rgba(0, 0, 0, 0.08);
+          background: rgba(168, 85, 247, 0.18);
           padding: 1px 5px;
           border-radius: var(--radius-slip);
-          color: #4A3E36;
+          color: #C8BEDE;
         }
         .tag-listening {
-          background: var(--inlay-line);
-          color: var(--paper);
+          background: #F43F5E;
+          color: #FFFFFF;
         }
         .your-actions {
           display: flex;
@@ -173,14 +173,15 @@ export const YourSeat: React.FC<YourSeatProps> = ({
           font-family: var(--font-sans);
           font-size: 11px;
           font-weight: 600;
-          background: var(--paper-shade);
-          color: var(--ink);
-          border: 1px solid #B0A284;
+          background: rgba(168, 85, 247, 0.2);
+          color: #FDFCFE;
+          border: 1px solid rgba(168, 85, 247, 0.35);
           border-radius: var(--radius-slip);
         }
         .mic-toggle-btn.btn-on {
-          background: var(--inlay-line);
-          color: var(--paper);
+          background: #A855F7;
+          color: #FFFFFF;
+          border-color: #C084FC;
         }
         .interrupt-btn {
           flex: 1.2;
@@ -188,13 +189,14 @@ export const YourSeat: React.FC<YourSeatProps> = ({
           font-family: var(--font-sans);
           font-size: 11px;
           font-weight: 700;
-          background: var(--ink);
-          color: var(--paper);
+          background: #E11D48;
+          color: #FFFFFF;
+          border: 1px solid #F43F5E;
           border-radius: var(--radius-slip);
           transition: background var(--transition-fast);
         }
         .interrupt-btn:hover {
-          background: #362B24;
+          background: #F43F5E;
         }
       `}</style>
     </div>
