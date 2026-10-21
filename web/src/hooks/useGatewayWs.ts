@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { CLIENT_CONFIG } from '../config/clientConfig'
+import { AudioPlayer } from '../audio/AudioPlayer'
 import type {
   SessionStateName,
   SessionMode,
@@ -47,6 +48,7 @@ export function useGatewayWs() {
   const threadTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const epochRef = useRef<number>(1)
   const mediaStreamRef = useRef<MediaStream | null>(null)
+  const audioPlayerRef = useRef<AudioPlayer | null>(null)
 
   // Client-clock metric timestamps
   const tVadStartRef = useRef<number | null>(null)
@@ -61,6 +63,44 @@ export function useGatewayWs() {
       console.warn('[useGatewayWs] Socket not open, failed to send:', payload)
     }
   }, [])
+
+  // Initialize AudioPlayer with callback events adhering to contracts/ws_events.md
+  useEffect(() => {
+    const player = new AudioPlayer({
+      onPlaybackStarted: (turnId, epoch, sentenceIdx, tClientMs) => {
+        send({
+          type: 'playback_started',
+          turn_id: turnId,
+          epoch,
+          sentence_idx: sentenceIdx,
+          t_client_ms: tClientMs,
+        })
+      },
+      onPlaybackProgress: (turnId, epoch, sentenceIdx, playedMs) => {
+        send({
+          type: 'playback_progress',
+          turn_id: turnId,
+          epoch,
+          sentence_idx: sentenceIdx,
+          played_ms: playedMs,
+        })
+      },
+      onPlaybackStopped: (turnId, epoch, reason, tClientMs) => {
+        send({
+          type: 'playback_stopped',
+          turn_id: turnId,
+          epoch,
+          reason,
+          t_client_ms: tClientMs,
+        })
+      },
+    })
+    audioPlayerRef.current = player
+
+    return () => {
+      player.close()
+    }
+  }, [send])
 
   // Connect to WebSocket
   const connect = useCallback(() => {
@@ -88,6 +128,7 @@ export function useGatewayWs() {
             if (data.epoch > epochRef.current) {
               epochRef.current = data.epoch
               setCurrentEpoch(data.epoch)
+              audioPlayerRef.current?.setEpoch(data.epoch)
               setActiveSpeakerId(null)
             }
           }
@@ -100,9 +141,11 @@ export function useGatewayWs() {
               if (data.epoch !== undefined) {
                 epochRef.current = data.epoch
                 setCurrentEpoch(data.epoch)
+                audioPlayerRef.current?.setEpoch(data.epoch)
               }
 
               if (data.state === 'ended') {
+                audioPlayerRef.current?.stop('end')
                 setActiveSpeakerId(null)
                 setSpeechSlip(null)
               }
@@ -144,15 +187,34 @@ export function useGatewayWs() {
               break
             }
 
+            case 'audio_chunk': {
+              // Play incoming MP3/WAV chunks in sentence order
+              if (data.data_b64) {
+                audioPlayerRef.current?.enqueueChunk({
+                  turnId: data.turn_id,
+                  epoch: data.epoch,
+                  sentenceIdx: data.sentence_idx ?? 0,
+                  seq: data.seq ?? 0,
+                  mime: data.mime || 'audio/mpeg',
+                  dataB64: data.data_b64,
+                })
+              }
+              break
+            }
+
             case 'transcript': {
               setSpeechSlip({ text: data.text, final: data.final })
 
               setTranscripts((prev) => {
+                // Key by turn_id, speaker, and sentence_idx to preserve each sentence in order
                 const existingIdx = prev.findIndex(
-                  (t) => t.turn_id === data.turn_id && t.speaker === data.speaker
+                  (t) =>
+                    t.turn_id === data.turn_id &&
+                    t.speaker === data.speaker &&
+                    (data.sentence_idx === undefined || t.sentence_idx === data.sentence_idx)
                 )
                 const newItem: TranscriptItem = {
-                  id: `t_${data.turn_id}_${data.epoch}_${data.speaker}`,
+                  id: `t_${data.turn_id}_${data.epoch}_${data.speaker}_${data.sentence_idx ?? 0}`,
                   turn_id: data.turn_id,
                   epoch: data.epoch,
                   speaker: data.speaker,
@@ -245,8 +307,8 @@ export function useGatewayWs() {
               break
             }
 
-            case 'audio_chunk': {
-              // Acknowledge received audio chunk; binary playback is handled in B4
+            case 'topic_config': {
+              console.log('[useGatewayWs] Topic configuration updated:', data.topic_id)
               break
             }
 
@@ -262,6 +324,7 @@ export function useGatewayWs() {
       ws.onclose = () => {
         console.log('[useGatewayWs] Disconnected')
         setConnected(false)
+        audioPlayerRef.current?.stop('error')
         // Local-only state S7 on socket closed (reconciliation R3)
         setSessionState('recovery')
         setNotices((prev) => [
@@ -295,6 +358,9 @@ export function useGatewayWs() {
       if (mediaStreamRef.current) {
         mediaStreamRef.current.getTracks().forEach((track) => track.stop())
       }
+      if (audioPlayerRef.current) {
+        audioPlayerRef.current.close()
+      }
     }
   }, [connect])
 
@@ -303,6 +369,7 @@ export function useGatewayWs() {
     (topicId: string) => {
       epochRef.current = 1
       setCurrentEpoch(1)
+      audioPlayerRef.current?.setEpoch(1)
       setSessionState('connecting')
       setTranscripts([])
       setClaims([])
@@ -319,13 +386,16 @@ export function useGatewayWs() {
     [send]
   )
 
-  // Barge-In (Local S4 User Speaking per R3, and client-clock metric calculation)
+  // Barge-In (Local S4 User Speaking per R3, audio player stop, and metrics)
   const bargeIn = useCallback(() => {
     const tStart = performance.now()
     tVadStartRef.current = tStart
     setSessionState('user_speaking')
     setActiveSpeakerId(null)
     setSpeechSlip({ text: 'Listening to you…', final: false })
+
+    // Immediately stop in-flight audio playback
+    audioPlayerRef.current?.stop('barge_in')
 
     // Send VAD start notification
     send({
@@ -391,6 +461,7 @@ export function useGatewayWs() {
   const endSession = useCallback(() => {
     epochRef.current += 1
     setCurrentEpoch(epochRef.current)
+    audioPlayerRef.current?.stop('end')
     setSessionState('ended')
     setActiveSpeakerId(null)
     setSpeechSlip(null)
