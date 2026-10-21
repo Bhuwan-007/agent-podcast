@@ -18,82 +18,77 @@ export const Header: React.FC<HeaderProps> = ({
   onEndSession,
   showEndButton = false,
 }) => {
-  const getStateLabel = () => {
+  const getStateInfo = () => {
     switch (state) {
       case 'ready':
-        return { code: 'S0', label: 'Ready', class: 'badge-neutral' }
+        return { code: 'S0', label: 'Table Ready', glyph: '○' }
       case 'connecting':
-        return { code: 'S1', label: 'Connecting…', class: 'badge-neutral' }
+        return { code: 'S1', label: 'Joining roundtable…', glyph: '◌' }
       case 'waiting_first_speaker':
-        return { code: 'S2', label: 'Preparing first speaker', class: 'badge-neutral' }
+        return { code: 'S2', label: 'Preparing first perspective', glyph: '⋯' }
       case 'agent_speaking':
         return {
           code: 'S3',
-          label: activeSpeakerName ? `${activeSpeakerName} speaking` : 'Agent speaking',
-          class: 'badge-live',
+          label: activeSpeakerName ? `${activeSpeakerName} is speaking` : 'Speaker active',
+          glyph: '●',
         }
       case 'user_speaking':
-        return { code: 'S4', label: 'Listening to you', class: 'badge-live' }
+        return { code: 'S4', label: 'Listening to you', glyph: '▲' }
       case 'processing_user':
-        return { code: 'S5', label: 'Routing your input…', class: 'badge-neutral' }
+        return { code: 'S5', label: 'Routing your inquiry…', glyph: '⟳' }
       case 'agent_generating':
-        return { code: 'S6', label: 'Synthesizing response…', class: 'badge-neutral' }
+        return { code: 'S6', label: 'Preparing response…', glyph: '⋯' }
       case 'recovery':
-        return { code: 'S7', label: 'Recovery / Degraded', class: 'badge-error' }
+        return { code: 'S7', label: 'Recovery / Degraded', glyph: '!' }
       case 'ended':
-        return { code: 'S8', label: 'Session ended', class: 'badge-neutral' }
+        return { code: 'S8', label: 'Roundtable ended', glyph: '■' }
       default:
-        return { code: '', label: state, class: 'badge-neutral' }
+        return { code: '', label: state, glyph: '·' }
     }
   }
 
-  const stateInfo = getStateLabel()
+  const stateInfo = getStateInfo()
 
   return (
-    <header className="header-root">
+    <header className="room-header">
+      {/* Persistent ink on brass Mock data banner per doc 04 section 8 */}
       {mode === 'mock' && (
-        <aside className="mock-banner" role="status" aria-label="Mock mode warning">
-          <span className="mock-pulse" />
-          <strong>MOCK-DEV:</strong> Playing simulated gateway event fixtures.
-        </aside>
+        <div className="mock-brass-strip" role="status" aria-label="Mock mode warning">
+          <span className="brass-pin" aria-hidden="true">◆</span>
+          <span><strong>MOCK DATA</strong> — Replaying golden gateway fixtures (contracts/ws_events.md)</span>
+        </div>
       )}
 
-      <div className="header-inner container">
+      <div className="header-bar container">
         <div className="brand-group">
-          <div className="brand-logo" aria-hidden="true">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <circle cx="12" cy="12" r="10" />
-              <path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20" />
-              <path d="M2 12h20" />
-            </svg>
-          </div>
-          <div>
-            <h1 className="brand-title">ROUNDTABLE AI</h1>
-            <span className="brand-subtitle">Real-Time Multi-Agent Voice Podcast</span>
-          </div>
+          <h1 className="brand-title">Roundtable AI</h1>
+          <span className="brand-pipe">|</span>
+          <span className="brand-tagline">Real-Time Multi-Agent Voice Podcast</span>
         </div>
 
-        <div className="status-group">
-          <div className="connection-indicator" title={connected ? 'Connected to gateway' : 'Offline'}>
-            <span className={`status-dot ${connected ? 'dot-connected' : 'dot-disconnected'}`} />
-            <span className="connection-text">{connected ? 'Gateway connected' : 'Disconnected'}</span>
+        <div className="header-status-group">
+          {/* Connection status */}
+          <div className="connection-glyph-wrap" title={connected ? 'Connected to gateway' : 'Disconnected'}>
+            <span className={`conn-glyph ${connected ? 'conn-ok' : 'conn-down'}`} />
+            <span className="conn-label">{connected ? 'Connected' : 'Offline'}</span>
           </div>
 
-          <div className={`badge ${stateInfo.class}`} title={`Protocol State: ${stateInfo.code} (${state})`}>
-            <span className="state-code">{stateInfo.code}</span>
-            <span>{stateInfo.label}</span>
+          {/* Session state paper plate */}
+          <div className="state-plate paper-surface" title={`Protocol State: ${stateInfo.code} (${state})`}>
+            <span className="state-code-glyph">{stateInfo.glyph}</span>
+            <span className="state-code-num">{stateInfo.code}</span>
+            <span className="state-label">{stateInfo.label}</span>
           </div>
 
+          {/* End session button */}
           {showEndButton && state !== 'ended' && (
             <button
+              type="button"
               onClick={onEndSession}
-              className="end-session-btn"
-              title="End roundtable session"
-              aria-label="End session"
+              className="end-table-btn"
+              title="Leave roundtable and stop audio"
+              aria-label="End roundtable session"
             >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
-              </svg>
               End Session
             </button>
           )}
@@ -101,122 +96,129 @@ export const Header: React.FC<HeaderProps> = ({
       </div>
 
       <style>{`
-        .header-root {
-          background: var(--color-surface);
-          border-bottom: 1px solid var(--color-border);
+        .room-header {
+          background: #140F0D;
+          border-bottom: 1px solid var(--wood-edge);
           position: sticky;
           top: 0;
           z-index: 50;
         }
-        .mock-banner {
-          background: #3B2A15;
-          color: var(--color-warning);
-          border-bottom: 1px solid var(--color-warning);
-          padding: 6px var(--space-4);
-          font-size: 13px;
+        .mock-brass-strip {
+          background: #B8975A;
+          color: #1C1612;
+          font-family: var(--font-sans);
+          font-size: 12px;
+          font-weight: 600;
+          padding: 4px var(--space-4);
           text-align: center;
           display: flex;
           align-items: center;
           justify-content: center;
-          gap: var(--space-2);
+          gap: 6px;
+          border-bottom: 1px solid #8A6A4B;
         }
-        .mock-pulse {
-          width: 8px;
-          height: 8px;
-          border-radius: 50%;
-          background: var(--color-warning);
-          display: inline-block;
+        .brass-pin {
+          font-size: 9px;
         }
-        .header-inner {
+        .header-bar {
           display: flex;
           align-items: center;
           justify-content: space-between;
-          padding-top: var(--space-3);
-          padding-bottom: var(--space-3);
+          padding: 10px var(--space-4);
           gap: var(--space-4);
         }
         .brand-group {
           display: flex;
-          align-items: center;
-          gap: var(--space-3);
-        }
-        .brand-logo {
-          color: var(--color-accent);
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          background: var(--color-surface-elevated);
-          padding: var(--space-2);
-          border-radius: var(--radius-sm);
-          border: 1px solid var(--color-border);
+          align-items: baseline;
+          gap: var(--space-2);
         }
         .brand-title {
-          font-size: 18px;
+          font-family: var(--font-display);
+          font-size: 21px;
           font-weight: 700;
-          letter-spacing: 0.05em;
-          color: var(--color-text);
+          color: var(--text);
+          letter-spacing: 0.02em;
           margin: 0;
-          line-height: 1.2;
+          line-height: 1;
         }
-        .brand-subtitle {
-          font-size: 11px;
-          color: var(--color-text-dim);
-          display: block;
+        .brand-pipe {
+          color: var(--wood-edge);
+          font-size: 14px;
         }
-        .status-group {
+        .brand-tagline {
+          font-family: var(--font-body);
+          font-size: 13px;
+          color: var(--text-muted);
+          font-style: italic;
+        }
+        .header-status-group {
           display: flex;
           align-items: center;
           gap: var(--space-3);
         }
-        .connection-indicator {
+        .connection-glyph-wrap {
+          display: flex;
+          align-items: center;
+          gap: 6px;
+          font-family: var(--font-mono);
+          font-size: 11px;
+          color: var(--text-muted);
+        }
+        .conn-glyph {
+          width: 7px;
+          height: 7px;
+          border-radius: 50%;
+          background: var(--inlay-line);
+        }
+        .conn-ok {
+          background: #8A6A4B;
+          box-shadow: 0 0 6px rgba(138, 106, 75, 0.5);
+        }
+        .conn-down {
+          background: var(--seat-1);
+        }
+        .state-plate {
+          padding: 4px 10px;
           display: flex;
           align-items: center;
           gap: 6px;
           font-size: 12px;
-          color: var(--color-text-muted);
+          color: var(--ink);
         }
-        .status-dot {
-          width: 8px;
-          height: 8px;
-          border-radius: 50%;
+        .state-code-glyph {
+          font-size: 11px;
+          color: #5A3F2E;
         }
-        .dot-connected {
-          background: var(--color-success);
-          box-shadow: 0 0 8px rgba(86, 204, 157, 0.6);
-        }
-        .dot-disconnected {
-          background: var(--color-error);
-        }
-        .state-code {
+        .state-code-num {
           font-family: var(--font-mono);
-          opacity: 0.7;
-          margin-right: 4px;
+          font-weight: 700;
+          color: #7D6D5F;
         }
-        .end-session-btn {
-          background: rgba(255, 122, 138, 0.15);
-          color: var(--color-error);
-          border: 1px solid var(--color-error);
-          padding: 6px 14px;
-          border-radius: var(--radius-control);
-          font-size: 13px;
+        .state-label {
+          font-family: var(--font-sans);
           font-weight: 600;
-          display: flex;
-          align-items: center;
-          gap: 6px;
-          transition: background var(--transition-fast);
         }
-        .end-session-btn:hover {
-          background: rgba(255, 122, 138, 0.25);
+        .end-table-btn {
+          font-family: var(--font-sans);
+          font-size: 12px;
+          font-weight: 600;
+          background: transparent;
+          color: var(--text-muted);
+          border: 1px solid var(--wood-edge);
+          border-radius: var(--radius-slip);
+          padding: 5px 12px;
+          transition: border-color var(--transition-fast), color var(--transition-fast);
+        }
+        .end-table-btn:hover {
+          border-color: var(--seat-1);
+          color: var(--text);
         }
         @media (max-width: 640px) {
-          .connection-text {
+          .brand-tagline, .brand-pipe {
             display: none;
           }
-          .brand-subtitle {
+          .conn-label {
             display: none;
-          }
-          .brand-title {
-            font-size: 15px;
           }
         }
       `}</style>

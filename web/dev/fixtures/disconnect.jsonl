@@ -1,0 +1,2 @@
+{"type":"session_state","state":"recovery","mode":"mock","session_id":"mock_sess_001","epoch":2}
+{"type":"notice","code":"disconnected","level":"warn","text":"Gateway connection dropped. Attempting automatic reconnection…","recoverable":true}
