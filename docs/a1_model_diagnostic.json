@@ -1,0 +1,15 @@
+{
+  "mocked": false,
+  "http_status": 200,
+  "finish_reason": "length",
+  "content_characters": 216,
+  "reasoning_characters": 1637,
+  "token_counts": {
+    "prompt_tokens": 288,
+    "completion_tokens": 400,
+    "total_tokens": 688
+  },
+  "accepted_by_existing_implementation": false,
+  "public_error": "Expert response was incomplete",
+  "elapsed_ms": 1818.2
+}

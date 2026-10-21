@@ -1,0 +1,45 @@
+{
+  "mocked": false,
+  "checked_at_ist": "2026-10-22T00:54:43.265779+05:30",
+  "scope": "Small A1 single-expert sample; no guarantee of future reliability or multi-agent quality.",
+  "quality_review": "Requires reading the final responses; passed flags below measure completion only.",
+  "samples": [
+    {
+      "sample": 1,
+      "question": "What can we do to ensure they have the intelligence to judge the best type of architectures needed for a particular kind of project, and I disagree with your point because nowadays AI can do more than just boilerplates",
+      "passed": true,
+      "spoken_text": "We could embed a knowledge graph of architectural patterns into the agent, letting it map project constraints to proven designs, and then let the agent generate code skeletons and run automated static\u2011analysis tests to catch early flaws. Success is measured by the agent\u2019s ability to propose a design that passes a suite of domain\u2011specific test cases and a human\u2011reviewed architecture audit. The AI would learn from feedback loops where developers flag mis\u2011matched patterns, tightening its judgement over time.",
+      "sentence_count": 3,
+      "attempts": 1,
+      "length_retries": 0,
+      "format_retries": 0,
+      "elapsed_ms": 1126.3
+    },
+    {
+      "sample": 2,
+      "question": "How can an AI coding agent choose between a modular monolith and microservices for a small team's project? Explain how it would justify and test the choice.",
+      "passed": true,
+      "spoken_text": "An agent can profile the team\u2019s size, velocity, and domain complexity, then score each pattern on coupling, deployment frequency, and failure isolation. It justifies the choice by comparing projected release cycles and fault\u2011domain impact; it would run a small\u2011scale simulation where a feature change is introduced and measure rebuild time, test coverage, and error propagation. If modular monolith gives faster iteration with acceptable fault isolation, the agent picks it; if isolation and scaling become critical, it flips to microservices.",
+      "sentence_count": 3,
+      "attempts": 1,
+      "length_retries": 0,
+      "format_retries": 0,
+      "elapsed_ms": 1201.7
+    },
+    {
+      "sample": 3,
+      "question": "You said AI agents lack architecture judgment. I disagree: they already propose designs. What would make an AI's architectural choices more reliable?",
+      "passed": true,
+      "spoken_text": "We could give the agent a curated knowledge base of proven architectural patterns, explicit constraints, and a cost\u2011budget model so it can trade off trade\u2011offs. The system should run simulations or static analyses on its own proposals, flagging violations before any code is written. Finally, we need an iterative human\u2011in\u2011the\u2011loop review that tests the design against real\u2011world metrics\u2014performance, security, and maintainability\u2014so that the agent learns from failures.",
+      "sentence_count": 3,
+      "attempts": 1,
+      "length_retries": 0,
+      "format_retries": 0,
+      "elapsed_ms": 900.1
+    }
+  ],
+  "passed": 3,
+  "total": 3,
+  "median_generation_ms": 1126.3,
+  "max_generation_ms": 1201.7
+}

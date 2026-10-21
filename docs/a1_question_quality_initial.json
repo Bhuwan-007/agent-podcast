@@ -1,0 +1,42 @@
+{
+  "mocked": false,
+  "checked_at_ist": "2026-10-22T00:49:34.243279+05:30",
+  "scope": "Small A1 single-expert sample; no guarantee of future reliability or multi-agent quality.",
+  "quality_review": "Requires reading the final responses; passed flags below measure completion only.",
+  "samples": [
+    {
+      "sample": 1,
+      "question": "What can we do to ensure they have the intelligence to judge the best type of architectures needed for a particular kind of project, and I disagree with your point because nowadays AI can do more than just boilerplates",
+      "passed": true,
+      "spoken_text": "We can train AI on massive codebases, add architecture\u2011policy layers, and let it simulate trade\u2011offs with human\u2011verified benchmarks. Success shows up when the AI recommends a pattern that outperforms human picks on latency, cost, and security metrics. But it still fails on long\u2011term vision, stakeholder context, and ethical constraints, so a senior lead must vet its choices.",
+      "sentence_count": 3,
+      "attempts": 1,
+      "length_retries": 0,
+      "elapsed_ms": 1118.5
+    },
+    {
+      "sample": 2,
+      "question": "How can an AI coding agent choose between a modular monolith and microservices for a small team's project? Explain how it would justify and test the choice.",
+      "passed": true,
+      "spoken_text": "An AI coding agent would profile the team\u2019s size, domain complexity, and future scaling plans, then score each architecture on latency, deployment cost, and maintainability. It would generate a trade\u2011off matrix, run a simulated load test and CI pipeline to measure build time, and present a concise recommendation. To validate, the agent would create a minimal prototype, measure success metrics, and iterate based on real feedback.",
+      "sentence_count": 3,
+      "attempts": 1,
+      "length_retries": 0,
+      "elapsed_ms": 1032.9
+    },
+    {
+      "sample": 3,
+      "question": "You said AI agents lack architecture judgment. I disagree: they already propose designs. What would make an AI's architectural choices more reliable?",
+      "passed": true,
+      "spoken_text": "AI can already sketch patterns, but it lacks deep domain knowledge, context, and long\u2011term safety checks, so its designs often miss constraints like security or performance. Make them reliable by feeding large, curated architectural corpora, continuous human\u2011in\u2011the\u2011loop validation, and formal constraint engines that evaluate trade\u2011offs. Success shows when the AI\u2011generated architecture passes automated policy tests and real\u2011world pilot deployments, but failures still arise when it mis\u2011interprets stakeholder intent or overlooks evolving requirements.",
+      "sentence_count": 3,
+      "attempts": 1,
+      "length_retries": 0,
+      "elapsed_ms": 2235.5
+    }
+  ],
+  "passed": 3,
+  "total": 3,
+  "median_generation_ms": 1118.5,
+  "max_generation_ms": 2235.5
+}

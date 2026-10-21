@@ -1,0 +1,23 @@
+{
+  "checks": [
+    {
+      "trigger": "turn_start",
+      "mocked": false,
+      "audio_chunks_before_end": 0,
+      "end_request_to_ended_event_ms": 474.9,
+      "ended_epoch": 1,
+      "passed": true,
+      "connection_closed_normally": true
+    },
+    {
+      "trigger": "audio_chunk",
+      "mocked": false,
+      "audio_chunks_before_end": 1,
+      "end_request_to_ended_event_ms": 82.8,
+      "ended_epoch": 1,
+      "passed": true,
+      "connection_closed_normally": true
+    }
+  ],
+  "interpretation": "Server cancellation and closure only, not audible stop latency."
+}

@@ -1,0 +1,91 @@
+{
+  "mocked": false,
+  "checked_at_ist": "2026-10-22T00:39:27.190300+05:30",
+  "scope": "Small A1 single-expert sample; no guarantee of future reliability or multi-agent quality.",
+  "samples": [
+    {
+      "sample": 1,
+      "question": "AI coding agents are becoming increasingly capable of building software. Will they eventually replace software developers, or will they transform the role of developers? Discuss your perspectives, challenge one another's assumptions, and work towards a nuanced conclusion.",
+      "passed": true,
+      "spoken_text": "AI coding agents can auto\u2011generate code and spot bugs, but they still lack the deep architectural vision, security sense, and user empathy that human developers bring. As tools improve, developers will shift toward design, oversight, and creative problem\u2011solving rather than routine coding.",
+      "sentence_count": 2,
+      "attempts": 1,
+      "length_retries": 0,
+      "elapsed_ms": 1114.9
+    },
+    {
+      "sample": 2,
+      "question": "AI coding agents are becoming increasingly capable of building software. Will they eventually replace software developers, or will they transform the role of developers? Discuss your perspectives, challenge one another's assumptions, and work towards a nuanced conclusion.",
+      "passed": true,
+      "spoken_text": "AI agents will shift developer work to higher\u2011level design, testing, and maintenance, but not fully replace humans because they still lack deep context, judgment, and the creative problem\u2011solving humans bring. We\u2019re already seeing teams use AI to generate boilerplate, catch bugs, and suggest architecture, yet they need human oversight to align with business goals, security policies, and user experience.",
+      "sentence_count": 2,
+      "attempts": 1,
+      "length_retries": 0,
+      "elapsed_ms": 923.3
+    },
+    {
+      "sample": 3,
+      "question": "What is one concrete coding task an agent can help with, and where does human judgment remain important?",
+      "passed": true,
+      "spoken_text": "An agent can auto\u2011generate a REST endpoint from a Swagger spec and run unit tests. Human judgment stays critical for choosing the right architecture, ensuring security, and balancing user experience.",
+      "sentence_count": 2,
+      "attempts": 1,
+      "length_retries": 0,
+      "elapsed_ms": 932.5
+    },
+    {
+      "sample": 4,
+      "question": "Could faster code generation increase security review work rather than reduce it? Explain the trade-off.",
+      "passed": true,
+      "spoken_text": "Yes, rapid code generation can flood QA teams with code that needs vetting, raising the volume of security reviews. The trade\u2011off is that while automation speeds up writing, it shifts the burden to humans to catch hidden bugs, architecture flaws, and compliance gaps that tools still miss, potentially increasing overall review effort.",
+      "sentence_count": 2,
+      "attempts": 1,
+      "length_retries": 0,
+      "elapsed_ms": 1202.5
+    },
+    {
+      "sample": 5,
+      "question": "How does this change for a student who cannot afford paid coding tools?",
+      "passed": true,
+      "spoken_text": "Students who can\u2019t afford paid tools still get free AI helpers\u2014GitHub Copilot free tier, open\u2011source LLMs, community plugins\u2014so learning isn\u2019t blocked. Yet they miss premium debugging, large\u2011model inference, and enterprise\u2011level integration, meaning they\u2019ll face higher friction and slower progress compared to paid\u2011tool users.",
+      "sentence_count": 2,
+      "attempts": 1,
+      "length_retries": 0,
+      "elapsed_ms": 858.3
+    },
+    {
+      "sample": 6,
+      "question": "I think tests passing proves generated software is secure. What assumption am I missing?",
+      "passed": true,
+      "spoken_text": "Testing only checks that code behaves as expected on supplied cases; it misses unseen edge cases, security flaws, and design problems. Without human oversight, bugs, design drift, and hidden vulnerabilities can slip through.",
+      "sentence_count": 2,
+      "attempts": 1,
+      "length_retries": 0,
+      "elapsed_ms": 1104.6
+    },
+    {
+      "sample": 7,
+      "question": "Give an example where you would agree with a cautious open-source maintainer.",
+      "passed": true,
+      "spoken_text": "I\u2019d agree when the maintainer says \u201cAdd this feature only after we\u2019ve vetted its security impact.\u201d  \nI\u2019d also back the \u201cdon\u2019t merge breaking changes without a full regression suite\u201d stance.",
+      "sentence_count": 1,
+      "attempts": 1,
+      "length_retries": 0,
+      "elapsed_ms": 1133.0
+    },
+    {
+      "sample": 8,
+      "question": "Does AI definitely replace every software developer? Give a nuanced answer without inventing studies.",
+      "passed": true,
+      "spoken_text": "AI won\u2019t fully replace every developer; it handles coding, debugging, and documentation, but humans still design architecture, ensure security, manage maintenance, and interpret user needs. Current tools boost productivity, yet complex systems demand human judgment, context, and collaboration that AI can\u2019t yet provide alone.",
+      "sentence_count": 2,
+      "attempts": 1,
+      "length_retries": 0,
+      "elapsed_ms": 1128.0
+    }
+  ],
+  "passed": 8,
+  "total": 8,
+  "median_generation_ms": 1109.8,
+  "max_generation_ms": 1202.5
+}

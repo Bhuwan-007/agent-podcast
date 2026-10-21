@@ -1,0 +1,41 @@
+{
+  "mocked": false,
+  "checked_at_ist": "2026-10-22T00:50:47.714669+05:30",
+  "scope": "Small A1 single-expert sample; no guarantee of future reliability or multi-agent quality.",
+  "quality_review": "Requires reading the final responses; passed flags below measure completion only.",
+  "samples": [
+    {
+      "sample": 1,
+      "question": "What can we do to ensure they have the intelligence to judge the best type of architectures needed for a particular kind of project, and I disagree with your point because nowadays AI can do more than just boilerplates",
+      "passed": true,
+      "spoken_text": "We can give AI curated architecture patterns, embed design\u2011rule modules, and run scenario simulations to show trade\u2011offs, then measure success by comparing the AI\u2011chosen design with expert reviews on real projects. The AI learns from version\u2011control histories, security audits, and performance data, so it can weigh modularity vs. speed, and the evaluation includes automated regression tests and static analysis scores.",
+      "sentence_count": 3,
+      "attempts": 1,
+      "length_retries": 0,
+      "elapsed_ms": 903.8
+    },
+    {
+      "sample": 2,
+      "question": "How can an AI coding agent choose between a modular monolith and microservices for a small team's project? Explain how it would justify and test the choice.",
+      "passed": true,
+      "spoken_text": "AI would analyze team size, domain complexity, and deployment constraints. It would weigh modular\u2011monolith benefits\u2014simpler CI/CD, lower latency\u2014against microservice gains\u2014isolated scaling, independent releases\u2014using a lightweight cost\u2011benefit matrix and simulating load patterns. The agent would validate the decision by running a prototype service split in a staging cluster and measuring latency, deployment time, and fault isolation, then adjust the architecture if metrics fall outside acceptable thresholds.",
+      "sentence_count": 3,
+      "attempts": 1,
+      "length_retries": 0,
+      "elapsed_ms": 831.4
+    },
+    {
+      "sample": 3,
+      "question": "You said AI agents lack architecture judgment. I disagree: they already propose designs. What would make an AI's architectural choices more reliable?",
+      "passed": false,
+      "error": "Expert returned an empty or oversized response",
+      "attempts": 1,
+      "length_retries": 0,
+      "elapsed_ms": 809.6
+    }
+  ],
+  "passed": 2,
+  "total": 3,
+  "median_generation_ms": 831.4,
+  "max_generation_ms": 903.8
+}

@@ -53,6 +53,7 @@ dist/
 .vite/
 
 # IDE & OS
+/.codex-local/
 .vscode/
 .idea/
 .DS_Store

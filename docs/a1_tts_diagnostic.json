@@ -1,0 +1,41 @@
+{
+  "mocked": false,
+  "audio_bytes": 34734,
+  "frames": [
+    {
+      "fields": [
+        "alignment",
+        "audio",
+        "isFinal",
+        "normalizedAlignment"
+      ]
+    },
+    {
+      "fields": [
+        "alignment",
+        "audio",
+        "isFinal",
+        "normalizedAlignment"
+      ]
+    },
+    {
+      "fields": [
+        "alignment",
+        "audio",
+        "isFinal",
+        "normalizedAlignment"
+      ]
+    },
+    {
+      "fields": [
+        "alignment",
+        "audio",
+        "isFinal",
+        "normalizedAlignment"
+      ]
+    }
+  ],
+  "handshake_completed": true,
+  "completed": true,
+  "elapsed_ms": 3328.1
+}

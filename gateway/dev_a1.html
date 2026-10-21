@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>AI Roundtable — A1 voice check</title>
+<style>
+body {font:16px system-ui; max-width:850px; margin:32px auto; padding:16px; color:#172033; background:#f5f7fb}
+button,input {font:inherit; padding:10px; margin:6px 0} input {width:95%}
+pre {white-space:pre-wrap; overflow-wrap:anywhere; background:white; padding:16px; max-height:330px; overflow:auto}
+.note {border-left:4px solid #6c47b5; padding:12px; background:white} button:focus-visible,input:focus-visible {outline:3px solid #6c47b5}
+</style>
+<h1>AI Roundtable · A1 voice check</h1>
+<p class="note">Single-expert integration check. Alex uses a real configured model and ElevenLabs.
+No panel, A2A, microphone, routing, or reconnect is implemented here. Audio buffers by sentence before playback.
+Backend generation completion does not mean audio has finished playing.</p>
+<button id="start">Start Topic 1</button> <button id="end" disabled>End and stop audio</button>
+<p id="state" role="status">Ready</p>
+<label for="question">Typed question to Alex (no session memory in A1)</label>
+<input id="question" maxlength="2000" placeholder="What is the biggest limitation of coding agents?">
+<button id="ask" disabled>Ask Alex</button>
+<h2>Generated text and playback evidence</h2><pre id="transcript"></pre>
+<h2>Events and local timing</h2><pre id="events"></pre>
+<script>
+'use strict';
+const el = id => document.getElementById(id);
+let ws, context, source, epoch = 0, token = 0, ended = true, turn = null;
+let parts = [], sentence = 0, chain = Promise.resolve(), generating = false, turnReceived = 0;
+function log(message) {
+  el('events').textContent = (el('events').textContent + message + '\n').slice(-16000);
+}
+function send(event) { if (ws && ws.readyState === WebSocket.OPEN) ws.send(JSON.stringify(event)); }
+function stopAudio() {
+  token++; parts = []; chain = Promise.resolve();
+  if (source) { source.stop(); source = null; }
+}
+function flushSentence() {
+  if (!parts.length || !turn) return;
+  const captured = {token, turn: {...turn}, sentence, pieces: parts};
+  parts = [];
+  chain = chain.then(async () => {
+    if (ended || captured.token !== token) return;
+    const size = captured.pieces.reduce((n, p) => n + p.length, 0);
+    const bytes = new Uint8Array(size); let offset = 0;
+    for (const piece of captured.pieces) { bytes.set(piece, offset); offset += piece.length; }
+    const buffer = await context.decodeAudioData(bytes.buffer);
+    if (ended || captured.token !== token) return;
+    const node = context.createBufferSource(); node.buffer = buffer; node.connect(context.destination);
+    source = node;
+    const started = context.currentTime;
+    const timer = setInterval(() => {
+      if (captured.token === token && !ended) send({type:'playback_progress', ...captured.turn,
+        sentence_idx:captured.sentence, played_ms:(context.currentTime-started)*1000});
+    }, 200);
+    await new Promise(resolve => {
+      node.onended = () => {clearInterval(timer); if (source === node) source = null; resolve();};
+      node.start();
+      send({type:'playback_started', ...captured.turn, sentence_idx:captured.sentence, t_client_ms:performance.now()});
+      if (captured.sentence === 0) log('Local turn receipt → playback started: ' +
+        (performance.now()-turnReceived).toFixed(1) + ' ms (A1 sentence-buffered client)');
+    });
+  }).catch(() => {
+    if (ended || captured.token !== token) return;
+    send({type:'playback_stopped', ...captured.turn, reason:'error', t_client_ms:performance.now()});
+    stopAudio(); log('Playback failed; check browser audio support.');
+  });
+}
+el('start').onclick = async () => {
+  try {
+    context = context || new AudioContext(); await context.resume();
+    ended = false; epoch = 0; turn = null; stopAudio();
+    el('start').disabled = true; el('end').disabled = false; el('transcript').textContent = '';
+    el('state').textContent = 'Connecting';
+    ws = new WebSocket((location.protocol === 'https:' ? 'wss://' : 'ws://') + location.host + '/ws');
+    ws.onopen = () => send({type:'start_session', topic_id:'topic_1', session_id:null});
+    ws.onmessage = ({data}) => {
+      const event = JSON.parse(data);
+      log(JSON.stringify(event.type === 'audio_chunk' ? {...event, data_b64:'[audio bytes]'} : event));
+      if (ended) return;
+      if (typeof event.epoch === 'number') {
+        if (event.epoch < epoch) return;
+        if (event.epoch > epoch) { epoch = event.epoch; stopAudio(); }
+      }
+      if (event.type === 'session_state') {
+        el('state').textContent = event.state;
+        if (event.state === 'ended') { ended = true; stopAudio(); }
+        el('ask').disabled = !['waiting_first_speaker','recovery','processing_user'].includes(event.state);
+      } else if (event.type === 'turn_start') {
+        stopAudio(); turn = {turn_id:event.turn_id, epoch:event.epoch};
+        sentence = 0; generating = true; turnReceived = performance.now(); el('ask').disabled = true;
+      } else if (event.type === 'transcript') {
+        if (event.speaker === 'human') {
+          el('transcript').textContent += '[typed question] ' + event.text + '\n'; return;
+        }
+        if (!event.final) {
+          if (event.sentence_idx !== sentence) {flushSentence(); sentence = event.sentence_idx;}
+          el('transcript').textContent += '[generated] ' + event.text + '\n';
+        } else el('transcript').textContent += '[playback confirmed] ' + event.text + '\n';
+      } else if (event.type === 'audio_chunk' && turn && event.turn_id === turn.turn_id) {
+        if (event.sentence_idx !== sentence) {flushSentence(); sentence = event.sentence_idx;}
+        const raw = atob(event.data_b64); parts.push(Uint8Array.from(raw, c => c.charCodeAt(0)));
+      } else if (event.type === 'turn_end') {
+        generating = false;
+        if (event.status !== 'completed') {stopAudio(); return;}
+        flushSentence();
+        const finishedToken = token, finishedTurn = {...turn};
+        chain.then(() => {
+          if (!ended && finishedToken === token) send({type:'playback_stopped', ...finishedTurn,
+            reason:'finished', t_client_ms:performance.now()});
+        });
+      }
+    };
+    ws.onclose = () => {
+      ended = true; stopAudio(); el('start').disabled = false; el('end').disabled = true; el('ask').disabled = true;
+      el('state').textContent = 'Disconnected / ended';
+    };
+    ws.onerror = () => {stopAudio(); log('WebSocket connection failed.');};
+  } catch { ended = true; stopAudio(); el('start').disabled = false; log('Could not initialize browser audio.'); }
+};
+el('end').onclick = () => {
+  send({type:'end_session'}); ended = true; stopAudio(); el('ask').disabled = true;
+  el('state').textContent = 'Ended locally; waiting for connection close';
+};
+el('ask').onclick = () => {
+  const text = el('question').value.trim(); if (!text || ended || generating) return;
+  send({type:'user_utterance', utterance_id:crypto.randomUUID(), text, final:true,
+    input_mode:'text', confidence:1, target_hint:'ai_engineer'});
+  el('ask').disabled = true;
+};
+</script>
+</html>

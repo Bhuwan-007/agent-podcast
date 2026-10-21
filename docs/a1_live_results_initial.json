@@ -1,0 +1,49 @@
+{
+  "checked_at_ist": "2026-10-21T23:54:45.018007+05:30",
+  "base_commit": "662dbe53480a5686a9da0428ccfd3123d38ab7a9",
+  "implementation": "local uncommitted A1",
+  "mocked": false,
+  "variables_present": {
+    "ELEVENLABS_API_KEY": true,
+    "VOICE_ID_AGENT1": true,
+    "LLM_BASE_URL": true,
+    "LLM_API_KEY": true,
+    "LLM_MODEL_SPEAK": true
+  },
+  "audible_browser_playback": "not tested",
+  "interrupt_to_silence_ms": null,
+  "user_question_to_first_audio_ms": null,
+  "grant_to_first_audio_ms": null,
+  "voice_access": {
+    "http_status": 200,
+    "accessible": true,
+    "elapsed_ms": 2424.2
+  },
+  "llm": {
+    "responded": false,
+    "error_type": "AgentError",
+    "error": "Expert response was incomplete",
+    "elapsed_ms": 2902.3
+  },
+  "gateway_websocket": {
+    "completed": false,
+    "audio_bytes": 0,
+    "audio_chunks": 0,
+    "start_to_first_audio_received_ms": null,
+    "turn_to_first_audio_received_ms": null,
+    "turn_id": 1,
+    "epoch": 0,
+    "notices": [
+      {
+        "code": "topic_unavailable",
+        "text": "A1 single-expert check: only Alex responds. A2A panel discussion, microphone input and routing are not implemented."
+      },
+      {
+        "code": "agent_timeout",
+        "text": "Expert generation failed."
+      }
+    ],
+    "elapsed_ms": 2002.7
+  },
+  "latency_interpretation": "Received-byte timings only; browser playback and the <1.5 s audible target are unverified."
+}
