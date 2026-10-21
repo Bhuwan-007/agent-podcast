@@ -1,4 +1,29 @@
-# A1 + B3 isolated integration check — 2026-10-22
+# A1 + B4 integration review — 2026-10-22
+
+## Pre-merge verification (latest)
+
+User authorized merging A1 into main. Main's B4 commit `71ac6e6` was merged into
+the integration branch without conflicts; teammate source was not edited.
+After combining: 34 Python tests passed in 0.79 s, 4 A1 player tests passed,
+10 frontend tests passed, and the production build passed (887.17 kB bundle warning).
+The first test attempt hit sandbox temporary-directory permissions; the approved rerun passed.
+These automated checks use mocked providers/browser APIs, not new live acceptance evidence.
+
+B4 adds real Web Audio playback and sentence-aware transcript keys. The historical
+B3 findings below describe the earlier snapshot. Current pairing gaps remain:
+the hook and player initialize at epoch 1 while A1 starts at 0; the player decodes
+each incoming MP3 fragment separately while A1 emits fragments of a sentence;
+End during asynchronous decode has no cancellation token unless the epoch advances;
+and playback-stopped acknowledgements omit the sentence index A1 needs for final transcripts.
+Topic configuration is logged but not applied to availability. Client latency still
+uses speaker-active receipt and barge-in still includes placeholder progress/timed VAD.
+Do not claim integrated frontend acceptance from passing simulated protocol tests.
+
+A1's verified experience is the backend-owned `/dev/a1` page. Single-expert functional
+acceptance is recorded; the 1.5 s audible-start engineering goal remains outstanding.
+Merging this working increment does not certify B4 pairing or later multi-agent phases.
+
+## Historical implementation and evidence
 
 Branch: `gateway/a1-b2-integration`, now based on `origin/main` at `1539311` (B3).
 The original workspace stays on `meds`. A1 source/tests were initially copied without committing;

@@ -11,6 +11,12 @@ not merged into main. Earlier "not committed/pushed" notes below describe prior 
 
 ## 1. Current Status
 
+Latest merge preparation: user authorized PR #4 merge. Integrated main's B4 commit
+`71ac6e6` without conflicts. Combined checks passed: 34 Python tests (0.79 s),
+4 A1 player tests, 10 frontend tests, and production build (bundle-size warning).
+See `docs/integration_review.md` for remaining frontend pairing gaps; A1's verified
+browser path is `/dev/a1`. Functional completion does not claim the 1.5 s goal.
+
 | Phase | Description | Status | Verification / Evidence |
 |---|---|---|---|
 | **A0** | Scaffold & Architecture Skeleton | **DONE** | `pytest eval/` passed (2/2); `/health` returns `{"status":"ok"}`; JSONL tracing active |
