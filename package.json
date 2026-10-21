@@ -1,0 +1,9 @@
+{
+  "name": "ai-roundtable",
+  "private": true,
+  "scripts": {
+    "dev": "npm --prefix web run dev",
+    "build": "npm --prefix web run build",
+    "mock:gateway": "node web/dev/mock_gateway.mjs"
+  }
+}

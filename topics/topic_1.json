@@ -1,0 +1,37 @@
+{
+  "topic_id": "topic_1",
+  "title": "Will AI Replace Software Developers?",
+  "background": "Coding tools can write/debug/explain code and automate tasks, but engineering includes architecture, security, testing, maintenance and user needs.",
+  "background_brief": "Coding tools can write/debug/explain code and automate tasks, but engineering includes architecture, security, testing, maintenance and user needs.",
+  "opening_prompt": "AI coding agents are becoming increasingly capable of building software. Will they eventually replace software developers, or will they transform the role of developers? Discuss your perspectives, challenge one another's assumptions, and work towards a nuanced conclusion.",
+  "available": true,
+  "agents": [
+    {
+      "agent_id": "ai_engineer",
+      "role": "AI Engineer",
+      "display_name": "Alex",
+      "voice_label": "Energetic Technologist",
+      "aliases": ["ai engineer", "engineer", "alex"],
+      "available": true,
+      "stance": "Builds AI coding agents. Believes automation will absorb most routine coding and keeps moving the goalposts of what developers do."
+    },
+    {
+      "agent_id": "software_developer",
+      "role": "Software Developer",
+      "display_name": "Sam",
+      "voice_label": "Pragmatic Builder",
+      "aliases": ["software developer", "developer", "dev", "sam"],
+      "available": true,
+      "stance": "Ships production software. Values architecture, testing, ownership and understanding requirements. Sees tools as accelerators that still need accountable humans."
+    },
+    {
+      "agent_id": "oss_maintainer",
+      "role": "Open-Source Maintainer",
+      "display_name": "Maya",
+      "voice_label": "Rigorous Maintainer",
+      "aliases": ["open-source maintainer", "open source maintainer", "maintainer", "maya"],
+      "available": true,
+      "stance": "Reviews other people's code for free. Worries about security, supply chain, review burden from generated contributions, and long-term maintenance."
+    }
+  ]
+}

@@ -1,154 +1,146 @@
-# 04 — Design System and UI Component Specification
+# 04 v2 — Design System: "The Table"
 
-**Status:** [PROPOSAL] Brand direction and Figma implementation brief; no claim UI is built.  
-**Design approach:** A restrained live-podcast studio, with clear speaker status and first-class interruption controls. The experience should feel interactive, not like a three-person slideshow.
+**Supersedes** doc 04 sections 2 (identity/tokens), 3 (screens), 4 (component visuals), 5 (speaker
+identity) and 6 (micro-interactions). **Keeps** doc 04 sections 1 (principles), 7 (handoff) and 8
+(UI copy boundaries), and every honesty rule in docs 01-03 (no fake waveform, no "Live" without
+events, no invented state). Owner: lane B. Product name everywhere: **Roundtable AI**.
 
-## 1. Design principles
+## 1. Concept
 
-1. **Voice first, interface second:** the UI clarifies real activity; it never pretends to animate actual sound where none exists.
-2. **User in control:** microphone/interruption and End remain clearly available during debate.
-3. **Three distinct perspectives:** expert cards communicate unique identities and the actual currently speaking agent.
-4. **Legible in 2 seconds:** topic, active voice, session state, user action are immediately obvious.
-5. **Trustworthy feedback:** differentiate initializing / ready / speaking / listening / processing / reconnecting / ended.
-6. **Accessibility:** roles/states must be understandable without color or animation.
+The product *is* a round table. A top-down view of a real table in a dim room, with one chair per
+expert and one chair for **you**. Whoever is speaking is lit by a pool of warm light and leans in;
+everyone else sits back in the shadow. Agent-to-agent messages are visible as threads pulled
+between chairs. Your interruption is you pulling your own chair into the light.
 
-## 2. Provisional visual identity
+Not allowed: shiny or neon blue / green / orange, purple-blue gradients, glassmorphism, glowing
+borders, generic dark-blue dashboards, emoji icons, stock robot imagery, Inter-and-cards layouts.
 
-**Working brand:** AI Roundtable / Roundtable AI — choose one consistent name. A placeholder wordmark is sufficient; do not spend the hackathon on logo exploration.
+## 2. Palette (muted, warm, matte)
 
-### Design tokens
-
-| Token | Proposed value | Use |
+| Token | Value | Use |
 |---|---|---|
-| `color.bg` | `#10131D` | App background |
-| `color.surface` | `#202435` | Cards, transcript |
-| `color.surfaceElevated` | `#2A2F43` | Controls, modals |
-| `color.border` | `#3B4056` | Dividers and card outlines |
-| `color.text` | `#F4F5FA` | Main text |
-| `color.textMuted` | `#BDC2D3` | Supporting labels |
-| `color.accent` | `#B5A0FF` | Active/CTA (check contrast) |
-| `color.success` | `#56CC9D` | Confirmed connected status |
-| `color.warning` | `#F6C177` | Degraded audio / recovery |
-| `color.error` | `#FF7A8A` | Disconnected / failure |
-| `radius.card` | `16px` | Cards |
-| `radius.control` | `12px` | Inputs/buttons |
-| `space.base` | `8px` | Spacing rhythm |
-| `font.primary` | Inter (or system sans) | Readable UI |
+| `--room` | `#17120F` | Page background (warm near-black) |
+| `--room-edge` | `#0E0A08` | Vignette edge |
+| `--wood` | `#5A3F2E` | Table top |
+| `--wood-edge` | `#3C2A1F` | Table rim / shadows |
+| `--inlay-line` | `#8A6A4B` | Thin engraved lines, thread lines |
+| `--inlay` | `#2A1F19` | Table centre (topic inlay) |
+| `--paper` | `#EADFC8` | Name plates, slips, Minutes drawer |
+| `--paper-shade` | `#CDBF9F` | Paper borders/shadow |
+| `--ink` | `#1C1612` | Text on paper |
+| `--text` | `#EFE6D2` | Text on the room |
+| `--text-muted` | `#B7A98F` | Secondary text |
+| `--light` | `rgba(255, 226, 170, 0.16)` | Spotlight pool |
+| `--seat-1` | `#9C4A47` | Expert 1 (dusty oxblood) |
+| `--seat-2` | `#B8975A` | Expert 2 (antique brass) |
+| `--seat-3` | `#7B5C82` | Expert 3 (dusty plum) |
+| `--seat-4` | `#8F8A7A` | Optional expert 4 (stone) |
+| `--you` | `#EADFC8` | Your seat (ivory) |
 
-**Note:** Values are starting tokens, not approved contrast measurements. Verify text, control and state contrast on implemented colors (WCAG AA where practical) before handoff.
+Status without green/red/amber: **ok** = paper plate + check glyph; **warn** = brass dashed outline;
+**error** = oxblood outline + "!" glyph on a paper slip; **info** = muted text. Never color alone:
+each state also has a glyph and text. Check contrast (WCAG AA) for text on every surface.
 
-### Typography and spacing
+## 3. Type, texture, icons
 
-- Title / hero: 32–40px desktop, 26–32px mobile.
-- Section heading: 20–24px.
-- Body: 15–17px, comfortable line-height.
-- Metadata/captions: 12–14px where legible.
-- Spacing scale: 4 / 8 / 12 / 16 / 24 / 32 / 48.
-- Motion: short, subtle highlight transitions; follow `prefers-reduced-motion`; waveform if and only if driven by actual audio signal or honestly labeled decorative.
+- Display / headings: **Fraunces** (soft serif). Body and transcript: **Newsreader**. Controls
+  and labels: **Instrument Sans**. Trace/metrics/timestamps: **IBM Plex Mono**. Always provide
+  system fallbacks. No Inter.
+- Texture: one subtle paper-noise overlay (SVG `feTurbulence`, about 4% opacity) on paper surfaces;
+  wood is a flat fill plus a faint two-tone linear gradient. No blur, no glow.
+- Icons: line icons, 1.5 px stroke (lucide or custom). Mic, hand, lock, link, clock, check, alert.
+- Radius: seats and table are circles; plates 6 px; slips 4 px. Spacing scale 4/8/12/16/24/32/48.
 
-## 3. Screens to create in Figma
+## 4. The table (Screen B, desktop 1440 x 900)
 
-### Screen A — Topic selection / lobby (P0)
+- A full-bleed `--room` with a soft vignette. Table: SVG circle, about 560 px, slightly left of
+  centre. Right 380 px: the **Minutes** drawer (paper).
+- **Seats** sit on a circle of radius about 330 px. Experts are spread evenly across the top
+  200 degrees; **You** is at the bottom (6 o'clock). Compute with `seatPosition(index, total)`.
+  Supports 3 or 4 experts.
+- A seat = a top-down chair (rounded backrest arc in the expert's color) + a **monogram** in the
+  serif + a **distinct shape** (circle / square / diamond / hexagon) so identity never depends on
+  color alone + a **name plate** (paper card: role, display name, voice label).
+- **Table centre** (inlay): the topic title in serif and, behind a "Read the question" toggle, the
+  verbatim opening prompt.
+- **Speaking:** on `speaker_active` (which follows real playback), the room dims to about 55% except
+  the speaker, a `--light` radial pool fades onto their seat and plate, the seat shifts about 10 px
+  toward the table centre, and a **speech slip** (paper strip with the current sentence) appears
+  beside the plate. Draft text is italic and muted; final text is upright. A ring around the seat
+  is static until B4, then amplitude-driven from a real `AnalyserNode`. No fake pulsing.
+- **Threads:** when a `trace_event` arrives (`from` -> `to`), draw a thin `--inlay-line` thread
+  between the two seats for about 1.5 s with a tiny mono label (e.g. `bid · challenge c7`).
+  Data-driven only. Never decorative.
+- **Addressing:** clicking or pressing Enter on an expert's name plate sets the addressee
+  (`address_agent`); the selected plate gets a ring and "Addressed" label. This replaces the
+  separate TargetSelector chips on desktop (keep chips on mobile).
+- **Your seat:** a small desk-mic glyph with an explicit text state (Mic off / Mic on / Mic blocked).
+  Controls row below the table: **Mic toggle** (primary) and **End session** (outlined, always visible).
 
-**Required:** product name, concise promise, organizer Topic 1–3 cards, roles per topic, Start button, mic/audio note. Do not call other topics 'supported' if only one works.
+## 5. Other screens
 
-```text
-+---------------------------------------------------------------+
-| [ROUND TABLE]                                  [Help]           |
-|                                                               |
-|      Three perspectives. One live conversation.               |
-|      Choose a starting topic. Interrupt whenever you want.    |
-|                                                               |
-|      [ Topic 1: Developers & AI                     SELECT ]   |
-|      [ Topic 2: AI decisions & human lives          SELECT ]   |
-|      [ Topic 3: AI tutors & teachers                SELECT ]   |
-|                                                               |
-|      Selected expert roles: [Role A] [Role B] [Role C]         |
-|      [ Start live roundtable ]                                 |
-|      [Mic permissions and AI-voice disclosure]                 |
-+---------------------------------------------------------------+
-```
+- **A. Lobby, "Choose a table".** Three top-down round tables in a row, each with its seat marks
+  and the roles listed under it. Unavailable topics are covered by a cloth (muted overlay) with
+  a plain "Closed, in development" slip. Selecting a table shows its background and the exact
+  opening prompt as an inscription. Primary action: "Join this roundtable". Mic and AI-voice
+  disclosure sits below as a paper slip.
+- **D. Interrupted / listening.** The light moves to **your** seat (`user_speaking`, set locally
+  on the first VAD frame). The previous speaker's plate gets an "Interrupted" slip and the
+  room dims further. After `routing`, a thread is drawn from your seat to the addressed expert
+  with the slip "Passing the floor to {role}". Until then: "Finding the right expert". Show
+  "Listening to you" only when the mic is actually capturing.
+- **E. Error / recovery** (always a paper slip pinned to the table rim, with a glyph, a plain
+  sentence and one action):
+  - `agent_timeout`: that expert's chair shows dashed outline and the plate says "Away".
+  - `mic_denied`: your seat shows a lock glyph and the slip explains how to re-enable the mic.
+  - `disconnected`: the whole table dims to about 40% with "Reconnecting" only while retrying.
+  - `tts_failed`: the speaker's slip carries a "Text only" tag.
+  - `no_speech`: "Didn't catch that" slip near your seat.
+- **F. Ended.** Lights down: chairs pushed back about 12 px, table dimmed, centre reads
+  "Roundtable ended". Minutes stay readable. Action: "New roundtable".
+- **C. Mobile (390 px).** The table collapses to a 340 px arc at the top (3 experts on the arc,
+  you as the bottom bar). Below it: the large speech slip, then the transcript. Bottom bar:
+  Mic, address chips, End. Minutes open as a bottom sheet.
 
-### Screen B — Active session / desktop (P0)
+## 6. Minutes drawer (replaces the dashboard panels)
 
-```text
-+-----------------------------------------------------------------------+
-| [ROUND TABLE]     [LIVE / STATE]           [Connection]       [End]   |
-| Topic: Will AI Replace Software Developers?                           |
-|                                                                       |
-|    [ Expert 1 ]        [ Expert 2 ACTIVE ]        [ Expert 3 ]         |
-|    AI Engineer         Software Developer        OSS Maintainer       |
-|    listening           speaking                  listening            |
-|                                                                       |
-|  +-----------------------------+  +--------------------------------+  |
-|  | Main audio / speaking       |  | Live transcript (P1)           |  |
-|  | visual (optional)           |  | [Role A]: claim                |  |
-|  |                             |  | [Role B]: response...          |  |
-|  +-----------------------------+  +--------------------------------+  |
-|                                                                       |
-|              [Mic: speak to interrupt]   [End session]                |
-|                  [Address: optional expert selector]                  |
-+-----------------------------------------------------------------------+
-```
+Paper surface, ink text, serif body. Tabs: **Transcript**, **Claims**, **Trace**, **Metrics**.
+- Transcript: speaker monogram + text; partial vs final styled differently; interrupted turns
+  struck with an "Interrupted" tag.
+- Claims: the word "Claimed", never "Verified" unless `verified:true`.
+- Trace: mono, user-safe summaries only (`from -> to · type · summary`).
+- Metrics: mono table; `null`/unavailable shows "Unavailable", never 0.
 
-### Screen C — Active session / mobile (P0)
+## 7. Motion (and reduced motion)
 
-```text
-+-------------------------------+
-| [LIVE / STATUS]       [End]    |
-| Topic heading                 |
-| [A]    [B speaking]    [C]   |
-| Current voice / argument     |
-| [Transcript, scrollable]     |
-| ---------------------------  |
-| [Pick expert] [MIC]           |
-| [Mic status: listening...]    |
-+-------------------------------+
-```
+Spotlight crossfade 350 ms ease-out; seat lean 250 ms; thread draw 600 ms via stroke-dashoffset;
+dim 300 ms. With `prefers-reduced-motion`: no movement or drawing, instant opacity changes, a
+static ring and the text label "Speaking". Meaning must be identical with and without motion.
 
-### Screen D — Interrupted / listening (P0)
+## 8. Event to visual mapping (all from `contracts/ws_events.md`)
 
-Freeze outdated speaker highlight, show foreground *'Listening to you…'* only if microphone captured successfully, and visually mark existing agent turn as interrupted. When processing starts, show *'Routing your question…'* rather than implying mic still active. The addressing UI should show the chosen expert if one is resolved.
+| Event | Visual |
+|---|---|
+| `topic_config` | Seats, plates, centre inlay |
+| `session_state` | Header status plate; ended -> lights down |
+| `speaker_active` | Spotlight, lean, speech slip |
+| `transcript` (partial/final) | Speech slip + Minutes |
+| `turn_end{interrupted}` | "Interrupted" slip on that plate |
+| `routing` | Thread from your seat to target; `unknown_target` -> clarification slip |
+| `trace_event` | Thread between seats |
+| `claims_update` | Minutes -> Claims |
+| `metrics` | Minutes -> Metrics |
+| `notice` | Slip by code (section 5, E) |
+| `session_state.mode = mock` | Persistent "Mock data" strip (ink on brass), never dismissible |
 
-### Screen E — Error and recovery (P0)
+## 9. Implementation notes for the coding agent
 
-Provide distinct states for blocked microphone, connection loss, no recognizable speech, audio generation failure, and failed expert reply. Show recovery action only when supported. Never show fake waveforms/audio.
-
-### Screen F — Session ended (P0)
-
-Show a clear finished state and Start Again. Transcript/export is P1/P2 only if implemented.
-
-## 4. Components and variants
-
-| Component | Important variants / props | Notes |
-|---|---|---|
-| `TopicCard` | selected, available, description, role previews | Opening prompt is a separate, exact content field. |
-| `ExpertCard` | idle, listening, speaking, addressed, unavailable; `agentId`, `voiceLabel` | State must follow live backend events. |
-| `SessionStatus` | connecting, live, reconnecting, error, ended | Avoid a universal green 'LIVE' badge when disconnected. |
-| `MicrophoneControl` | permission-needed, off, listening, processing, disabled | Clear text label; large touch area; keyboard operable. |
-| `TranscriptPanel` | awaiting, partial, final, unavailable | P1; use actual audio/text events with speaker attribution. |
-| `AudioStatus` | loading, speaking, paused, muted, failed | Real playback status, not timer-based simulation. |
-| `TargetSelector` | none, selected, missing | Useful fallback; spoken targeting remains mandatory. |
-| `EndSessionButton` | active, stopping, ended | Always visible, prevents stale playback. |
-| `RecoveryNotice` | mic denied, disconnected, timed out, bad audio | Explicit next step, no fabricated success. |
-| `EvidencePanel` | collapsed/expanded trace summary | P1 for judges: show a user-safe argument/message trace, not secret model reasoning. |
-
-## 5. Visual speaker identity
-
-Assign each expert a consistent icon/shape plus voice label. Roles must be driven from the **selected topic** (see Topic 1–3). Do not use three generic personas for all topics without explicit confirmation. Use at least a text label, consistent avatar and optional accent tint for each; never distinguish by color alone.
-
-## 6. Micro-interactions
-
-- New voice turn: visible role highlight when audio actually starts.
-- Interruption: switch status promptly, stop old highlight, enable live input display.
-- Handoff: crossfade/slide role highlight subtly **only after confirmed turn change**.
-- Tool use (optional): concise status such as 'Checking a source…', and the result/outcome; no fabricated search animation.
-- Reduced motion: static role labels and status text provide identical meaning.
-
-## 7. Frontend developer handoff
-
-Design component props and exact event-to-state mapping jointly; sample event names in `09_TEAM_HANDOFF_AND_CONTRACT.md` are illustrative. Provide desktop (1440px or equivalent), laptop and mobile (~390px) frames and all key error states. Export token values and SVG icons, not screenshot-only page layouts.
-
-## 8. UI copy boundaries
-
-Do **not** display 'Experts are independently researching', 'AI has learned from the debate', 'Conversation saved', or 'Live' unless the system actually supports the claim. **Do** display 'AI-generated expert perspectives' and the real permissions/processing state.
+- Build the table as one inline SVG plus absolutely positioned HTML plates (so plates are real
+  `<button>`s: focusable, labelled, keyboard operable). No canvas, no heavy animation library.
+- New components: `RoundTable`, `Seat`, `NamePlate`, `Spotlight`, `ThreadLayer`, `SpeechSlip`,
+  `MinutesDrawer` (wraps TranscriptPanel, ClaimsLedger, TracePanel, MetricsPanel), `TableCard`
+  (lobby), `Slip` (replaces RecoveryNotice styling). Keep the existing event/state code.
+- Replace the old color tokens entirely. Remove the blue/green/amber role colors and any glow.
+- Focus order: header, expert plates, your mic, End, Minutes. Visible focus ring in `--paper`.
+- Acceptance: all six screens at 1440 px and 390 px; every state readable with colors removed
+  (grayscale check) and with reduced motion; no color outside this palette.
