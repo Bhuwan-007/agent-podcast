@@ -14,6 +14,8 @@ interface CinematicTableProps {
   isUserListening: boolean
   isUserProcessing: boolean
   micOn: boolean
+  speakerAudioLevel?: number
+  micAudioLevel?: number
   onAddressAgent: (agentId: string | null) => void
   onMicToggle: () => void
   onBargeIn: () => void
@@ -28,6 +30,8 @@ export const CinematicTable: React.FC<CinematicTableProps> = ({
   isUserListening,
   isUserProcessing,
   micOn,
+  speakerAudioLevel = 0,
+  micAudioLevel = 0,
   onAddressAgent,
   onMicToggle,
   onBargeIn,
@@ -279,6 +283,8 @@ export const CinematicTable: React.FC<CinematicTableProps> = ({
             activeThread={activeThread}
             isUserSpeaking={isUserListening}
             isUserProcessing={isUserProcessing}
+            speakerAudioLevel={speakerAudioLevel}
+            micAudioLevel={micAudioLevel}
             onSelectAgent={handleAgentSelect}
             onHoverAgent={setHoveredAgentId}
           />
@@ -293,6 +299,7 @@ export const CinematicTable: React.FC<CinematicTableProps> = ({
               isUserListening={isUserListening}
               isUserProcessing={isUserProcessing}
               micOn={micOn}
+              micAudioLevel={micAudioLevel}
               onAddressAgent={handleAgentSelect}
               onMicToggle={onMicToggle}
               onBargeIn={onBargeIn}

@@ -30,6 +30,8 @@ export const App: React.FC = () => {
     metrics,
     notices,
     micState,
+    micAudioLevel,
+    speakerAudioLevel,
     startSession,
     bargeIn,
     addressAgent,
@@ -270,6 +272,8 @@ export const App: React.FC = () => {
                   isUserListening={sessionState === 'user_speaking'}
                   isUserProcessing={sessionState === 'processing_user'}
                   micOn={micState === 'on'}
+                  speakerAudioLevel={speakerAudioLevel}
+                  micAudioLevel={micAudioLevel}
                   onAddressAgent={addressAgent}
                   onMicToggle={toggleMic}
                   onBargeIn={handleBargeIn}
@@ -309,6 +313,7 @@ export const App: React.FC = () => {
                   isUserListening={sessionState === 'user_speaking'}
                   isUserProcessing={sessionState === 'processing_user'}
                   micOn={micState === 'on'}
+                  micAudioLevel={micAudioLevel}
                   onAddressAgent={addressAgent}
                   onMicToggle={toggleMic}
                   onBargeIn={handleBargeIn}

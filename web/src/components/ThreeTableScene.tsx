@@ -10,6 +10,8 @@ interface ThreeTableSceneProps {
   activeThread: ActiveThread | null
   isUserSpeaking: boolean
   isUserProcessing?: boolean
+  speakerAudioLevel?: number
+  micAudioLevel?: number
   onSelectAgent: (agentId: string | null) => void
   onHoverAgent?: (agentId: string | null) => void
 }
@@ -41,6 +43,8 @@ export const ThreeTableScene: React.FC<ThreeTableSceneProps> = ({
   activeThread,
   isUserSpeaking,
   isUserProcessing = false,
+  speakerAudioLevel = 0,
+  micAudioLevel = 0,
   onSelectAgent,
   onHoverAgent: _onHoverAgent,
 }) => {
@@ -53,6 +57,8 @@ export const ThreeTableScene: React.FC<ThreeTableSceneProps> = ({
     activeThread,
     isUserSpeaking,
     isUserProcessing,
+    speakerAudioLevel,
+    micAudioLevel,
     agents: topic.agents,
   })
 
@@ -63,9 +69,11 @@ export const ThreeTableScene: React.FC<ThreeTableSceneProps> = ({
       activeThread,
       isUserSpeaking,
       isUserProcessing,
+      speakerAudioLevel,
+      micAudioLevel,
       agents: topic.agents,
     }
-  }, [activeSpeakerId, addressedAgentId, activeThread, isUserSpeaking, isUserProcessing, topic.agents])
+  }, [activeSpeakerId, addressedAgentId, activeThread, isUserSpeaking, isUserProcessing, speakerAudioLevel, micAudioLevel, topic.agents])
 
   useEffect(() => {
     const container = mountRef.current
@@ -756,12 +764,21 @@ export const ThreeTableScene: React.FC<ThreeTableSceneProps> = ({
         }
         chair.group.position.lerp(targetPos, delta * 5)
 
-        // Update shader uniforms
+        // Update shader uniforms with real audio energy
         if (chair.avatarUniforms) {
           chair.avatarUniforms.time.value = time
           const curIntensity = chair.avatarUniforms.voiceIntensity.value
-          const targetIntensity = isThisSpeaking ? 1.0 : 0.0
-          chair.avatarUniforms.voiceIntensity.value += (targetIntensity - curIntensity) * 0.12
+          let targetIntensity = 0.0
+          if (isThisSpeaking) {
+            if (chair.isUser) {
+              const micLvl = currentProps.micAudioLevel || 0
+              targetIntensity = 0.5 + micLvl * 1.8
+            } else {
+              const spkLvl = currentProps.speakerAudioLevel || 0
+              targetIntensity = 0.5 + spkLvl * 2.2
+            }
+          }
+          chair.avatarUniforms.voiceIntensity.value += (targetIntensity - curIntensity) * 0.15
         }
 
         // Rotate halo rings (faster when speaking)

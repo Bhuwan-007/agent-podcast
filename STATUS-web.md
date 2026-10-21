@@ -36,7 +36,38 @@
 
 ---
 
-## Next Phase: Phase B4 — Audio Integration + Live Microphone
-- Real Web Audio API playback pipeline for received `audio_chunk` payloads (WAV/MP3).
-- Real-time `AnalyserNode` frequency data connected to acoustic avatar displacement shaders and live microphone waveforms.
-- Client VAD integration using Web Audio energy thresholding / WebRTC VAD to trigger automated spoken barge-in without button presses.
+## Phase B4: Audio Integration + Real-time Web Audio + Live Microphone VAD — COMPLETED (PASSED)
+
+### Completed
+- [x] **Web Audio API Streaming Audio Player (`web/src/audio/AudioPlayer.ts`):**
+  - Streams and decodes base64 PCM WAV / ElevenLabs MP3 chunks via `AudioContext.decodeAudioData`.
+  - Strict sentence and chunk sequencing queue sorted by `(sentenceIdx, seq)`.
+  - Dispatches canonical client playback telemetry back to gateway:
+    - `playback_started` on first audio frame of a turn/sentence with high-resolution `t_client_ms`.
+    - `playback_progress` emitted periodically every 200ms with played duration `played_ms`.
+    - `playback_stopped` on completion (`finished`), barge-in (`barge_in`), session termination (`end`), or decode error (`error`).
+  - Stale epoch chunk rejection (`chunk.epoch < currentEpoch`).
+  - Immediate queue flush and audio cutoff on `stop()` / `setEpoch()`.
+- [x] **Client VAD & Automated Voice Barge-In (`web/src/audio/ClientVad.ts`):**
+  - Browser microphone stream processing via `MediaStreamAudioSourceNode` and `AnalyserNode`.
+  - Continuous RMS energy detection (speech start threshold: RMS > 0.028; silence timeout: 800ms).
+  - Triggers automated spoken barge-in (`bargeIn()`) without requiring manual button clicks when user speaks while agent is active.
+  - Emits canonical `{"type": "vad", "state": "start"|"end", "t_client_ms": ...}` events.
+  - Integrated Web Speech API (`webkitSpeechRecognition` / `SpeechRecognition`) to transcribe human speech and emit canonical `user_utterance` with `target_hint` extraction.
+- [x] **Real-time Audio Visualizations Driven Solely by AnalyserNode:**
+  - `AnalyserNode` frequency spectrum drives 3D avatar GLSL noise displacement shaders and glow ripples (`ThreeTableScene.tsx`).
+  - Active speaker voice energy directly vibrates the speaking expert's 3D avatar orb.
+  - 5-bar live equalizer soundwave on the host desk mic (`YourSeat.tsx`, `RoundTable.tsx`, `CinematicTable.tsx`) pulsing to real ambient microphone audio.
+- [x] **Automated Unit & Integration Tests (`npm test`):**
+  - `web/test/audio.test.mjs` (4 tests) + `web/test/protocol.test.mjs` (6 tests) = 10/10 passing tests.
+  - `oxlint` 0 errors, 0 warnings across 37 files.
+  - Vite production build passing (`tsc -b && vite build`).
+- [x] **Live Browser Verification:**
+  - Recorded browser verification session confirming smooth 3D camera transitions, audio decoding, typewriter HUD, desk mic equalizer, and zero console errors.
+
+---
+
+## Next Phase: Phase B5 — Full Integration & Polish with Person A Backend
+- Connect live to Lane A's streaming ElevenLabs gateway endpoint.
+- Verify end-to-end multi-agent voice podcast generation with live human interruptions in real time.
+

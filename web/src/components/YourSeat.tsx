@@ -7,6 +7,7 @@ interface YourSeatProps {
   isProcessing: boolean
   isBlocked: boolean
   micOn: boolean
+  micAudioLevel?: number
   onMicToggle: () => void
   onBargeIn: () => void
 }
@@ -18,6 +19,7 @@ export const YourSeat: React.FC<YourSeatProps> = ({
   isProcessing,
   isBlocked,
   micOn,
+  micAudioLevel = 0,
   onMicToggle,
   onBargeIn,
 }) => {
@@ -68,7 +70,18 @@ export const YourSeat: React.FC<YourSeatProps> = ({
       <div className="your-plate paper-surface">
         <div className="your-plate-top">
           <span className="your-label">YOU (Human Listener)</span>
-          <span className={`your-tag ${isListening ? 'tag-listening' : ''}`}>{statusText}</span>
+          <div className="status-with-wave">
+            {micOn && (
+              <div className="mic-live-waveform" aria-hidden="true" title="Live mic audio input">
+                <span className="wave-bar" style={{ height: `${Math.max(3, Math.min(18, micAudioLevel * 24 * 0.7))}px` }} />
+                <span className="wave-bar" style={{ height: `${Math.max(3, Math.min(22, micAudioLevel * 28 * 1.1))}px` }} />
+                <span className="wave-bar" style={{ height: `${Math.max(3, Math.min(24, micAudioLevel * 32 * 1.4))}px` }} />
+                <span className="wave-bar" style={{ height: `${Math.max(3, Math.min(20, micAudioLevel * 26 * 0.9))}px` }} />
+                <span className="wave-bar" style={{ height: `${Math.max(3, Math.min(16, micAudioLevel * 20 * 0.6))}px` }} />
+              </div>
+            )}
+            <span className={`your-tag ${isListening ? 'tag-listening' : ''}`}>{statusText}</span>
+          </div>
         </div>
         <div className="your-actions">
           <button
@@ -117,6 +130,24 @@ export const YourSeat: React.FC<YourSeatProps> = ({
           font-size: 12px;
           font-weight: 700;
           color: var(--ink);
+        }
+        .status-with-wave {
+          display: flex;
+          align-items: center;
+          gap: 6px;
+        }
+        .mic-live-waveform {
+          display: flex;
+          align-items: flex-end;
+          gap: 2px;
+          height: 16px;
+          padding: 0 2px;
+        }
+        .wave-bar {
+          width: 2.5px;
+          background: #55DD88;
+          border-radius: 1px;
+          transition: height 0.08s ease;
         }
         .your-tag {
           font-family: var(--font-mono);

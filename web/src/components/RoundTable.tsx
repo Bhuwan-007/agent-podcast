@@ -15,6 +15,7 @@ interface RoundTableProps {
   isUserListening: boolean
   isUserProcessing: boolean
   micOn: boolean
+  micAudioLevel?: number
   onAddressAgent: (agentId: string | null) => void
   onMicToggle: () => void
   onBargeIn: () => void
@@ -29,6 +30,7 @@ export const RoundTable: React.FC<RoundTableProps> = ({
   isUserListening,
   isUserProcessing,
   micOn,
+  micAudioLevel = 0,
   onAddressAgent,
   onMicToggle,
   onBargeIn,
@@ -232,6 +234,7 @@ export const RoundTable: React.FC<RoundTableProps> = ({
         isProcessing={isUserProcessing}
         isBlocked={false}
         micOn={micOn}
+        micAudioLevel={micAudioLevel}
         onMicToggle={onMicToggle}
         onBargeIn={onBargeIn}
       />
