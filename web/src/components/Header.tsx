@@ -39,30 +39,30 @@ export const Header: React.FC<HeaderProps> = ({
   const getStateInfo = () => {
     switch (state) {
       case 'ready':
-        return { code: 'S0', label: 'Room Ready', color: '#B8B0CC' }
+        return { code: 'S0', label: 'Room Ready', color: '#D6D3D1' }
       case 'connecting':
-        return { code: 'S1', label: 'Connecting…', color: '#C084FC' }
+        return { code: 'S1', label: 'Connecting…', color: '#FB7185' }
       case 'waiting_first_speaker':
-        return { code: 'S2', label: 'Table Convening…', color: '#C084FC' }
+        return { code: 'S2', label: 'Table Convening…', color: '#FB7185' }
       case 'agent_speaking':
         return {
           code: 'S3',
           label: activeSpeakerName ? `${activeSpeakerName} speaking` : 'Speaker active',
-          color: '#FDFCFE',
+          color: '#FFFFFF',
           isSpeaking: true,
         }
       case 'user_speaking':
         return { code: 'S4', label: 'You have the floor', color: '#F43F5E', isSpeaking: true }
       case 'processing_user':
-        return { code: 'S5', label: 'Processing inquiry…', color: '#C084FC' }
+        return { code: 'S5', label: 'Processing inquiry…', color: '#FB7185' }
       case 'agent_generating':
-        return { code: 'S6', label: 'Synthesizing voice…', color: '#C084FC' }
+        return { code: 'S6', label: 'Synthesizing voice…', color: '#FB7185' }
       case 'recovery':
         return { code: 'S7', label: 'Reconnecting…', color: '#E11D48' }
       case 'ended':
-        return { code: 'S8', label: 'Session Concluded', color: '#7E7497' }
+        return { code: 'S8', label: 'Session Concluded', color: '#A8A29E' }
       default:
-        return { code: '', label: state, color: '#B8B0CC' }
+        return { code: '', label: state, color: '#D6D3D1' }
     }
   }
 
@@ -75,9 +75,9 @@ export const Header: React.FC<HeaderProps> = ({
         <div className="brand-section">
           <div className="brand-emblem" aria-hidden="true">
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
-              <circle cx="12" cy="12" r="10" stroke="#A855F7" strokeWidth="1.8" />
+              <circle cx="12" cy="12" r="10" stroke="#FB7185" strokeWidth="1.8" />
               <circle cx="12" cy="12" r="5" stroke="#F43F5E" strokeWidth="1.8" />
-              <circle cx="12" cy="12" r="2" fill="#FF1493" />
+              <circle cx="12" cy="12" r="2" fill="#E11D48" />
             </svg>
           </div>
 
@@ -205,8 +205,8 @@ export const Header: React.FC<HeaderProps> = ({
 
       <style>{`
         .broadcast-header {
-          background: rgba(13, 9, 23, 0.88);
-          border-bottom: 1px solid rgba(168, 85, 247, 0.22);
+          background: rgba(18, 15, 22, 0.92);
+          border-bottom: 1px solid rgba(244, 63, 94, 0.22);
           position: sticky;
           top: 0;
           z-index: 50;
@@ -242,8 +242,8 @@ export const Header: React.FC<HeaderProps> = ({
           justify-content: center;
           width: 32px;
           height: 32px;
-          background: rgba(168, 85, 247, 0.12);
-          border: 1px solid rgba(168, 85, 247, 0.3);
+          background: rgba(244, 63, 94, 0.12);
+          border: 1px solid rgba(244, 63, 94, 0.3);
           border-radius: 8px;
         }
 
@@ -299,9 +299,9 @@ export const Header: React.FC<HeaderProps> = ({
           font-family: var(--font-mono);
           font-size: 9px;
           font-weight: 700;
-          background: rgba(192, 132, 252, 0.18);
-          color: #C084FC;
-          border: 1px solid rgba(192, 132, 252, 0.35);
+          background: rgba(251, 113, 133, 0.16);
+          color: #FB7185;
+          border: 1px solid rgba(251, 113, 133, 0.35);
           padding: 1px 5px;
           border-radius: 4px;
         }
@@ -309,7 +309,7 @@ export const Header: React.FC<HeaderProps> = ({
         .topic-subtitle {
           font-family: var(--font-sans);
           font-size: 11px;
-          color: #B8B0CC;
+          color: #A8A29E;
           max-width: 260px;
           overflow: hidden;
           text-overflow: ellipsis;
@@ -329,8 +329,8 @@ export const Header: React.FC<HeaderProps> = ({
           align-items: center;
           gap: 8px;
           padding: 5px 14px;
-          background: rgba(22, 14, 38, 0.8);
-          border: 1px solid rgba(168, 85, 247, 0.25);
+          background: rgba(24, 20, 27, 0.9);
+          border: 1px solid rgba(244, 63, 94, 0.25);
           border-radius: 9999px;
           transition: all 200ms ease;
         }
@@ -344,7 +344,7 @@ export const Header: React.FC<HeaderProps> = ({
           font-family: var(--font-mono);
           font-size: 10px;
           font-weight: 700;
-          color: #C084FC;
+          color: #FB7185;
         }
 
         .status-label {
@@ -391,7 +391,7 @@ export const Header: React.FC<HeaderProps> = ({
           font-family: var(--font-sans);
           font-size: 11px;
           font-weight: 500;
-          color: #B8B0CC;
+          color: #D6D3D1;
         }
 
         .conn-dot {
@@ -401,8 +401,8 @@ export const Header: React.FC<HeaderProps> = ({
         }
 
         .conn-indicator.is-connected .conn-dot {
-          background: #C084FC;
-          box-shadow: 0 0 6px rgba(192, 132, 252, 0.8);
+          background: #FB7185;
+          box-shadow: 0 0 6px rgba(251, 113, 133, 0.8);
         }
 
         .conn-indicator.is-disconnected .conn-dot {
@@ -418,16 +418,16 @@ export const Header: React.FC<HeaderProps> = ({
           font-weight: 600;
           padding: 6px 12px;
           border-radius: 9999px;
-          border: 1px solid rgba(168, 85, 247, 0.28);
-          background: rgba(22, 14, 38, 0.8);
+          border: 1px solid rgba(244, 63, 94, 0.28);
+          background: rgba(24, 20, 27, 0.85);
           color: #FDFCFE;
           cursor: pointer;
           transition: all 160ms ease;
         }
 
         .action-btn:hover {
-          background: rgba(168, 85, 247, 0.25);
-          border-color: #C084FC;
+          background: rgba(244, 63, 94, 0.25);
+          border-color: #FB7185;
           transform: translateY(-1px);
         }
 
@@ -449,10 +449,10 @@ export const Header: React.FC<HeaderProps> = ({
         }
 
         .minutes-toggle-btn.active {
-          background: #A855F7;
-          border-color: #C084FC;
+          background: #E11D48;
+          border-color: #FB7185;
           color: #FFFFFF;
-          box-shadow: 0 2px 10px rgba(168, 85, 247, 0.4);
+          box-shadow: 0 2px 10px rgba(225, 29, 72, 0.4);
         }
 
         .counter-badge {
@@ -466,12 +466,12 @@ export const Header: React.FC<HeaderProps> = ({
 
         .dev-toggle-btn {
           padding: 6px 9px;
-          color: #C084FC;
+          color: #FB7185;
         }
 
         .dev-toggle-btn.active {
-          background: rgba(192, 132, 252, 0.25);
-          border-color: #C084FC;
+          background: rgba(251, 113, 133, 0.25);
+          border-color: #FB7185;
         }
 
         .leave-btn {

@@ -154,10 +154,10 @@ export const YourSeat: React.FC<YourSeatProps> = ({
           font-size: 9px;
           font-weight: 700;
           text-transform: uppercase;
-          background: rgba(168, 85, 247, 0.18);
+          background: rgba(244, 63, 94, 0.18);
           padding: 1px 5px;
           border-radius: var(--radius-slip);
-          color: #C8BEDE;
+          color: #FDA4AF;
         }
         .tag-listening {
           background: #F43F5E;
@@ -173,15 +173,15 @@ export const YourSeat: React.FC<YourSeatProps> = ({
           font-family: var(--font-sans);
           font-size: 11px;
           font-weight: 600;
-          background: rgba(168, 85, 247, 0.2);
+          background: rgba(244, 63, 94, 0.2);
           color: #FDFCFE;
-          border: 1px solid rgba(168, 85, 247, 0.35);
+          border: 1px solid rgba(244, 63, 94, 0.35);
           border-radius: var(--radius-slip);
         }
         .mic-toggle-btn.btn-on {
-          background: #A855F7;
+          background: #E11D48;
           color: #FFFFFF;
-          border-color: #C084FC;
+          border-color: #FB7185;
         }
         .interrupt-btn {
           flex: 1.2;

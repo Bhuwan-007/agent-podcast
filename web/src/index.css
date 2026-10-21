@@ -1,45 +1,44 @@
-/* Design System: "Cyber-Luxe Amethyst & Radiant Magenta" */
+/* Design System: "Titanium Obsidian, Velvet Crimson Ruby, and Liquid Rose Gold" */
 
 :root {
-  /* Vibrant Amethyst & Neon Rose / Crimson Palette (Strictly NO shiny blue, NO green, NO navy blue, NO orange) */
-  --room: #090611;
-  --room-edge: #05030A;
-  --surface-1: #130C22;
-  --surface-2: #1C1231;
-  --surface-3: #271A42;
-  --surface-glass: rgba(20, 13, 34, 0.78);
-  --surface-glass-border: rgba(168, 85, 247, 0.22);
-  --surface-glass-hover: rgba(168, 85, 247, 0.38);
+  /* Bespoke Titanium & Crimson Palette (Strictly NO purple, NO shiny blue, NO green, NO navy blue, NO orange) */
+  --room: #0C0A0E;
+  --room-edge: #060507;
+  --surface-1: #161318;
+  --surface-2: #201C24;
+  --surface-3: #2A2630;
+  --surface-glass: rgba(24, 20, 27, 0.86);
+  --surface-glass-border: rgba(244, 63, 94, 0.22);
+  --surface-glass-hover: rgba(244, 63, 94, 0.38);
 
   /* Vibrant Accents */
-  --accent-magenta: #FF1493;
-  --accent-rose: #F43F5E;
-  --accent-violet: #A855F7;
-  --accent-amethyst: #C084FC;
-  --accent-plum: #9333EA;
-  --accent-crimson: #E11D48;
-  --accent-pearl: #FCE7F3;
+  --accent-ruby: #F43F5E;
+  --accent-scarlet: #E11D48;
+  --accent-rose-gold: #FB7185;
+  --accent-coral: #FDA4AF;
+  --accent-champagne: #F5EBE6;
+  --accent-pearl: #FFF1F2;
 
-  /* Expert Seat Colors (Vibrant) */
-  --seat-1: #F43F5E; /* Alex / AI Engineer (Vivid Magenta / Rose) */
-  --seat-2: #A855F7; /* Sam / Software Dev (Electric Royal Amethyst) */
-  --seat-3: #C084FC; /* Maya / OSS Maintainer (Radiant Orchid / Violet) */
-  --seat-4: #E11D48; /* Crimson */
-  --you: #FCE7F3;    /* Host seat (Luminous Rose Quartz / Pearl) */
+  /* Expert Seat Colors */
+  --seat-1: #F43F5E; /* Alex / AI Engineer (Vivid Ruby Crimson) */
+  --seat-2: #FB7185; /* Sam / Software Dev (Rose Gold Coral) */
+  --seat-3: #BE123C; /* Maya / OSS Maintainer (Deep Wine Crimson) */
+  --seat-4: #E11D48; /* Scarlet */
+  --you: #FFF1F2;    /* Host seat (Champagne Platinum) */
 
   /* Status Colors */
   --status-error-border: #E11D48;
-  --status-warn-border: #C084FC;
+  --status-warn-border: #FB7185;
   --status-ok-border: #F43F5E;
 
   /* Text & Surfaces */
-  --paper: #18102B;
-  --paper-shade: #261B42;
-  --ink: #FDFCFE;
-  --text: #FDFCFE;
-  --text-muted: #B8B0CC;
-  --text-dim: #7E7497;
-  --light: rgba(192, 132, 252, 0.16);
+  --paper: #1A161E;
+  --paper-shade: #26212C;
+  --ink: #FFFFFF;
+  --text: #FFFFFF;
+  --text-muted: #D6D3D1;
+  --text-dim: #A8A29E;
+  --light: rgba(251, 113, 133, 0.16);
 
   /* Typography */
   --font-display: 'Instrument Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
@@ -84,7 +83,7 @@ html, body {
 body {
   font-family: var(--font-sans);
   background-color: var(--room);
-  background: radial-gradient(circle at 50% 30%, #150D27 0%, var(--room) 70%, var(--room-edge) 100%);
+  background: radial-gradient(circle at 50% 30%, #19151D 0%, var(--room) 70%, var(--room-edge) 100%);
   color: var(--text);
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
@@ -113,7 +112,7 @@ body {
 
 /* Accessible focus ring */
 :focus-visible {
-  outline: 2px solid var(--accent-amethyst);
+  outline: 2px solid var(--accent-ruby);
   outline-offset: 3px;
 }
 
@@ -132,25 +131,25 @@ button:disabled {
 
 /* Glassmorphism Luxury Surface Class */
 .paper-surface {
-  background: rgba(22, 14, 38, 0.85);
-  color: #FDFCFE;
-  border: 1px solid rgba(168, 85, 247, 0.24);
+  background: rgba(26, 22, 29, 0.88);
+  color: #FFFFFF;
+  border: 1px solid rgba(244, 63, 94, 0.24);
   border-radius: var(--radius-card);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.55), 0 0 1px rgba(244, 63, 94, 0.2);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.65), 0 0 1px rgba(244, 63, 94, 0.3);
   backdrop-filter: blur(20px);
   position: relative;
 }
 
 /* Glass Badge / Slip Class */
 .paper-slip {
-  background: rgba(28, 18, 48, 0.9);
-  color: #FDFCFE;
+  background: rgba(32, 28, 36, 0.92);
+  color: #FFFFFF;
   border-radius: var(--radius-slip);
   padding: 4px 10px;
   font-family: var(--font-sans);
   font-size: 13px;
-  border: 1px solid rgba(168, 85, 247, 0.28);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+  border: 1px solid rgba(244, 63, 94, 0.28);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
   display: inline-flex;
   align-items: center;
   gap: 6px;
@@ -167,10 +166,10 @@ button:disabled {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgba(168, 85, 247, 0.3);
+  background: rgba(244, 63, 94, 0.3);
   border-radius: var(--radius-pill);
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: var(--accent-amethyst);
+  background: var(--accent-ruby);
 }

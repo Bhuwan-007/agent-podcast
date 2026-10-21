@@ -403,7 +403,7 @@ export const CinematicTable: React.FC<CinematicTableProps> = ({
           width: 34px;
           height: 34px;
           border-radius: 50%;
-          border: 1px solid rgba(192, 132, 252, 0.45);
+          border: 1px solid rgba(251, 113, 133, 0.45);
           transition: width 0.3s, height 0.3s, border-radius 0.3s, border 0.3s;
         }
 
@@ -445,13 +445,13 @@ export const CinematicTable: React.FC<CinematicTableProps> = ({
 
         .view-mode-toggle {
           display: inline-flex;
-          background: rgba(19, 12, 32, 0.78);
-          border: 1px solid rgba(168, 85, 247, 0.28);
+          background: rgba(24, 20, 27, 0.88);
+          border: 1px solid rgba(244, 63, 94, 0.28);
           border-radius: 9999px;
           padding: 3px;
           gap: 3px;
           backdrop-filter: blur(16px);
-          box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+          box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
         }
 
         .view-toggle-btn {
@@ -464,7 +464,7 @@ export const CinematicTable: React.FC<CinematicTableProps> = ({
           letter-spacing: 0.03em;
           padding: 5px 12px;
           background: transparent;
-          color: #B8B0CC;
+          color: #A8A29E;
           border: none;
           border-radius: 9999px;
           cursor: pointer;
@@ -476,9 +476,9 @@ export const CinematicTable: React.FC<CinematicTableProps> = ({
         }
 
         .view-toggle-btn.active {
-          background: #A855F7;
+          background: #E11D48;
           color: #FFFFFF;
-          box-shadow: 0 2px 12px rgba(168, 85, 247, 0.45);
+          box-shadow: 0 2px 12px rgba(225, 29, 72, 0.45);
         }
 
         .studio-audio-btn {
@@ -489,9 +489,9 @@ export const CinematicTable: React.FC<CinematicTableProps> = ({
           font-size: 11px;
           font-weight: 600;
           letter-spacing: 0.03em;
-          background: rgba(19, 12, 32, 0.78);
-          color: #C084FC;
-          border: 1px solid rgba(168, 85, 247, 0.28);
+          background: rgba(24, 20, 27, 0.88);
+          color: #FB7185;
+          border: 1px solid rgba(244, 63, 94, 0.28);
           padding: 5px 12px;
           border-radius: 9999px;
           cursor: pointer;
@@ -500,14 +500,14 @@ export const CinematicTable: React.FC<CinematicTableProps> = ({
         }
 
         .studio-audio-btn:hover {
-          border-color: #C084FC;
+          border-color: #FB7185;
           color: #FDFCFE;
         }
 
         .studio-audio-btn.audio-online {
-          background: rgba(192, 132, 252, 0.22);
-          color: #FCE7F3;
-          border-color: #C084FC;
+          background: rgba(251, 113, 133, 0.22);
+          color: #FFF1F2;
+          border-color: #FB7185;
         }
 
         /* Top Right Voice Telemetry HUD */
@@ -526,11 +526,11 @@ export const CinematicTable: React.FC<CinematicTableProps> = ({
           align-items: center;
           gap: 8px;
           padding: 6px 14px;
-          background: rgba(19, 12, 32, 0.78);
-          border: 1px solid rgba(168, 85, 247, 0.25);
+          background: rgba(24, 20, 27, 0.88);
+          border: 1px solid rgba(244, 63, 94, 0.25);
           border-radius: 9999px;
           backdrop-filter: blur(16px);
-          box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+          box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
         }
 
         .status-beacon {
@@ -555,7 +555,7 @@ export const CinematicTable: React.FC<CinematicTableProps> = ({
           font-family: var(--font-mono, monospace);
           font-size: 11px;
           letter-spacing: 0.04em;
-          color: #B8B0CC;
+          color: #A8A29E;
         }
 
         .telemetry-text.agent-focus {
@@ -619,8 +619,8 @@ export const CinematicTable: React.FC<CinematicTableProps> = ({
           transform: translateX(-50%);
           width: min(880px, calc(100% - 32px));
           padding: 14px 20px;
-          background: rgba(20, 13, 34, 0.88);
-          border: 1px solid rgba(168, 85, 247, 0.28);
+          background: rgba(24, 20, 27, 0.92);
+          border: 1px solid rgba(244, 63, 94, 0.28);
           border-radius: 16px;
           box-shadow: 0 20px 48px rgba(0, 0, 0, 0.8);
           z-index: 30;
@@ -657,8 +657,8 @@ export const CinematicTable: React.FC<CinematicTableProps> = ({
           font-size: 9px;
           padding: 2px 7px;
           border-radius: 9999px;
-          background: rgba(168, 85, 247, 0.2);
-          color: #C084FC;
+          background: rgba(244, 63, 94, 0.2);
+          color: #FB7185;
           letter-spacing: 0.08em;
           font-weight: 600;
         }
@@ -725,7 +725,7 @@ export const CinematicTable: React.FC<CinematicTableProps> = ({
         .idle-label {
           font-family: var(--font-sans);
           font-size: 12px;
-          color: #B8B0CC;
+          color: #A8A29E;
         }
 
         .pull-chair-btn.inline-barge {

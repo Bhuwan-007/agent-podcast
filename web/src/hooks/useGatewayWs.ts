@@ -281,7 +281,9 @@ export function useGatewayWs() {
             }
 
             case 'playback_stopped': {
-              setActiveSpeakerId(null)
+              if (data.reason === 'finished' || data.reason === 'barge_in' || data.reason === 'end') {
+                setActiveSpeakerId(null)
+              }
               break
             }
 

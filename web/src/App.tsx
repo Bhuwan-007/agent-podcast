@@ -390,7 +390,7 @@ export const App: React.FC = () => {
           font-family: var(--font-mono);
           font-size: 11px;
           font-weight: 700;
-          color: #C084FC;
+          color: #FB7185;
           text-transform: uppercase;
           letter-spacing: 0.1em;
           display: inline-block;
@@ -409,7 +409,7 @@ export const App: React.FC = () => {
         .lobby-desc {
           font-family: var(--font-sans);
           font-size: 15px;
-          color: #B8B0CC;
+          color: #A8A29E;
           max-width: 620px;
           margin: 0 auto;
           line-height: 1.6;
@@ -429,8 +429,8 @@ export const App: React.FC = () => {
           gap: 24px;
           flex-wrap: wrap;
           align-items: center;
-          background: rgba(20, 13, 34, 0.85);
-          border: 1px solid rgba(168, 85, 247, 0.25);
+          background: rgba(24, 20, 27, 0.88);
+          border: 1px solid rgba(244, 63, 94, 0.25);
           border-radius: 16px;
         }
 
@@ -443,7 +443,7 @@ export const App: React.FC = () => {
           font-family: var(--font-mono);
           font-size: 11px;
           font-weight: 700;
-          color: #C084FC;
+          color: #FB7185;
           text-transform: uppercase;
           letter-spacing: 0.06em;
         }
@@ -459,13 +459,13 @@ export const App: React.FC = () => {
         .inscription-background {
           font-family: var(--font-sans);
           font-size: 14px;
-          color: #B8B0CC;
+          color: #A8A29E;
           margin-bottom: 14px;
           line-height: 1.5;
         }
 
         .opening-quote-box {
-          background: rgba(168, 85, 247, 0.1);
+          background: rgba(244, 63, 94, 0.1);
           border-left: 3px solid #F43F5E;
           padding: 10px 14px;
           margin-bottom: 14px;
@@ -477,7 +477,7 @@ export const App: React.FC = () => {
           font-family: var(--font-mono);
           font-size: 10px;
           font-weight: 700;
-          color: #C084FC;
+          color: #FB7185;
           text-transform: uppercase;
           margin-bottom: 4px;
         }
@@ -493,9 +493,9 @@ export const App: React.FC = () => {
 
         .disclosure-slip {
           font-size: 12px;
-          color: #C8BEDE;
+          color: #D6D3D1;
           background: rgba(255, 255, 255, 0.05);
-          border: 1px solid rgba(168, 85, 247, 0.2);
+          border: 1px solid rgba(244, 63, 94, 0.2);
           border-radius: 6px;
           padding: 6px 12px;
           display: inline-flex;
@@ -551,8 +551,8 @@ export const App: React.FC = () => {
           left: 50%;
           transform: translateX(-50%);
           width: min(960px, calc(100% - 32px));
-          background: rgba(18, 11, 32, 0.94);
-          border: 1px solid rgba(168, 85, 247, 0.35);
+          background: rgba(24, 20, 27, 0.95);
+          border: 1px solid rgba(244, 63, 94, 0.35);
           border-radius: 14px;
           box-shadow: 0 16px 48px rgba(0, 0, 0, 0.9);
           backdrop-filter: blur(24px);
@@ -572,7 +572,7 @@ export const App: React.FC = () => {
           justify-content: space-between;
           margin-bottom: 10px;
           padding-bottom: 6px;
-          border-bottom: 1px solid rgba(168, 85, 247, 0.2);
+          border-bottom: 1px solid rgba(244, 63, 94, 0.2);
         }
 
         .dev-header-left {
@@ -594,11 +594,11 @@ export const App: React.FC = () => {
           font-size: 10px;
           font-weight: 700;
           letter-spacing: 0.08em;
-          color: #C084FC;
+          color: #FB7185;
         }
 
         .dev-close-btn {
-          color: #7E7497;
+          color: #A8A29E;
           font-size: 14px;
           padding: 2px 6px;
           border-radius: 4px;
@@ -621,9 +621,9 @@ export const App: React.FC = () => {
           font-family: var(--font-sans);
           font-size: 11px;
           font-weight: 600;
-          background: rgba(28, 18, 48, 0.85);
-          color: #C8BEDE;
-          border: 1px solid rgba(168, 85, 247, 0.28);
+          background: rgba(32, 26, 36, 0.85);
+          color: #D6D3D1;
+          border: 1px solid rgba(244, 63, 94, 0.28);
           padding: 5px 10px;
           border-radius: 6px;
           transition: all 140ms ease;
@@ -631,8 +631,8 @@ export const App: React.FC = () => {
 
         .dev-btn:hover {
           color: #FFFFFF;
-          border-color: #C084FC;
-          background: rgba(168, 85, 247, 0.25);
+          border-color: #FB7185;
+          background: rgba(244, 63, 94, 0.25);
         }
 
         /* Screen F: Ended State */
@@ -654,8 +654,8 @@ export const App: React.FC = () => {
           flex-direction: column;
           align-items: center;
           gap: 12px;
-          background: rgba(20, 13, 34, 0.9);
-          border: 1px solid rgba(168, 85, 247, 0.3);
+          background: rgba(24, 20, 27, 0.92);
+          border: 1px solid rgba(244, 63, 94, 0.3);
           border-radius: 16px;
         }
 
@@ -681,7 +681,7 @@ export const App: React.FC = () => {
         .ended-desc {
           font-family: var(--font-sans);
           font-size: 14px;
-          color: #B8B0CC;
+          color: #A8A29E;
           margin: 0;
           line-height: 1.5;
         }
@@ -717,7 +717,7 @@ export const App: React.FC = () => {
           height: 100%;
           transform: none;
           border-radius: 16px;
-          border: 1px solid rgba(168, 85, 247, 0.25);
+          border: 1px solid rgba(244, 63, 94, 0.25);
         }
       `}</style>
     </div>
