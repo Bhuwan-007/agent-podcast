@@ -118,6 +118,21 @@ async def a1_test_page():
     return FileResponse(Path(__file__).with_name("dev_a1.html"))
 
 
+@app.get('/dev/roundtable', include_in_schema=False)
+async def roundtable_test_page():
+    return FileResponse(Path(__file__).with_name('dev_roundtable.html'))
+
+
+@app.websocket('/ws/a1')
+async def a1_socket(socket: WebSocket):
+    allowed = origins + ['http://localhost:8000', 'http://127.0.0.1:8000']
+    if socket.headers.get('origin') and socket.headers['origin'] not in allowed:
+        await socket.close(code=1008)
+        return
+    await socket.accept()
+    await VoiceSession(socket, a1_services).run()
+
+
 if __name__ == "__main__":
     import uvicorn
 

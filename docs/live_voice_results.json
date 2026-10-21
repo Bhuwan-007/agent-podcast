@@ -1,0 +1,38 @@
+{
+  "mode": "real providers",
+  "playback": "not tested; no playback acknowledgements fabricated",
+  "voices": [
+    {
+      "agent": 1,
+      "success": true,
+      "bytes": 31808,
+      "first_bytes_ms": 1818.7
+    },
+    {
+      "agent": 2,
+      "success": true,
+      "bytes": 51035,
+      "first_bytes_ms": 652.0
+    },
+    {
+      "agent": 3,
+      "success": true,
+      "bytes": 31808,
+      "first_bytes_ms": 780.7
+    }
+  ],
+  "stt": {
+    "success": true,
+    "text": "Maya, how can we check the security of generated code?",
+    "elapsed_ms": 3169.5,
+    "input": "synthetic spoken test question, not microphone acceptance"
+  },
+  "gateway": {
+    "audio_bytes": 0,
+    "complete_generation": false,
+    "notices": [
+      "agent_timeout"
+    ],
+    "end_confirmed": true
+  }
+}

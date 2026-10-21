@@ -41,6 +41,10 @@ class ExpertAgent:
         if event.to != self.id:
             raise ValueError('Wrong recipient')
         state = self.state(event.trace_id)
+        if event.type == 'floor.resume':
+            if event.sender != 'gateway':
+                raise ValueError('Resume requires the gateway')
+            return [envelope('agent.ack', event.trace_id, event.turn_id, self.id, 'gateway', received='floor.resume')]
         if event.type == 'agent.direct':
             if event.sender not in AGENTS or event.sender == self.id:
                 raise ValueError('Invalid direct sender')
@@ -53,7 +57,7 @@ class ExpertAgent:
                              received='agent.direct')]
         if event.type == 'floor.utterance':
             text = event.payload.get('text', '')
-            if event.sender not in (*AGENTS, 'organizer_prompt') or not isinstance(text, str) or not text or len(text) > 4000:
+            if event.sender not in (*AGENTS, 'organizer_prompt', 'human') or not isinstance(text, str) or not text or len(text) > 4000:
                 raise ValueError('Invalid utterance')
             if event.turn_id <= state['version']:
                 raise ValueError('Stale or duplicate utterance')

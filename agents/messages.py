@@ -14,7 +14,7 @@ AGENTS = ('ai_engineer', 'software_developer', 'oss_maintainer')
 class Envelope(BaseModel):
     model_config = ConfigDict(populate_by_name=True, extra='forbid')
     type: Literal['floor.utterance', 'floor.bid', 'floor.grant', 'agent.direct',
-                  'agent.speech', 'agent.ack', 'human.question']
+                  'agent.speech', 'agent.ack', 'human.question', 'floor.resume']
     trace_id: str = Field(min_length=1, max_length=100)
     turn_id: int = Field(ge=0)
     sender: str = Field(alias='from', min_length=1, max_length=60)

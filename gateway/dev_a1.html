@@ -70,7 +70,7 @@ el('start').onclick = async () => {
     ended = false; epoch = 0; turn = null; stopAudio();
     el('start').disabled = true; el('end').disabled = false; el('transcript').textContent = '';
     el('state').textContent = 'Connecting';
-    ws = new WebSocket((location.protocol === 'https:' ? 'wss://' : 'ws://') + location.host + '/ws');
+    ws = new WebSocket((location.protocol === 'https:' ? 'wss://' : 'ws://') + location.host + '/ws/a1');
     ws.onopen = () => send({type:'start_session', topic_id:'topic_1', session_id:null});
     ws.onmessage = ({data}) => {
       const event = JSON.parse(data);
