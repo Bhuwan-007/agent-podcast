@@ -1,5 +1,19 @@
 # A1 + B4 integration review — 2026-10-22
 
+## Latest B5 pairing follow-up
+
+During A2, main through `20560b2` was merged without conflicts. B5 accepts epoch 0,
+assembles sentence MP3 bytes and adds an asynchronous decode cancellation token.
+Its 12 frontend unit tests and production build pass. An actual-class diagnostic
+with mocked Web Audio still reproduces two failures: `finished` is emitted before
+pending decodes complete, and starting the second sentence's decode invalidates the
+first sentence's decode. Only sentence 1 starts when 0 and 1 were expected.
+Run `node eval/check_b5_player.mjs`; see `docs/b5_player_pairing_diagnostic.json`.
+Completion acks also omit `sentence_idx`. Source review additionally shows generation
+flags and flushed sentence IDs are not reset for each new turn. Please cover multiple
+turns in production-class tests. These are frontend pairing issues, not A2 text failures.
+Earlier B3/B4 findings below are historical; no teammate source was changed here.
+
 ## Pre-merge verification (latest)
 
 User authorized merging A1 into main. Main's B4 commit `71ac6e6` was merged into

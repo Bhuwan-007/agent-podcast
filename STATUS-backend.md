@@ -1,5 +1,16 @@
 # STATUS-backend.md — Lane A Progress & Verification
 
+**Latest A2 verification (2026-10-22):** branch `agents/a2-floor-protocol`; real
+10-turn text discussion across three independent A2A processes passed with explicit
+120B speech / 20B bid models, 2,500 ms bid deadline and 12 s quota pacing. Median bid
+round 777.9 ms; unchanged default 400 ms failed (0/1 turn). 49 Python tests passed
+in a clean requirements-only environment (4.82 s), `pip check` passed, and 4 A1 player
+tests passed. Latest main through B5 `20560b2` merged without conflicts; 12 frontend
+unit tests and build passed, with a 894.26 kB bundle warning. A separate diagnostic of
+the actual B5 player with mocked Web Audio exposes premature completion and a dropped
+sentence; live frontend acceptance remains blocked. See `docs/a2_acceptance.md` and
+`docs/b5_player_pairing_diagnostic.json`. No main merge of A2 is authorized/claimed here.
+
 **Owner:** Person A (Backend / Agents / Voice)  
 **Last Updated:** 2026-10-22 — A1 functional playback verified; latency goal outstanding
 
@@ -21,7 +32,7 @@ browser path is `/dev/a1`. Functional completion does not claim the 1.5 s goal.
 |---|---|---|---|
 | **A0** | Scaffold & Architecture Skeleton | **DONE** | `pytest eval/` passed (2/2); `/health` returns `{"status":"ok"}`; JSONL tracing active |
 | **A1** | One real agent speaking + live WS | Functional pass; latency goal outstanding | 34 Python + 4 player tests; real voice and question-quality samples; user confirmed speech, typed reply and End |
-| **A2** | Three A2A agents + floor protocol | Planned | — |
+| **A2** | Three A2A agents + floor protocol | Text functional pass with diagnostic settings; default latency blocked | Real 10-turn/3-process run; 400 ms window failed; see docs/a2_acceptance.md |
 | **A3** | Voice for all agents (multi-voice TTS) | Planned | — |
 | **A4** | Mid-sentence barge-in, routing, STT | Planned | — |
 | **A5** | Claims ledger & rolling memory | Planned | — |
@@ -32,6 +43,7 @@ browser path is `/dev/a1`. Functional completion does not claim the 1.5 s goal.
 ---
 
 ## 2. Implemented Components
+- **A2 independent services:** `agents/agent_server.py`, `base_agent.py`, `model.py`, `messages.py` and three Topic 1 personas; SDK Agent Cards, JSON-RPC/SSE, bounded recent context and real peer-message relays. `gateway/moderator.py` never calls a model; `gateway/a2a_client.py` collects parallel bids; `gateway/cli.py` runs the text discussion. No A2 browser/voice wiring yet. Setup and limitations: `docs/a2_protocol.md`.
 - **FastAPI Gateway (`gateway/main.py`):** `/health`, `/ws`, origin validation, and backend-owned `/dev/a1` voice test page. CORS permits `http://localhost:5173`.
 - **Voice session (`gateway/session.py`):** Topic 1 loader, single active turn, epoch cancellation, JSON/base64 audio events, real playback acknowledgements and safe error notices.
 - **Single expert (`agents/llm.py`, `agents/personas/topic_1/ai_engineer.yaml`):** Dynamic model response in Alex's perspective; strips claims metadata before speech. This is not A2A, which starts in A2.
