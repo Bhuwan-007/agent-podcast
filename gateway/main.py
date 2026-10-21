@@ -36,6 +36,9 @@ async def lifespan(app: FastAPI):
         payload={"service": "ai-roundtable-gateway", "status": "running"},
     )
     yield
+    if hasattr(app.state, 'runtime'):
+        await app.state.runtime.close()
+        del app.state.runtime
     # Shutdown
     await trace_logger.log_event(
         trace_id="system_shutdown",
@@ -93,7 +96,20 @@ async def websocket_session(socket: WebSocket):
         await socket.close(code=1008)
         return
     await socket.accept()
-    await VoiceSession(socket, a1_services).run()
+    if os.getenv('ROUNDTABLE_MODE') == 'panel':
+        from gateway.panel_session import PanelSession
+        await PanelSession(socket, panel_services).run()
+    else:
+        await VoiceSession(socket, a1_services).run()
+
+
+async def panel_services(session_id, logger):
+    from gateway.runtime import AgentRuntime
+    if not hasattr(app.state, 'runtime'):
+        app.state.runtime = AgentRuntime()
+    if not hasattr(app.state, 'tts'):
+        app.state.tts = ElevenLabsTTS(TTSConfig.from_env())
+    return await app.state.runtime.pool(session_id, logger), app.state.tts
 
 
 @app.get("/dev/a1", include_in_schema=False)
