@@ -7,6 +7,7 @@ interface YourSeatProps {
   isProcessing: boolean
   isBlocked: boolean
   micOn: boolean
+  micAudioLevel?: number
   onMicToggle: () => void
   onBargeIn: () => void
 }
@@ -18,6 +19,7 @@ export const YourSeat: React.FC<YourSeatProps> = ({
   isProcessing,
   isBlocked,
   micOn,
+  micAudioLevel = 0,
   onMicToggle,
   onBargeIn,
 }) => {
@@ -68,7 +70,18 @@ export const YourSeat: React.FC<YourSeatProps> = ({
       <div className="your-plate paper-surface">
         <div className="your-plate-top">
           <span className="your-label">YOU (Human Listener)</span>
-          <span className={`your-tag ${isListening ? 'tag-listening' : ''}`}>{statusText}</span>
+          <div className="status-with-wave">
+            {micOn && (
+              <div className="mic-live-waveform" aria-hidden="true" title="Live mic audio input">
+                <span className="wave-bar" style={{ height: `${Math.max(3, Math.min(18, micAudioLevel * 24 * 0.7))}px` }} />
+                <span className="wave-bar" style={{ height: `${Math.max(3, Math.min(22, micAudioLevel * 28 * 1.1))}px` }} />
+                <span className="wave-bar" style={{ height: `${Math.max(3, Math.min(24, micAudioLevel * 32 * 1.4))}px` }} />
+                <span className="wave-bar" style={{ height: `${Math.max(3, Math.min(20, micAudioLevel * 26 * 0.9))}px` }} />
+                <span className="wave-bar" style={{ height: `${Math.max(3, Math.min(16, micAudioLevel * 20 * 0.6))}px` }} />
+              </div>
+            )}
+            <span className={`your-tag ${isListening ? 'tag-listening' : ''}`}>{statusText}</span>
+          </div>
         </div>
         <div className="your-actions">
           <button
@@ -118,19 +131,37 @@ export const YourSeat: React.FC<YourSeatProps> = ({
           font-weight: 700;
           color: var(--ink);
         }
+        .status-with-wave {
+          display: flex;
+          align-items: center;
+          gap: 6px;
+        }
+        .mic-live-waveform {
+          display: flex;
+          align-items: flex-end;
+          gap: 2px;
+          height: 16px;
+          padding: 0 2px;
+        }
+        .wave-bar {
+          width: 2.5px;
+          background: #F43F5E;
+          border-radius: 1px;
+          transition: height 0.08s ease;
+        }
         .your-tag {
           font-family: var(--font-mono);
           font-size: 9px;
           font-weight: 700;
           text-transform: uppercase;
-          background: rgba(0, 0, 0, 0.08);
+          background: rgba(168, 85, 247, 0.18);
           padding: 1px 5px;
           border-radius: var(--radius-slip);
-          color: #4A3E36;
+          color: #C8BEDE;
         }
         .tag-listening {
-          background: var(--inlay-line);
-          color: var(--paper);
+          background: #F43F5E;
+          color: #FFFFFF;
         }
         .your-actions {
           display: flex;
@@ -142,14 +173,15 @@ export const YourSeat: React.FC<YourSeatProps> = ({
           font-family: var(--font-sans);
           font-size: 11px;
           font-weight: 600;
-          background: var(--paper-shade);
-          color: var(--ink);
-          border: 1px solid #B0A284;
+          background: rgba(168, 85, 247, 0.2);
+          color: #FDFCFE;
+          border: 1px solid rgba(168, 85, 247, 0.35);
           border-radius: var(--radius-slip);
         }
         .mic-toggle-btn.btn-on {
-          background: var(--inlay-line);
-          color: var(--paper);
+          background: #A855F7;
+          color: #FFFFFF;
+          border-color: #C084FC;
         }
         .interrupt-btn {
           flex: 1.2;
@@ -157,13 +189,14 @@ export const YourSeat: React.FC<YourSeatProps> = ({
           font-family: var(--font-sans);
           font-size: 11px;
           font-weight: 700;
-          background: var(--ink);
-          color: var(--paper);
+          background: #E11D48;
+          color: #FFFFFF;
+          border: 1px solid #F43F5E;
           border-radius: var(--radius-slip);
           transition: background var(--transition-fast);
         }
         .interrupt-btn:hover {
-          background: #362B24;
+          background: #F43F5E;
         }
       `}</style>
     </div>

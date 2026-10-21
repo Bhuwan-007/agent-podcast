@@ -10,6 +10,8 @@ interface ThreeTableSceneProps {
   activeThread: ActiveThread | null
   isUserSpeaking: boolean
   isUserProcessing?: boolean
+  speakerAudioLevel?: number
+  micAudioLevel?: number
   onSelectAgent: (agentId: string | null) => void
   onHoverAgent?: (agentId: string | null) => void
 }
@@ -41,6 +43,8 @@ export const ThreeTableScene: React.FC<ThreeTableSceneProps> = ({
   activeThread,
   isUserSpeaking,
   isUserProcessing = false,
+  speakerAudioLevel = 0,
+  micAudioLevel = 0,
   onSelectAgent,
   onHoverAgent: _onHoverAgent,
 }) => {
@@ -53,6 +57,8 @@ export const ThreeTableScene: React.FC<ThreeTableSceneProps> = ({
     activeThread,
     isUserSpeaking,
     isUserProcessing,
+    speakerAudioLevel,
+    micAudioLevel,
     agents: topic.agents,
   })
 
@@ -63,22 +69,24 @@ export const ThreeTableScene: React.FC<ThreeTableSceneProps> = ({
       activeThread,
       isUserSpeaking,
       isUserProcessing,
+      speakerAudioLevel,
+      micAudioLevel,
       agents: topic.agents,
     }
-  }, [activeSpeakerId, addressedAgentId, activeThread, isUserSpeaking, isUserProcessing, topic.agents])
+  }, [activeSpeakerId, addressedAgentId, activeThread, isUserSpeaking, isUserProcessing, speakerAudioLevel, micAudioLevel, topic.agents])
 
   useEffect(() => {
     const container = mountRef.current
     if (!container) return
 
-    // Scene setup with warm room background matching --room: #17120F
+    // Scene setup with cyber-luxe cosmic background
     const scene = new THREE.Scene()
-    scene.background = new THREE.Color(0x17120f)
-    scene.fog = new THREE.FogExp2(0x17120f, 0.009)
+    scene.background = new THREE.Color(0x090611)
+    scene.fog = new THREE.FogExp2(0x090611, 0.008)
 
     const width = container.clientWidth || 800
     const height = container.clientHeight || 650
-    const camera = new THREE.PerspectiveCamera(40, width / height, 0.1, 1000)
+    const camera = new THREE.PerspectiveCamera(52, width / height, 0.1, 1000)
 
     const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: 'high-performance' })
     renderer.setSize(width, height)
@@ -86,14 +94,14 @@ export const ThreeTableScene: React.FC<ThreeTableSceneProps> = ({
     renderer.shadowMap.enabled = true
     renderer.shadowMap.type = THREE.PCFSoftShadowMap
     renderer.toneMapping = THREE.ACESFilmicToneMapping
-    renderer.toneMappingExposure = 1.15
+    renderer.toneMappingExposure = 1.25
     container.appendChild(renderer.domElement)
 
-    // Lighting: Studio Room Setup
-    const ambientLight = new THREE.AmbientLight(0xecdcc2, 0.42)
+    // Lighting: Cyberpunk Studio Setup
+    const ambientLight = new THREE.AmbientLight(0x3a1d5c, 0.65)
     scene.add(ambientLight)
 
-    const overheadLight = new THREE.DirectionalLight(0xffeedd, 0.8)
+    const overheadLight = new THREE.DirectionalLight(0xfff0f5, 0.85)
     overheadLight.position.set(0, 45, 12)
     overheadLight.castShadow = true
     overheadLight.shadow.mapSize.width = 1024
@@ -101,8 +109,8 @@ export const ThreeTableScene: React.FC<ThreeTableSceneProps> = ({
     overheadLight.shadow.bias = -0.0005
     scene.add(overheadLight)
 
-    // Dynamic warm spotlight that tracks the speaking chair
-    const spotlight = new THREE.SpotLight(0xffe2aa, 4.2, 75, Math.PI / 4.5, 0.45, 1.2)
+    // Dynamic luminous spotlight that tracks the speaking chair
+    const spotlight = new THREE.SpotLight(0xf43f5e, 4.5, 80, Math.PI / 4.2, 0.45, 1.2)
     spotlight.position.set(0, 36, 0)
     spotlight.castShadow = true
     spotlight.shadow.mapSize.width = 1024
@@ -115,9 +123,9 @@ export const ThreeTableScene: React.FC<ThreeTableSceneProps> = ({
     // Studio Floor
     const floorGeo = new THREE.PlaneGeometry(180, 180)
     const floorMat = new THREE.MeshStandardMaterial({
-      color: 0x110c09,
-      roughness: 0.95,
-      metalness: 0.05,
+      color: 0x06030c,
+      roughness: 0.85,
+      metalness: 0.2,
     })
     const floor = new THREE.Mesh(floorGeo, floorMat)
     floor.rotation.x = -Math.PI / 2
@@ -125,7 +133,7 @@ export const ThreeTableScene: React.FC<ThreeTableSceneProps> = ({
     floor.receiveShadow = true
     scene.add(floor)
 
-    // Warm Atmospheric Dust Particles (reflecting studio spotlight)
+    // Violet Atmospheric Stardust Particles
     const particleCount = 200
     const particleGeo = new THREE.BufferGeometry()
     const particlePositions = new Float32Array(particleCount * 3)
@@ -136,10 +144,10 @@ export const ThreeTableScene: React.FC<ThreeTableSceneProps> = ({
     }
     particleGeo.setAttribute('position', new THREE.BufferAttribute(particlePositions, 3))
     const particleMat = new THREE.PointsMaterial({
-      color: 0xffe2aa,
-      size: 0.25,
+      color: 0xc084fc,
+      size: 0.28,
       transparent: true,
-      opacity: 0.35,
+      opacity: 0.45,
       blending: THREE.AdditiveBlending,
     })
     const particles = new THREE.Points(particleGeo, particleMat)
@@ -149,46 +157,49 @@ export const ThreeTableScene: React.FC<ThreeTableSceneProps> = ({
     const tableGroup = new THREE.Group()
     scene.add(tableGroup)
 
-    // Table Top (Wood Cylinder with rich walnut finish)
+    // Table Top (Dark Obsidian composite)
     const tableRadius = 16
     const tableTopGeo = new THREE.CylinderGeometry(tableRadius, tableRadius + 0.4, 1.2, 64)
     const tableMat = new THREE.MeshStandardMaterial({
-      color: 0x5a3f2e, // --wood
-      roughness: 0.72,
-      metalness: 0.08,
+      color: 0x120c22,
+      roughness: 0.38,
+      metalness: 0.4,
     })
     const tableTop = new THREE.Mesh(tableTopGeo, tableMat)
     tableTop.position.y = 0
     tableTop.receiveShadow = true
     tableGroup.add(tableTop)
 
-    // Table Rim
+    // Table Rim (Radiant Amethyst Glow)
     const rimGeo = new THREE.TorusGeometry(tableRadius + 0.3, 0.45, 16, 64)
     const rimMat = new THREE.MeshStandardMaterial({
-      color: 0x3c2a1f,
-      roughness: 0.8,
+      color: 0x9333ea,
+      roughness: 0.3,
+      metalness: 0.7,
+      emissive: 0x240742,
     })
     const rim = new THREE.Mesh(rimGeo, rimMat)
     rim.rotation.x = Math.PI / 2
     rim.position.y = 0.5
     tableGroup.add(rim)
 
-    // Table Center Inlay (Dark felt / leather inlay)
+    // Table Center Inlay (Carbon Velvet)
     const inlayGeo = new THREE.CylinderGeometry(7.5, 7.5, 1.25, 64)
     const inlayMat = new THREE.MeshStandardMaterial({
-      color: 0x2a1f19, // --inlay
-      roughness: 0.88,
+      color: 0x07040d,
+      roughness: 0.9,
     })
     const inlay = new THREE.Mesh(inlayGeo, inlayMat)
     inlay.position.y = 0.02
     tableGroup.add(inlay)
 
-    // Inlay Brass Ring
+    // Inlay Amethyst Ring
     const brassRingGeo = new THREE.TorusGeometry(7.6, 0.12, 16, 64)
     const brassRingMat = new THREE.MeshStandardMaterial({
-      color: 0x8a6a4b, // brass
-      roughness: 0.28,
-      metalness: 0.75,
+      color: 0xa855f7,
+      roughness: 0.2,
+      metalness: 0.8,
+      emissive: 0x3d0b66,
     })
     const brassRing = new THREE.Mesh(brassRingGeo, brassRingMat)
     brassRing.rotation.x = Math.PI / 2
@@ -198,9 +209,9 @@ export const ThreeTableScene: React.FC<ThreeTableSceneProps> = ({
     // Central Topic Inscription Plaque
     const plaqueGeo = new THREE.CylinderGeometry(3.2, 3.2, 0.06, 32)
     const plaqueMat = new THREE.MeshStandardMaterial({
-      color: 0x33251c,
-      roughness: 0.6,
-      metalness: 0.4,
+      color: 0x1a112e,
+      roughness: 0.5,
+      metalness: 0.5,
     })
     const plaque = new THREE.Mesh(plaqueGeo, plaqueMat)
     plaque.position.y = 0.66
@@ -209,7 +220,7 @@ export const ThreeTableScene: React.FC<ThreeTableSceneProps> = ({
     // Central Pedestal Base
     const pedestalGeo = new THREE.CylinderGeometry(3.5, 5, 4, 32)
     const pedestalMat = new THREE.MeshStandardMaterial({
-      color: 0x221712,
+      color: 0x0d0818,
       roughness: 0.9,
     })
     const pedestal = new THREE.Mesh(pedestalGeo, pedestalMat)
@@ -238,32 +249,32 @@ export const ThreeTableScene: React.FC<ThreeTableSceneProps> = ({
     const chairMeshes: ChairEntry[] = []
     const interactableObjects: THREE.Object3D[] = []
 
-    // Expert seat angles: 3 experts across top 200° (215°, 270°, 325°)
+    // Expert seat angles: 3 experts across top 200° (210°, 270°, 330°)
     const angles = [
-      (215 * Math.PI) / 180,
+      (210 * Math.PI) / 180,
       (270 * Math.PI) / 180,
-      (325 * Math.PI) / 180,
+      (330 * Math.PI) / 180,
     ]
 
-    const seatColors = [0x9c4a47, 0xb8975a, 0x7b5c82]
-    const seatColorHex = ['#9C4A47', '#B8975A', '#7B5C82']
-    const activeGlowColors = [0xee6660, 0xf0c878, 0xbb88cc]
+    const seatColors = [0xf43f5e, 0xa855f7, 0xc084fc]
+    const seatColorHex = ['#F43F5E', '#A855F7', '#C084FC']
+    const activeGlowColors = [0xff1493, 0xc084fc, 0xe879f9]
 
-    // Helper: Create Canvas Nameplate Texture
+    // Helper: Create Canvas Nameplate Texture in Dark Glass
     function createNameplateTexture(name: string, role: string, colorHex: string) {
       const canvas = document.createElement('canvas')
       canvas.width = 512
       canvas.height = 256
       const ctx = canvas.getContext('2d')
       if (ctx) {
-        // Brass / aged paper background
-        ctx.fillStyle = '#EADFC8'
+        // Deep obsidian glass background
+        ctx.fillStyle = '#140E24'
         ctx.fillRect(0, 0, 512, 256)
 
-        // Border line in expert color
+        // Border line in vibrant accent color
         ctx.strokeStyle = colorHex
         ctx.lineWidth = 10
-        ctx.strokeRect(16, 16, 480, 224)
+        ctx.strokeRect(14, 14, 484, 228)
 
         // Status indicator dot
         ctx.fillStyle = colorHex
@@ -271,14 +282,14 @@ export const ThreeTableScene: React.FC<ThreeTableSceneProps> = ({
         ctx.arc(60, 80, 16, 0, Math.PI * 2)
         ctx.fill()
 
-        // Name
-        ctx.font = 'bold 58px system-ui, sans-serif'
-        ctx.fillStyle = '#1C1612'
+        // Name in pure pearl white
+        ctx.font = 'bold 54px system-ui, sans-serif'
+        ctx.fillStyle = '#FDFCFE'
         ctx.fillText(name.toUpperCase(), 95, 96)
 
-        // Role
-        ctx.font = '32px system-ui, sans-serif'
-        ctx.fillStyle = '#5A3F2E'
+        // Role in lavender amethyst
+        ctx.font = '500 28px system-ui, sans-serif'
+        ctx.fillStyle = '#C8BEDE'
         ctx.fillText(role.toUpperCase(), 60, 175)
       }
       const tex = new THREE.CanvasTexture(canvas)
@@ -663,10 +674,10 @@ export const ThreeTableScene: React.FC<ThreeTableSceneProps> = ({
         focusLookAt.set(0, 2.2, 21.5)
         targetSpotPos.set(0, 1, 20)
         targetSpotIntensity = 4.8
-        targetFov = 34 // Intimate framing
+        targetFov = 38
 
-        // Mic LED glows green
-        micHeadMat.emissive.setHex(0x55dd88)
+        // Mic LED glows vibrant magenta (strictly no green)
+        micHeadMat.emissive.setHex(0xf43f5e)
       } else if (activeSpk) {
         const chair = chairMeshes.find(
           (c) =>
@@ -681,34 +692,34 @@ export const ThreeTableScene: React.FC<ThreeTableSceneProps> = ({
 
           // Studio Broadcast Crane: Camera glides along outer host perimeter arc
           if (chair.id === 'ai_engineer') {
-            // Alex on northwest: Camera sits on right-host arc, angling gently across table
-            focusTargetPos.set(7.5, 13.5, 25)
-            focusLookAt.set(-17.6, 2.6, -12.3)
+            // Alex on left: Camera sits on right-host arc, angling gently across table
+            focusTargetPos.set(8.5, 14, 24)
+            focusLookAt.set(-18, 3.2, -10.5)
           } else if (chair.id === 'software_developer') {
-            // Sam on north center: Camera sits center host arc, looking straight down table
-            focusTargetPos.set(0, 12.5, 26)
-            focusLookAt.set(0, 2.6, -21.5)
+            // Sam on center: Camera sits center host arc, looking straight down table
+            focusTargetPos.set(0, 13.5, 25)
+            focusLookAt.set(0, 3.2, -21.5)
           } else if (chair.id === 'oss_maintainer') {
-            // Maya on northeast: Camera sits on left-host arc, angling gently across table
-            focusTargetPos.set(-7.5, 13.5, 25)
-            focusLookAt.set(17.6, 2.6, -12.3)
+            // Maya on right: Camera sits on left-host arc, angling gently across table
+            focusTargetPos.set(-8.5, 14, 24)
+            focusLookAt.set(18, 3.2, -10.5)
           } else {
-            focusTargetPos.set(-cp.x * 0.4, 13.5, 24)
-            focusLookAt.set(cp.x, 2.6, cp.z)
+            focusTargetPos.set(-cp.x * 0.4, 14, 24)
+            focusLookAt.set(cp.x, 3.2, cp.z)
           }
 
           targetSpotPos.set(cp.x, 1, cp.z)
           targetSpotIntensity = 4.8
-          targetFov = 32 // Intimate cinematic broadcast framing
+          targetFov = 36 // Intimate cinematic broadcast framing
         }
         micHeadMat.emissive.setHex(0x000000)
       } else {
-        // Table Overview when room is listening / waiting
-        focusTargetPos.set(0, 36, 32)
-        focusLookAt.set(0, 0.5, 0)
+        // Table Overview: 3 agents cover the entire width at the same height!
+        focusTargetPos.set(0, 24, 28)
+        focusLookAt.set(0, 3.2, -6)
         targetSpotPos.set(0, 0, 0)
-        targetSpotIntensity = 1.6
-        targetFov = 42
+        targetSpotIntensity = 1.8
+        targetFov = 52
         micHeadMat.emissive.setHex(0x000000)
       }
 
@@ -756,12 +767,21 @@ export const ThreeTableScene: React.FC<ThreeTableSceneProps> = ({
         }
         chair.group.position.lerp(targetPos, delta * 5)
 
-        // Update shader uniforms
+        // Update shader uniforms with real audio energy
         if (chair.avatarUniforms) {
           chair.avatarUniforms.time.value = time
           const curIntensity = chair.avatarUniforms.voiceIntensity.value
-          const targetIntensity = isThisSpeaking ? 1.0 : 0.0
-          chair.avatarUniforms.voiceIntensity.value += (targetIntensity - curIntensity) * 0.12
+          let targetIntensity = 0.0
+          if (isThisSpeaking) {
+            if (chair.isUser) {
+              const micLvl = currentProps.micAudioLevel || 0
+              targetIntensity = 0.5 + micLvl * 1.8
+            } else {
+              const spkLvl = currentProps.speakerAudioLevel || 0
+              targetIntensity = 0.5 + spkLvl * 2.2
+            }
+          }
+          chair.avatarUniforms.voiceIntensity.value += (targetIntensity - curIntensity) * 0.15
         }
 
         // Rotate halo rings (faster when speaking)
@@ -836,12 +856,10 @@ export const ThreeTableScene: React.FC<ThreeTableSceneProps> = ({
         .three-table-wrap {
           width: 100%;
           height: 100%;
-          min-height: 540px;
-          height: 560px;
+          min-height: 480px;
           position: relative;
-          border-radius: var(--radius-card, 4px);
           overflow: hidden;
-          background: #17120F;
+          background: #090611;
           cursor: crosshair;
         }
         .three-table-wrap canvas {

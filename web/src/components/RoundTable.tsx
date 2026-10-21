@@ -15,6 +15,7 @@ interface RoundTableProps {
   isUserListening: boolean
   isUserProcessing: boolean
   micOn: boolean
+  micAudioLevel?: number
   onAddressAgent: (agentId: string | null) => void
   onMicToggle: () => void
   onBargeIn: () => void
@@ -29,6 +30,7 @@ export const RoundTable: React.FC<RoundTableProps> = ({
   isUserListening,
   isUserProcessing,
   micOn,
+  micAudioLevel = 0,
   onAddressAgent,
   onMicToggle,
   onBargeIn,
@@ -99,29 +101,29 @@ export const RoundTable: React.FC<RoundTableProps> = ({
       {/* SVG Table Top */}
       <svg width={width} height={height} className="table-svg" aria-hidden="true">
         <defs>
-          {/* Subtle two-tone wood linear gradient */}
+          {/* Subtle two-tone obsidian/amethyst linear gradient */}
           <linearGradient id="wood-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stopColor="#5E4331" />
-            <stop offset="100%" stopColor="#4C3425" />
+            <stop offset="0%" stopColor="#1B1231" />
+            <stop offset="100%" stopColor="#120A22" />
           </linearGradient>
 
           {/* Inlay radial gradient */}
           <radialGradient id="inlay-gradient" cx="50%" cy="50%" r="50%">
-            <stop offset="0%" stopColor="#2F231C" />
-            <stop offset="100%" stopColor="#231A15" />
+            <stop offset="0%" stopColor="#0F081D" />
+            <stop offset="100%" stopColor="#080410" />
           </radialGradient>
         </defs>
 
-        {/* Outer wood rim shadow */}
-        <circle cx={centerX} cy={centerY} r={tableRadius + 8} fill="var(--room-edge)" opacity="0.6" />
+        {/* Outer rim shadow */}
+        <circle cx={centerX} cy={centerY} r={tableRadius + 8} fill="#05030A" opacity="0.8" />
 
-        {/* Outer wood rim */}
+        {/* Outer rim */}
         <circle
           cx={centerX}
           cy={centerY}
           r={tableRadius + 4}
-          fill="var(--wood-edge)"
-          stroke="var(--wood)"
+          fill="#160D2A"
+          stroke="#9333EA"
           strokeWidth="1.5"
         />
 
@@ -131,7 +133,7 @@ export const RoundTable: React.FC<RoundTableProps> = ({
           cy={centerY}
           r={tableRadius}
           fill="url(#wood-gradient)"
-          stroke="var(--inlay-line)"
+          stroke="#A855F7"
           strokeWidth="1.5"
         />
 
@@ -141,7 +143,7 @@ export const RoundTable: React.FC<RoundTableProps> = ({
           cy={centerY}
           r={tableRadius - 35}
           fill="none"
-          stroke="var(--inlay-line)"
+          stroke="#C084FC"
           strokeWidth="1"
           strokeDasharray="6 4"
           opacity="0.6"
@@ -153,7 +155,7 @@ export const RoundTable: React.FC<RoundTableProps> = ({
           cy={centerY}
           r={135}
           fill="url(#inlay-gradient)"
-          stroke="var(--inlay-line)"
+          stroke="#A855F7"
           strokeWidth="1.5"
         />
 
@@ -163,9 +165,9 @@ export const RoundTable: React.FC<RoundTableProps> = ({
           cy={centerY}
           r={120}
           fill="none"
-          stroke="var(--inlay-line)"
+          stroke="#F43F5E"
           strokeWidth="0.75"
-          opacity="0.4"
+          opacity="0.5"
         />
       </svg>
 
@@ -232,6 +234,7 @@ export const RoundTable: React.FC<RoundTableProps> = ({
         isProcessing={isUserProcessing}
         isBlocked={false}
         micOn={micOn}
+        micAudioLevel={micAudioLevel}
         onMicToggle={onMicToggle}
         onBargeIn={onBargeIn}
       />

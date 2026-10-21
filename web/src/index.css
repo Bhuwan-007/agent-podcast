@@ -1,42 +1,56 @@
-/* 04 v2 — Design System: "The Table" */
+/* Design System: "Cyber-Luxe Amethyst & Radiant Magenta" */
 
 :root {
-  /* Warm matte palette from doc 04 v2 */
-  --room: #17120F;
-  --room-edge: #0E0A08;
-  --wood: #5A3F2E;
-  --wood-edge: #3C2A1F;
-  --inlay-line: #8A6A4B;
-  --inlay: #2A1F19;
-  --paper: #EADFC8;
-  --paper-shade: #CDBF9F;
-  --ink: #1C1612;
-  --text: #EFE6D2;
-  --text-muted: #B7A98F;
-  --light: rgba(255, 226, 170, 0.16);
+  /* Vibrant Amethyst & Neon Rose / Crimson Palette (Strictly NO shiny blue, NO green, NO navy blue, NO orange) */
+  --room: #090611;
+  --room-edge: #05030A;
+  --surface-1: #130C22;
+  --surface-2: #1C1231;
+  --surface-3: #271A42;
+  --surface-glass: rgba(20, 13, 34, 0.78);
+  --surface-glass-border: rgba(168, 85, 247, 0.22);
+  --surface-glass-hover: rgba(168, 85, 247, 0.38);
 
-  /* Expert Seat Colors */
-  --seat-1: #9C4A47; /* Alex / AI Engineer (dusty oxblood) */
-  --seat-2: #B8975A; /* Sam / Software Dev (antique brass) */
-  --seat-3: #7B5C82; /* Maya / OSS Maintainer (dusty plum) */
-  --seat-4: #8F8A7A; /* Optional expert 4 (stone) */
-  --you: #EADFC8;    /* Your seat (ivory) */
+  /* Vibrant Accents */
+  --accent-magenta: #FF1493;
+  --accent-rose: #F43F5E;
+  --accent-violet: #A855F7;
+  --accent-amethyst: #C084FC;
+  --accent-plum: #9333EA;
+  --accent-crimson: #E11D48;
+  --accent-pearl: #FCE7F3;
 
-  /* Status Colors (Subtle & Matte) */
-  --status-error-border: #9C4A47;
-  --status-warn-border: #B8975A;
-  --status-ok-border: #8A6A4B;
+  /* Expert Seat Colors (Vibrant) */
+  --seat-1: #F43F5E; /* Alex / AI Engineer (Vivid Magenta / Rose) */
+  --seat-2: #A855F7; /* Sam / Software Dev (Electric Royal Amethyst) */
+  --seat-3: #C084FC; /* Maya / OSS Maintainer (Radiant Orchid / Violet) */
+  --seat-4: #E11D48; /* Crimson */
+  --you: #FCE7F3;    /* Host seat (Luminous Rose Quartz / Pearl) */
+
+  /* Status Colors */
+  --status-error-border: #E11D48;
+  --status-warn-border: #C084FC;
+  --status-ok-border: #F43F5E;
+
+  /* Text & Surfaces */
+  --paper: #18102B;
+  --paper-shade: #261B42;
+  --ink: #FDFCFE;
+  --text: #FDFCFE;
+  --text-muted: #B8B0CC;
+  --text-dim: #7E7497;
+  --light: rgba(192, 132, 252, 0.16);
 
   /* Typography */
-  --font-display: 'Fraunces', Georgia, serif;
-  --font-body: 'Newsreader', Georgia, serif;
+  --font-display: 'Instrument Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-body: 'Instrument Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   --font-sans: 'Instrument Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   --font-mono: 'IBM Plex Mono', ui-monospace, Menlo, monospace;
 
   /* Radius */
-  --radius-plate: 6px;
-  --radius-slip: 4px;
-  --radius-card: 8px;
+  --radius-plate: 8px;
+  --radius-slip: 6px;
+  --radius-card: 12px;
   --radius-pill: 9999px;
 
   /* Spacing */
@@ -61,10 +75,16 @@
   padding: 0;
 }
 
+html, body {
+  width: 100%;
+  height: 100%;
+  overflow-x: hidden;
+}
+
 body {
   font-family: var(--font-sans);
   background-color: var(--room);
-  background: radial-gradient(circle at 45% 45%, var(--room) 0%, var(--room-edge) 100%);
+  background: radial-gradient(circle at 50% 30%, #150D27 0%, var(--room) 70%, var(--room-edge) 100%);
   color: var(--text);
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
@@ -76,11 +96,12 @@ body {
 
 #root {
   min-height: 100vh;
+  width: 100%;
   display: flex;
   flex-direction: column;
 }
 
-/* Reduced motion preference per doc 04 section 7 */
+/* Reduced motion preference */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
     animation-duration: 0.01ms !important;
@@ -90,9 +111,9 @@ body {
   }
 }
 
-/* Accessible focus ring in paper color */
+/* Accessible focus ring */
 :focus-visible {
-  outline: 2px solid var(--paper);
+  outline: 2px solid var(--accent-amethyst);
   outline-offset: 3px;
 }
 
@@ -109,37 +130,27 @@ button:disabled {
   opacity: 0.45;
 }
 
-/* Paper Surface Class */
+/* Glassmorphism Luxury Surface Class */
 .paper-surface {
-  background-color: var(--paper);
-  color: var(--ink);
-  border: 1px solid var(--paper-shade);
-  border-radius: var(--radius-plate);
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
+  background: rgba(22, 14, 38, 0.85);
+  color: #FDFCFE;
+  border: 1px solid rgba(168, 85, 247, 0.24);
+  border-radius: var(--radius-card);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.55), 0 0 1px rgba(244, 63, 94, 0.2);
+  backdrop-filter: blur(20px);
   position: relative;
 }
 
-.paper-surface::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  background-image: radial-gradient(rgba(0,0,0,0.03) 1px, transparent 0);
-  background-size: 8px 8px;
-  pointer-events: none;
-  opacity: 0.6;
-}
-
-/* Paper Slip Class */
+/* Glass Badge / Slip Class */
 .paper-slip {
-  background: var(--paper);
-  color: var(--ink);
+  background: rgba(28, 18, 48, 0.9);
+  color: #FDFCFE;
   border-radius: var(--radius-slip);
   padding: 4px 10px;
-  font-family: var(--font-body);
+  font-family: var(--font-sans);
   font-size: 13px;
-  border: 1px solid var(--paper-shade);
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.35);
+  border: 1px solid rgba(168, 85, 247, 0.28);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
   display: inline-flex;
   align-items: center;
   gap: 6px;
@@ -156,10 +167,10 @@ button:disabled {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: var(--wood-edge);
+  background: rgba(168, 85, 247, 0.3);
   border-radius: var(--radius-pill);
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: var(--inlay-line);
+  background: var(--accent-amethyst);
 }

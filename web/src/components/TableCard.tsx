@@ -30,20 +30,20 @@ export const TableCard: React.FC<TableCardProps> = ({
       {/* Top-down mini table illustration */}
       <div className="mini-table-visual">
         <svg width="180" height="180" viewBox="0 0 180 180" className="mini-table-svg">
-          {/* Wood circle */}
-          <circle cx="90" cy="90" r="65" fill="var(--wood)" stroke="var(--wood-edge)" strokeWidth="3" />
-          <circle cx="90" cy="90" r="56" fill="none" stroke="var(--inlay-line)" strokeWidth="0.75" strokeDasharray="3 3" />
-          <circle cx="90" cy="90" r="30" fill="var(--inlay)" stroke="var(--inlay-line)" strokeWidth="1" />
+          {/* Table surface */}
+          <circle cx="90" cy="90" r="65" fill="#140E24" stroke="#9333EA" strokeWidth="2" />
+          <circle cx="90" cy="90" r="56" fill="none" stroke="#C084FC" strokeWidth="0.75" strokeDasharray="3 3" />
+          <circle cx="90" cy="90" r="30" fill="#0D0818" stroke="#A855F7" strokeWidth="1" />
 
           {/* Mini seats surrounding the table */}
-          {/* Expert 1 */}
-          <circle cx="48" cy="54" r="8" fill="var(--seat-1)" stroke="var(--wood-edge)" strokeWidth="1" />
-          {/* Expert 2 */}
-          <circle cx="90" cy="36" r="8" fill="var(--seat-2)" stroke="var(--wood-edge)" strokeWidth="1" />
-          {/* Expert 3 */}
-          <circle cx="132" cy="54" r="8" fill="var(--seat-3)" stroke="var(--wood-edge)" strokeWidth="1" />
+          {/* Expert 1: Alex */}
+          <circle cx="48" cy="54" r="8" fill="#F43F5E" stroke="#140E24" strokeWidth="1.5" />
+          {/* Expert 2: Sam */}
+          <circle cx="90" cy="36" r="8" fill="#A855F7" stroke="#140E24" strokeWidth="1.5" />
+          {/* Expert 3: Maya */}
+          <circle cx="132" cy="54" r="8" fill="#C084FC" stroke="#140E24" strokeWidth="1.5" />
           {/* You */}
-          <circle cx="90" cy="144" r="8" fill="var(--you)" stroke="var(--wood-edge)" strokeWidth="1" />
+          <circle cx="90" cy="144" r="8" fill="#FCE7F3" stroke="#140E24" strokeWidth="1.5" />
         </svg>
 
         {/* Cloth overlay if unavailable per doc 04 section 5 */}
@@ -96,25 +96,27 @@ export const TableCard: React.FC<TableCardProps> = ({
 
       <style>{`
         .table-card {
-          background: #1B1511;
-          border: 1px solid var(--wood-edge);
+          background: rgba(20, 13, 34, 0.85);
+          border: 1px solid rgba(168, 85, 247, 0.25);
           border-radius: var(--radius-card);
           padding: var(--space-4);
           display: flex;
           flex-direction: column;
           gap: var(--space-3);
           cursor: pointer;
+          backdrop-filter: blur(16px);
           transition: border-color var(--transition-fast), transform var(--transition-fast);
           position: relative;
         }
         .table-card:hover:not(.is-closed) {
-          border-color: var(--inlay-line);
+          border-color: #C084FC;
           transform: translateY(-2px);
+          box-shadow: 0 8px 30px rgba(168, 85, 247, 0.25);
         }
         .table-card.is-selected {
-          border-color: var(--paper);
-          box-shadow: 0 0 0 2px var(--inlay-line);
-          background: #201914;
+          border-color: #F43F5E;
+          box-shadow: 0 0 0 2px #F43F5E, 0 8px 30px rgba(244, 63, 94, 0.35);
+          background: rgba(28, 17, 48, 0.95);
         }
         .table-card.is-closed {
           cursor: not-allowed;
