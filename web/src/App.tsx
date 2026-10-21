@@ -33,6 +33,7 @@ export const App: React.FC = () => {
     startSession,
     bargeIn,
     addressAgent,
+    sendUtterance,
     endSession,
     toggleMic,
     triggerMockEvent,
@@ -179,6 +180,7 @@ export const App: React.FC = () => {
               addressedAgentId={addressedAgentId}
               activeThread={activeThread}
               speechSlip={speechSlip}
+              sessionState={sessionState}
               isUserListening={sessionState === 'user_speaking'}
               isUserProcessing={sessionState === 'processing_user'}
               micOn={micState === 'on'}
@@ -187,6 +189,7 @@ export const App: React.FC = () => {
               onAddressAgent={addressAgent}
               onMicToggle={toggleMic}
               onBargeIn={handleBargeIn}
+              onSendUtterance={sendUtterance}
             />
 
             {/* Slide-Over Meeting Minutes Drawer */}

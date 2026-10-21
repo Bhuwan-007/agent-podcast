@@ -11,6 +11,7 @@ interface CinematicTableProps {
   addressedAgentId: string | null
   activeThread: ActiveThread | null
   speechSlip: { text: string; final: boolean } | null
+  sessionState?: string
   isUserListening: boolean
   isUserProcessing: boolean
   micOn: boolean
@@ -19,6 +20,7 @@ interface CinematicTableProps {
   onAddressAgent: (agentId: string | null) => void
   onMicToggle: () => void
   onBargeIn: () => void
+  onSendUtterance?: (text: string) => void
 }
 
 export const CinematicTable: React.FC<CinematicTableProps> = ({
@@ -27,6 +29,7 @@ export const CinematicTable: React.FC<CinematicTableProps> = ({
   addressedAgentId,
   activeThread,
   speechSlip,
+  sessionState: _sessionState,
   isUserListening,
   isUserProcessing,
   micOn,
@@ -35,10 +38,12 @@ export const CinematicTable: React.FC<CinematicTableProps> = ({
   onAddressAgent,
   onMicToggle,
   onBargeIn,
+  onSendUtterance,
 }) => {
   const [viewMode, setViewMode] = useState<'3d' | '2d'>('3d')
   const [hoveredAgentId, setHoveredAgentId] = useState<string | null>(null)
   const [audioOnline, setAudioOnline] = useState<boolean>(false)
+  const [inputText, setInputText] = useState<string>('')
   const containerRef = useRef<HTMLDivElement>(null)
 
   // Web Audio Studio Engine
@@ -173,6 +178,13 @@ export const CinematicTable: React.FC<CinematicTableProps> = ({
       a.display_name.toLowerCase() === activeSpeakerId?.toLowerCase()
   )
   const isLocked = Boolean(activeSpeakerId || isUserListening || hoveredAgentId)
+
+  const handleSendQuestion = (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!inputText.trim()) return
+    onSendUtterance?.(inputText.trim())
+    setInputText('')
+  }
 
   const handleAgentSelect = (agentId: string | null) => {
     playClickChime()
@@ -353,16 +365,38 @@ export const CinematicTable: React.FC<CinematicTableProps> = ({
             <div className="idle-hint-row">
               <span className="idle-dot" />
               <span className="idle-label">
-                Roundtable Active: Speak into your microphone or click "Interrupt / Pull Chair" to take the floor.
+                {isUserProcessing
+                  ? 'Generating response...'
+                  : isUserListening
+                  ? 'Listening to your voice...'
+                  : 'Alex (AI Engineer) is listening. Ask a question or speak into your mic.'}
               </span>
             </div>
-            <button
-              type="button"
-              className="pull-chair-btn inline-barge"
-              onClick={onBargeIn}
-            >
-              Interrupt / Pull Chair
-            </button>
+
+            <form className="ask-question-form" onSubmit={handleSendQuestion}>
+              <input
+                type="text"
+                className="question-input"
+                placeholder="Ask Alex a question about open weights vs frontier models..."
+                value={inputText}
+                onChange={(e) => setInputText(e.target.value)}
+                disabled={Boolean(activeSpeakerId) || isUserProcessing}
+              />
+              <button
+                type="submit"
+                className="ask-btn"
+                disabled={!inputText.trim() || Boolean(activeSpeakerId) || isUserProcessing}
+              >
+                Ask Alex
+              </button>
+              <button
+                type="button"
+                className={`pull-chair-btn inline-barge ${isUserListening ? 'chair-pulled' : ''}`}
+                onClick={onBargeIn}
+              >
+                {isUserListening ? 'Speaking...' : 'Interrupt / Pull Chair'}
+              </button>
+            </form>
           </div>
         )}
       </div>
@@ -731,6 +765,62 @@ export const CinematicTable: React.FC<CinematicTableProps> = ({
         .pull-chair-btn.inline-barge {
           padding: 6px 14px;
           font-size: 12px;
+        }
+
+        .ask-question-form {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          width: 100%;
+          margin-top: 8px;
+        }
+
+        .question-input {
+          flex: 1;
+          background: rgba(14, 11, 18, 0.9);
+          border: 1px solid rgba(244, 63, 94, 0.28);
+          color: #FFFFFF;
+          font-family: var(--font-sans);
+          font-size: 13px;
+          padding: 7px 14px;
+          border-radius: 9999px;
+          outline: none;
+          transition: border-color 160ms, box-shadow 160ms;
+        }
+
+        .question-input:focus {
+          border-color: #FB7185;
+          box-shadow: 0 0 10px rgba(244, 63, 94, 0.3);
+        }
+
+        .question-input:disabled {
+          opacity: 0.5;
+          cursor: not-allowed;
+        }
+
+        .ask-btn {
+          background: #E11D48;
+          color: #FFFFFF;
+          font-family: var(--font-sans);
+          font-size: 12px;
+          font-weight: 700;
+          padding: 7px 16px;
+          border-radius: 9999px;
+          border: 1px solid #F43F5E;
+          cursor: pointer;
+          transition: all 160ms ease;
+          white-space: nowrap;
+        }
+
+        .ask-btn:hover:not(:disabled) {
+          background: #F43F5E;
+          transform: translateY(-1px);
+          box-shadow: 0 2px 10px rgba(244, 63, 94, 0.4);
+        }
+
+        .ask-btn:disabled {
+          opacity: 0.4;
+          cursor: not-allowed;
         }
 
         @media (max-width: 768px) {

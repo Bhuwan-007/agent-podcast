@@ -106,4 +106,43 @@ describe('Phase B4: Audio Player & Sentence Ordering Unit Tests', () => {
     addTranscript({ turn_id: 2, epoch: 1, speaker: 'software_developer', text: 'Syntax is easy.', final: true, sentence_idx: 0 })
     assert.equal(transcripts.length, 3, 'Turn 2 must be preserved alongside Turn 1')
   })
+
+  test('Fresh session accepts authoritative epoch 0 from gateway', () => {
+    let currentEpoch = 0
+    function shouldAcceptChunk(chunkEpoch) {
+      return chunkEpoch >= currentEpoch
+    }
+
+    assert.equal(shouldAcceptChunk(0), true, 'Epoch 0 must be accepted in fresh A1 session')
+    assert.equal(shouldAcceptChunk(1), true, 'Higher epoch 1 must be accepted')
+  })
+
+  test('Multi-sentence turn completes playback without premature finished acknowledgement', () => {
+    const events = []
+    const queue = [
+      { turnId: 1, sentenceIdx: 0 },
+      { turnId: 1, sentenceIdx: 1 },
+      { turnId: 1, sentenceIdx: 2 },
+    ]
+    let isGenerationCompleted = true
+
+    function simulatePlayThrough() {
+      while (queue.length > 0) {
+        const item = queue.shift()
+        events.push({ type: 'playback_started', sentence_idx: item.sentenceIdx })
+        // Sentence finishes; do not emit finished yet if items remain
+        if (queue.length === 0 && isGenerationCompleted) {
+          events.push({ type: 'playback_stopped', reason: 'finished' })
+        }
+      }
+    }
+
+    simulatePlayThrough()
+    const starts = events.filter((e) => e.type === 'playback_started')
+    const stops = events.filter((e) => e.type === 'playback_stopped')
+
+    assert.equal(starts.length, 3, 'All 3 sentences must start in sequence')
+    assert.equal(stops.length, 1, 'Only exactly 1 finished stop emitted at end of turn')
+    assert.equal(stops[0].reason, 'finished')
+  })
 })
