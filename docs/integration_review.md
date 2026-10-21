@@ -1,7 +1,9 @@
 # A1 + B3 isolated integration check — 2026-10-22
 
 Branch: `gateway/a1-b2-integration`, now based on `origin/main` at `1539311` (B3).
-The original workspace stays on `meds`. A1 source/tests were copied without committing.
+The original workspace stays on `meds`. A1 source/tests were initially copied without committing;
+the reviewed implementation is now commit `7dd261b`, published in
+[draft PR #4](https://github.com/Bhuwan-007/agent-podcast/pull/4). It is not merged into main.
 No `.env`, locally edited `.env.example`, or original trace files were copied.
 The integration gateway reads only its own root `.env` rather than discovering a parent file.
 

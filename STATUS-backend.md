@@ -3,6 +3,10 @@
 **Owner:** Person A (Backend / Agents / Voice)  
 **Last Updated:** 2026-10-22 — A1 functional playback verified; latency goal outstanding
 
+**Review:** [Draft PR #4](https://github.com/Bhuwan-007/agent-podcast/pull/4), branch
+`gateway/a1-b2-integration`, implementation commit `7dd261b`. Published for review;
+not merged into main. Earlier "not committed/pushed" notes below describe prior milestones.
+
 ---
 
 ## 1. Current Status
