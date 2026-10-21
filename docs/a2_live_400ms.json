@@ -1,0 +1,47 @@
+{
+  "transcript": [],
+  "error": "No eligible bids; discussion stopped rather than inventing a speaker",
+  "turns_completed": 0,
+  "speakers": {},
+  "challenge_bids_spoken": 0,
+  "bid_rounds": [
+    {
+      "elapsed_ms": 467.3,
+      "agents": [
+        {
+          "agent": "ai_engineer",
+          "status": "timeout",
+          "reason": "TimeoutError",
+          "elapsed_ms": 461.3
+        },
+        {
+          "agent": "software_developer",
+          "status": "timeout",
+          "reason": "TimeoutError",
+          "elapsed_ms": 450.8
+        },
+        {
+          "agent": "oss_maintainer",
+          "status": "timeout",
+          "reason": "TimeoutError",
+          "elapsed_ms": 464.8
+        }
+      ]
+    }
+  ],
+  "bid_round_median_ms": 467.3,
+  "semantic_quality": "Requires human review; challenge intent alone is not proof of disagreement",
+  "recorded_at": "2026-10-21T20:23:47.903756+00:00",
+  "mode": "live",
+  "session_id": "59a873349a604aa1967f95332054ee70",
+  "protocol": "A2A 0.3.0 / SDK 0.3.26 / JSON-RPC + SSE",
+  "speech_model": "openai/gpt-oss-120b",
+  "speech_model_source": "CLI override",
+  "bid_model": "openai/gpt-oss-20b",
+  "bid_model_source": "CLI override",
+  "bid_timeout_ms": 400,
+  "requested_turns": 1,
+  "diagnostic_turn_delay_s": 0,
+  "trace_path": "logs/traces/59a873349a604aa1967f95332054ee70.jsonl",
+  "functional_transport_pass": false
+}
