@@ -1,0 +1,34 @@
+{
+  "topic_id": "topic_3",
+  "title": "Should AI Tutors Replace Traditional Teaching?",
+  "background": "AI tutors can personalize instruction and expand access, while classroom learning also involves social development, mentorship, motivation, privacy and uneven technology access.",
+  "background_brief": "AI tutors can personalize instruction and expand access, while classroom learning also involves social development, mentorship, motivation, privacy and uneven technology access.",
+  "opening_prompt": "Suppose every student could access a personalized AI tutor at almost zero cost. Should education systems shift towards AI-driven learning, or would this sacrifice important aspects of human teaching? Discuss who benefits, who might be disadvantaged, and what an ideal education system would look like.",
+  "available": false,
+  "agents": [
+    {
+      "agent_id": "learning_scientist",
+      "role": "Learning Scientist",
+      "display_name": "Devi",
+      "voice_label": "Pedagogy Researcher",
+      "aliases": ["learning scientist", "devi"],
+      "available": false
+    },
+    {
+      "agent_id": "ai_product_engineer",
+      "role": "AI Product Engineer",
+      "display_name": "Leo",
+      "voice_label": "Product Engineer",
+      "aliases": ["product engineer", "leo"],
+      "available": false
+    },
+    {
+      "agent_id": "teacher_advocate",
+      "role": "Teacher or Education Advocate",
+      "display_name": "Clara",
+      "voice_label": "Education Advocate",
+      "aliases": ["teacher", "education advocate", "clara"],
+      "available": false
+    }
+  ]
+}

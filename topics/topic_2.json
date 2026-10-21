@@ -1,0 +1,34 @@
+{
+  "topic_id": "topic_2",
+  "title": "Should AI Make Decisions That Affect Human Lives?",
+  "background": "AI already influences hiring, healthcare, loans and public services, offering efficiency but creating bias, error, privacy and accountability concerns.",
+  "background_brief": "AI already influences hiring, healthcare, loans and public services, offering efficiency but creating bias, error, privacy and accountability concerns.",
+  "opening_prompt": "Imagine a future where AI systems can make decisions faster and sometimes more consistently than humans. Should AI be allowed to make important decisions about people's lives autonomously, or should humans always retain the final authority? Debate the benefits, risks, and exceptions.",
+  "available": false,
+  "agents": [
+    {
+      "agent_id": "ai_researcher",
+      "role": "AI Researcher",
+      "display_name": "Elena",
+      "voice_label": "Analytical Researcher",
+      "aliases": ["ai researcher", "researcher", "elena"],
+      "available": false
+    },
+    {
+      "agent_id": "ethics_policy_expert",
+      "role": "Ethics and Policy Expert",
+      "display_name": "Marcus",
+      "voice_label": "Ethical Analyst",
+      "aliases": ["ethics expert", "policy expert", "marcus"],
+      "available": false
+    },
+    {
+      "agent_id": "industry_leader",
+      "role": "Industry Leader",
+      "display_name": "Diane",
+      "voice_label": "Industry Strategist",
+      "aliases": ["industry leader", "leader", "diane"],
+      "available": false
+    }
+  ]
+}
