@@ -431,18 +431,18 @@ export const CinematicTable: React.FC<CinematicTableProps> = ({
           display: flex;
           align-items: center;
           justify-content: space-between;
-          padding: 10px 16px;
-          background: rgba(23, 18, 15, 0.85);
-          border-bottom: 1px solid rgba(138, 106, 75, 0.25);
+          padding: 6px 14px;
+          background: rgba(18, 14, 12, 0.9);
+          border-bottom: 1px solid rgba(138, 106, 75, 0.2);
           z-index: 20;
-          backdrop-filter: blur(8px);
+          backdrop-filter: blur(12px);
         }
 
         .view-mode-toggle {
           display: inline-flex;
-          background: #221813;
-          border: 1px solid rgba(138, 106, 75, 0.3);
-          border-radius: 4px;
+          background: rgba(26, 19, 15, 0.85);
+          border: 1px solid rgba(138, 106, 75, 0.25);
+          border-radius: 9999px;
           padding: 2px;
           gap: 2px;
         }
@@ -450,24 +450,29 @@ export const CinematicTable: React.FC<CinematicTableProps> = ({
         .view-toggle-btn {
           display: inline-flex;
           align-items: center;
-          gap: 6px;
+          gap: 5px;
           font-family: var(--font-control, system-ui);
-          font-size: 11px;
-          letter-spacing: 0.05em;
+          font-size: 10px;
+          font-weight: 600;
+          letter-spacing: 0.04em;
           text-transform: uppercase;
-          padding: 4px 10px;
+          padding: 3px 10px;
           background: transparent;
-          color: var(--muted-light, #B3A18F);
+          color: #8A7563;
           border: none;
-          border-radius: 3px;
+          border-radius: 9999px;
           cursor: pointer;
-          transition: all 180ms ease;
+          transition: all 160ms ease;
+        }
+
+        .view-toggle-btn:hover {
+          color: #EADFC8;
         }
 
         .view-toggle-btn.active {
-          background: var(--inlay-line, #D69E2E);
-          color: #17120F;
-          font-weight: 600;
+          background: rgba(138, 106, 75, 0.35);
+          color: #FAF5EB;
+          border: 1px solid rgba(214, 158, 46, 0.4);
         }
 
         .studio-audio-btn {
@@ -475,22 +480,27 @@ export const CinematicTable: React.FC<CinematicTableProps> = ({
           align-items: center;
           gap: 6px;
           font-family: var(--font-mono, monospace);
-          font-size: 11px;
+          font-size: 10px;
           letter-spacing: 0.04em;
           text-transform: uppercase;
-          background: rgba(42, 31, 25, 0.6);
-          color: var(--muted-light, #B3A18F);
-          border: 1px solid rgba(138, 106, 75, 0.35);
+          background: rgba(30, 22, 17, 0.7);
+          color: #B3A18F;
+          border: 1px solid rgba(138, 106, 75, 0.25);
           padding: 4px 10px;
-          border-radius: 4px;
+          border-radius: 9999px;
           cursor: pointer;
-          transition: all 180ms ease;
+          transition: all 160ms ease;
+        }
+
+        .studio-audio-btn:hover {
+          border-color: rgba(214, 158, 46, 0.5);
+          color: #FAF5EB;
         }
 
         .studio-audio-btn.audio-online {
-          background: rgba(46, 92, 60, 0.5);
-          color: #8ce6a8;
-          border-color: rgba(140, 230, 168, 0.5);
+          background: rgba(46, 92, 60, 0.35);
+          color: #8CE6A8;
+          border-color: rgba(85, 221, 136, 0.45);
         }
 
         /* Telemetry HUD */
@@ -498,9 +508,9 @@ export const CinematicTable: React.FC<CinematicTableProps> = ({
           display: flex;
           align-items: center;
           justify-content: space-between;
-          padding: 8px 16px;
-          background: rgba(23, 18, 15, 0.65);
-          border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+          padding: 6px 14px;
+          background: rgba(16, 12, 10, 0.65);
+          border-bottom: 1px solid rgba(255, 255, 255, 0.03);
           z-index: 15;
         }
 

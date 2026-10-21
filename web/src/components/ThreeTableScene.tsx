@@ -651,17 +651,19 @@ export const ThreeTableScene: React.FC<ThreeTableSceneProps> = ({
       particles.rotation.y = time * 0.02
 
       // Determine Camera Focus Target based on VOICE / active speaker
-      let focusTargetPos = new THREE.Vector3(0, 38, 34)
+      let focusTargetPos = new THREE.Vector3(0, 36, 32)
       let focusLookAt = new THREE.Vector3(0, 0.5, 0)
-      let targetFov = 40
+      let targetSpotPos = new THREE.Vector3(0, 0, 0)
+      let targetSpotIntensity = 1.6
+      let targetFov = 42
 
       if (isSpeakingHuman) {
-        // Voice focus on You at 6 o'clock
-        focusTargetPos.set(0, 10, 4)
-        focusLookAt.set(0, 2.4, 21.5)
-        spotTarget.position.set(0, 1, 20)
-        spotlight.intensity = 5.0
-        targetFov = 32 // Intimate framing
+        // Voice focus on You (Host) at 6 o'clock
+        focusTargetPos.set(0, 13.5, 12)
+        focusLookAt.set(0, 2.2, 21.5)
+        targetSpotPos.set(0, 1, 20)
+        targetSpotIntensity = 4.8
+        targetFov = 34 // Intimate framing
 
         // Mic LED glows green
         micHeadMat.emissive.setHex(0x55dd88)
@@ -676,31 +678,51 @@ export const ThreeTableScene: React.FC<ThreeTableSceneProps> = ({
         )
         if (chair) {
           const cp = chair.basePosition
-          // Camera glides across table to frame the speaker directly
-          focusTargetPos.set(-cp.x * 0.45, 12, -cp.z * 0.45)
-          focusLookAt.set(cp.x, 2.6, cp.z)
-          spotTarget.position.set(cp.x, 1, cp.z)
-          spotlight.intensity = 5.0
-          targetFov = 30 // Intimate cinematic framing
+
+          // Studio Broadcast Crane: Camera glides along outer host perimeter arc
+          if (chair.id === 'ai_engineer') {
+            // Alex on northwest: Camera sits on right-host arc, angling gently across table
+            focusTargetPos.set(7.5, 13.5, 25)
+            focusLookAt.set(-17.6, 2.6, -12.3)
+          } else if (chair.id === 'software_developer') {
+            // Sam on north center: Camera sits center host arc, looking straight down table
+            focusTargetPos.set(0, 12.5, 26)
+            focusLookAt.set(0, 2.6, -21.5)
+          } else if (chair.id === 'oss_maintainer') {
+            // Maya on northeast: Camera sits on left-host arc, angling gently across table
+            focusTargetPos.set(-7.5, 13.5, 25)
+            focusLookAt.set(17.6, 2.6, -12.3)
+          } else {
+            focusTargetPos.set(-cp.x * 0.4, 13.5, 24)
+            focusLookAt.set(cp.x, 2.6, cp.z)
+          }
+
+          targetSpotPos.set(cp.x, 1, cp.z)
+          targetSpotIntensity = 4.8
+          targetFov = 32 // Intimate cinematic broadcast framing
         }
         micHeadMat.emissive.setHex(0x000000)
       } else {
         // Table Overview when room is listening / waiting
-        focusTargetPos.set(0, 36, 34)
+        focusTargetPos.set(0, 36, 32)
         focusLookAt.set(0, 0.5, 0)
-        spotTarget.position.set(0, 0, 0)
-        spotlight.intensity = 1.4
+        targetSpotPos.set(0, 0, 0)
+        targetSpotIntensity = 1.6
         targetFov = 42
         micHeadMat.emissive.setHex(0x000000)
       }
 
-      // Smooth Dynamic FOV
-      camera.fov += (targetFov - camera.fov) * 0.06
+      // Silky Smooth Dynamic FOV Easing
+      camera.fov += (targetFov - camera.fov) * 0.028
       camera.updateProjectionMatrix()
 
-      // Smooth Camera Glide (Voice-driven lerp)
-      camTargetPos.lerp(focusTargetPos, 0.055)
-      camTargetLook.lerp(focusLookAt, 0.065)
+      // Smooth Follow-Spotlight Glide
+      spotTarget.position.lerp(targetSpotPos, 0.035)
+      spotlight.intensity += (targetSpotIntensity - spotlight.intensity) * 0.04
+
+      // Silky Smooth Camera Glide (Critically damped broadcast crane easing)
+      camTargetPos.lerp(focusTargetPos, 0.032)
+      camTargetLook.lerp(focusLookAt, 0.035)
 
       // Apply camera position: pure voice focus unless manual drag is actively used
       if (isDragging || Math.abs(orbitTheta) > 0.05 || Math.abs(orbitPhi - Math.PI / 3.2) > 0.1) {
@@ -709,12 +731,12 @@ export const ThreeTableScene: React.FC<ThreeTableSceneProps> = ({
         const finalX = lookAt.x + Math.sin(orbitPhi) * Math.sin(orbitTheta) * dist
         const finalY = lookAt.y + Math.cos(orbitPhi) * dist
         const finalZ = lookAt.z + Math.sin(orbitPhi) * Math.cos(orbitTheta) * dist
-        camera.position.lerp(new THREE.Vector3(finalX, finalY, finalZ), 0.07)
+        camera.position.lerp(new THREE.Vector3(finalX, finalY, finalZ), 0.05)
       } else {
-        camera.position.lerp(camTargetPos, 0.07)
+        camera.position.copy(camTargetPos)
       }
 
-      currentLookAt.lerp(camTargetLook, 0.08)
+      currentLookAt.copy(camTargetLook)
       camera.lookAt(currentLookAt)
 
       // Animate Chairs leaning in & voice-avatar rippling

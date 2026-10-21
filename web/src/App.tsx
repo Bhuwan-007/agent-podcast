@@ -644,18 +644,18 @@ export const App: React.FC = () => {
           padding: var(--space-4);
         }
         .dev-gateway-controls {
-          position: absolute;
-          top: 12px;
-          left: 16px;
           display: flex;
           align-items: center;
           gap: 6px;
           flex-wrap: wrap;
-          background: rgba(23, 18, 15, 0.85);
-          border: 1px solid var(--wood-edge);
-          padding: 6px 10px;
-          border-radius: var(--radius-slip);
-          z-index: 30;
+          background: rgba(20, 15, 12, 0.9);
+          border: 1px solid rgba(138, 106, 75, 0.25);
+          padding: 5px 12px;
+          border-radius: 6px;
+          margin-bottom: 10px;
+          width: 100%;
+          max-width: 1100px;
+          z-index: 10;
         }
         .dev-tag {
           font-family: var(--font-mono);
