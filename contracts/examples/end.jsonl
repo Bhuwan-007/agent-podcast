@@ -1,0 +1,2 @@
+{"type":"turn_end","turn_id":4,"epoch":2,"status":"discarded"}
+{"type":"session_state","state":"ended","mode":"mock","session_id":"mock_sess_001","epoch":3}

@@ -1,169 +1,63 @@
 import React, { useState } from 'react'
 import { Header } from './components/Header'
-import { TopicCard } from './components/TopicCard'
-import { ExpertCard } from './components/ExpertCard'
-import { TranscriptPanel } from './components/TranscriptPanel'
-import { TargetSelector } from './components/TargetSelector'
-import { MicrophoneControl, type MicState } from './components/MicrophoneControl'
-import { ClaimsLedger } from './components/ClaimsLedger'
-import { TracePanel } from './components/TracePanel'
-import { MetricsPanel } from './components/MetricsPanel'
-import { RecoveryNotice } from './components/RecoveryNotice'
+import { RoundTable } from './components/RoundTable'
+import { CinematicTable } from './components/CinematicTable'
+import { MinutesDrawer } from './components/MinutesDrawer'
+import { TableCard } from './components/TableCard'
+import { Slip } from './components/Slip'
 import { ScreenSwitcher, type ScreenId } from './components/ScreenSwitcher'
 import { TOPICS, DEFAULT_TOPIC } from './data/topics'
-import type {
-  SessionStateName,
-  SessionMode,
-  TranscriptItem,
-  Claim,
-  TraceEvent,
-  MetricsState,
-  Notice,
-} from './types/protocol'
-
-// Static sample data representing live roundtable state
-const SAMPLE_TRANSCRIPTS: TranscriptItem[] = [
-  {
-    id: 't1',
-    turn_id: 1,
-    epoch: 1,
-    speaker: 'Alex (AI Engineer)',
-    text: 'AI coding tools are advancing past simple autocomplete. We are now seeing autonomous systems construct whole modules and resolve regressions overnight.',
-    final: true,
-  },
-  {
-    id: 't2',
-    turn_id: 2,
-    epoch: 1,
-    speaker: 'Sam (Software Developer)',
-    text: 'Generating syntax is the easy part. Software engineering is primarily about requirements clarity, domain modeling, and living with the code you ship for five years.',
-    final: true,
-  },
-  {
-    id: 't3',
-    turn_id: 3,
-    epoch: 1,
-    speaker: 'Maya (OSS Maintainer)',
-    text: 'From an open-source perspective, AI pull requests have exploded review fatigue. Who verifies the supply chain security and edge cases when nobody wrote it by hand?',
-    final: true,
-  },
-  {
-    id: 't4',
-    turn_id: 4,
-    epoch: 1,
-    speaker: 'Sam (Software Developer)',
-    text: 'Exactly, Maya. When an incident occurs at 3 AM, you need mental models, not just generated boilerplate that passed a green test suite.',
-    final: false, // Live draft demonstrating final: false
-  },
-]
-
-const SAMPLE_CLAIMS: Claim[] = [
-  {
-    id: 'c1',
-    agent_id: 'ai_engineer',
-    text: 'AI automation will absorb majority of routine CRUD and boilerplate coding.',
-    status: 'open',
-    verified: false, // Never verified without tool observation per contract
-  },
-  {
-    id: 'c2',
-    agent_id: 'software_developer',
-    text: 'Architecture and long-term maintenance judgment cannot be replaced by statistical generation.',
-    status: 'challenged',
-    verified: false,
-  },
-  {
-    id: 'c3',
-    agent_id: 'oss_maintainer',
-    text: 'Unchecked AI PRs increase volunteer burnout and supply chain security vulnerabilities.',
-    status: 'open',
-    verified: false,
-  },
-]
-
-const SAMPLE_TRACES: TraceEvent[] = [
-  {
-    ts: '12:04:15.120',
-    from: 'software_developer',
-    to: 'moderator',
-    msg_type: 'floor.bid',
-    summary: 'challenge c1: dispute maintenance claim (urgency: 0.85)',
-  },
-  {
-    ts: '12:04:15.450',
-    from: 'moderator',
-    to: 'software_developer',
-    msg_type: 'floor.grant',
-    summary: 'granted floor: highest urgency and relevance score',
-  },
-  {
-    ts: '12:04:17.200',
-    from: 'oss_maintainer',
-    to: 'ai_engineer',
-    msg_type: 'agent.direct',
-    summary: 'direct challenge: review capacity bottleneck',
-  },
-]
-
-const SAMPLE_METRICS: MetricsState = {
-  interrupt_to_silence_ms: 124,
-  user_question_to_first_audio_ms: 1420,
-  grant_to_first_audio_ms: 890,
-}
-
-const SAMPLE_NOTICES: Notice[] = [
-  {
-    code: 'mic_denied',
-    level: 'error',
-    text: 'Microphone access is blocked in your browser. Enable permissions to interrupt by voice.',
-    recoverable: true,
-  },
-  {
-    code: 'disconnected',
-    level: 'warn',
-    text: 'Connection lost to gateway. Attempting backoff reconnection (attempt 1/3)…',
-    recoverable: true,
-  },
-]
+import { useGatewayWs } from './hooks/useGatewayWs'
 
 export const App: React.FC = () => {
-  const [currentScreen, setCurrentScreen] = useState<ScreenId>('A')
+  const [currentScreen, setCurrentScreen] = useState<ScreenId>('B')
   const [isMobilePreview, setIsMobilePreview] = useState<boolean>(false)
   const [selectedTopicId, setSelectedTopicId] = useState<string>(DEFAULT_TOPIC.topic_id)
-  const [targetedAgentId, setTargetedAgentId] = useState<string | null>(null)
-  const [micState, setMicState] = useState<MicState>('off')
-  const [sessionMode] = useState<SessionMode>('mock')
+  const [isMinutesOpen, setIsMinutesOpen] = useState<boolean>(true)
+  const [micOn, setMicOn] = useState<boolean>(false)
+
+  // Real WebSocket state from mock gateway
+  const {
+    connected,
+    sessionState,
+    sessionMode,
+    activeSpeakerId,
+    addressedAgentId,
+    activeThread,
+    speechSlip,
+    transcripts,
+    claims,
+    traces,
+    metrics,
+    notices,
+    startSession,
+    bargeIn,
+    addressAgent,
+    endSession,
+    triggerMockEvent,
+    dismissNotice,
+    simulateSpeaker,
+  } = useGatewayWs()
 
   const selectedTopic = TOPICS.find((t) => t.topic_id === selectedTopicId) || DEFAULT_TOPIC
 
-  // Determine active state per screen
-  const getScreenState = (): SessionStateName => {
-    switch (currentScreen) {
-      case 'A':
-        return 'ready'
-      case 'B':
-      case 'C':
-        return 'agent_speaking'
-      case 'D':
-        return 'user_speaking'
-      case 'E':
-        return 'recovery'
-      case 'F':
-        return 'ended'
-      default:
-        return 'ready'
-    }
+  // Find active speaker name for header
+  const activeAgent = selectedTopic.agents.find((a) => a.agent_id === activeSpeakerId)
+  const activeSpeakerDisplayName = activeAgent?.display_name
+
+  const handleStartSession = () => {
+    startSession(selectedTopic.topic_id)
+    setCurrentScreen('B')
   }
 
-  const sessionState = getScreenState()
-
   const handleMicToggle = () => {
-    if (micState === 'off') {
-      setMicState('listening')
-    } else if (micState === 'listening') {
-      setMicState('off')
-    } else if (micState === 'denied') {
-      setMicState('listening')
+    setMicOn(!micOn)
+  }
+
+  const handleBargeIn = () => {
+    bargeIn()
+    if (currentScreen !== 'B' && currentScreen !== 'C') {
+      setCurrentScreen('D')
     }
   }
 
@@ -178,40 +72,57 @@ export const App: React.FC = () => {
       />
 
       <div className={`app-viewport ${isMobilePreview ? 'mobile-frame' : ''}`}>
-        {/* Universal Header */}
+        {/* Universal Header with ink on brass Mock banner and paper state plate */}
         <Header
           state={sessionState}
           mode={sessionMode}
           activeSpeakerName={
-            currentScreen === 'B' || currentScreen === 'C'
-              ? 'Sam'
-              : currentScreen === 'D'
-              ? 'You (Human)'
-              : undefined
+            sessionState === 'user_speaking'
+              ? 'You'
+              : activeSpeakerDisplayName
           }
-          connected={currentScreen !== 'E'}
+          connected={connected}
           showEndButton={currentScreen !== 'A' && currentScreen !== 'F'}
-          onEndSession={() => setCurrentScreen('F')}
+          onEndSession={() => {
+            endSession()
+            setCurrentScreen('F')
+          }}
         />
 
-        <main className="main-content">
+        {/* Global Notices Pinboard */}
+        {notices.length > 0 && (
+          <aside className="notices-pinboard container" aria-label="Notices">
+            {notices.map((n, idx) => (
+              <Slip
+                key={`${n.code}-${idx}`}
+                notice={n}
+                onDismiss={() => dismissNotice(idx)}
+                onRetry={() => {
+                  if (n.code === 'disconnected') window.location.reload()
+                }}
+              />
+            ))}
+          </aside>
+        )}
+
+        <main className="table-room-main">
           {/* ============================================================ */}
-          {/* SCREEN A: TOPIC SELECTION / LOBBY                            */}
+          {/* SCREEN A: LOBBY — CHOOSE A TABLE                             */}
           {/* ============================================================ */}
           {currentScreen === 'A' && (
-            <section className="screen-lobby container" aria-label="Screen A: Topic Selection">
-              <div className="hero-banner">
-                <span className="hero-badge">FOSS Forge 2.0 • ElevenLabs Track</span>
-                <h2 className="hero-title">Three perspectives. One live conversation.</h2>
-                <p className="hero-tagline">
-                  Choose an official topic to begin. Listen to autonomous AI experts debate dynamically,
-                  and speak to interrupt at any second.
+            <section className="screen-lobby container" aria-label="Screen A: Choose a table">
+              <header className="lobby-heading">
+                <span className="lobby-badge">FOSS Forge 2.0 • ElevenLabs Track</span>
+                <h2 className="lobby-title">Choose a Roundtable</h2>
+                <p className="lobby-desc">
+                  Three autonomous perspectives. One live room. Listen to continuous voice debate,
+                  and pull your chair into the light whenever you wish to interrupt.
                 </p>
-              </div>
+              </header>
 
-              <div className="topics-grid">
+              <div className="lobby-tables-row">
                 {TOPICS.map((topic) => (
-                  <TopicCard
+                  <TableCard
                     key={topic.topic_id}
                     topic={topic}
                     isSelected={selectedTopicId === topic.topic_id}
@@ -220,310 +131,337 @@ export const App: React.FC = () => {
                 ))}
               </div>
 
-              <div className="lobby-footer-card">
-                <div className="footer-meta">
-                  <h3 className="footer-title">Starting Configuration: {selectedTopic.title}</h3>
-                  <p className="footer-desc">
-                    Opening prompt will be injected verbatim from official organizer materials.
-                  </p>
-                  <div className="permissions-notice">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              {/* Selected Topic Brief & Opening Inscription */}
+              <div className="table-inscription-panel paper-surface">
+                <div className="inscription-meta">
+                  <span className="inscription-tag">Selected Roundtable:</span>
+                  <h3 className="inscription-title">{selectedTopic.title}</h3>
+                  <p className="inscription-background">{selectedTopic.background}</p>
+
+                  <div className="opening-quote-box">
+                    <span className="quote-label">Opening prompt (verbatim from doc 05):</span>
+                    <blockquote className="quote-text">
+                      "{selectedTopic.opening_prompt}"
+                    </blockquote>
+                  </div>
+
+                  <div className="disclosure-slip paper-slip">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                       <circle cx="12" cy="12" r="10" />
                       <line x1="12" y1="16" x2="12" y2="12" />
                       <line x1="12" y1="8" x2="12.01" y2="8" />
                     </svg>
                     <span>
-                      Voice synthesis powered by <strong>ElevenLabs streaming WebSocket</strong>.
-                      Microphone capture uses browser echo-cancellation and local client VAD.
+                      Live speech synthesized via <strong>ElevenLabs WebSocket</strong>. Microphone echo-cancellation and client VAD active.
                     </span>
                   </div>
                 </div>
 
-                <button
-                  type="button"
-                  className="start-roundtable-btn"
-                  onClick={() => setCurrentScreen('B')}
-                >
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <polygon points="5 3 19 12 5 21 5 3" />
-                  </svg>
-                  Start Live Roundtable
-                </button>
+                <div className="inscription-cta-col">
+                  <button
+                    id="btn-join-roundtable"
+                    type="button"
+                    className="join-roundtable-btn"
+                    onClick={handleStartSession}
+                  >
+                    Join this Roundtable
+                  </button>
+                  <span className="cta-note">Opens WebSocket session on topic</span>
+                </div>
               </div>
             </section>
           )}
 
           {/* ============================================================ */}
-          {/* SCREEN B: ACTIVE DESKTOP SESSION (1440px layout)             */}
+          {/* SCREEN B: ACTIVE DESKTOP SESSION — "THE TABLE" (1440x900)   */}
           {/* ============================================================ */}
           {currentScreen === 'B' && (
-            <section className="screen-desktop container" aria-label="Screen B: Desktop Live Session">
-              <div className="session-subnav">
-                <div className="topic-context">
-                  <span className="context-label">Current Topic:</span>
-                  <h2 className="context-title">{selectedTopic.title}</h2>
-                </div>
-                <div className="angle-badge">
-                  <span>Perspective: Engineering vs Automation</span>
-                </div>
-              </div>
-
-              {/* 3 Expert Cards */}
-              <div className="experts-grid">
-                {selectedTopic.agents.map((agent) => {
-                  let status: 'idle' | 'listening' | 'speaking' | 'addressed' = 'listening'
-                  if (agent.agent_id === 'software_developer') status = 'speaking'
-                  if (targetedAgentId === agent.agent_id) status = 'addressed'
-
-                  return (
-                    <ExpertCard
-                      key={agent.agent_id}
-                      agent={agent}
-                      status={status}
-                      isTargeted={targetedAgentId === agent.agent_id}
-                      onClick={() =>
-                        setTargetedAgentId(
-                          targetedAgentId === agent.agent_id ? null : agent.agent_id
-                        )
-                      }
-                    />
-                  )
-                })}
-              </div>
-
-              {/* Main Panel Layout */}
-              <div className="session-body-grid">
-                <div className="main-stage-col">
-                  {/* Current Active Speaker Spotlight */}
-                  <div className="speaker-spotlight">
-                    <div className="spotlight-header">
-                      <span className="spotlight-tag">Authoritative Speaker (Audio Active)</span>
-                      <span className="spotlight-voice">Voice: Pragmatic Builder (ElevenLabs)</span>
-                    </div>
-                    <blockquote className="spotlight-quote">
-                      "Generating syntax is the easy part. Software engineering is primarily about requirements
-                      clarity, domain modeling, and living with the code you ship for five years."
-                    </blockquote>
-                  </div>
-
-                  {/* Interruption & Directing Controls */}
-                  <div className="session-controls-card">
-                    <TargetSelector
-                      agents={selectedTopic.agents}
-                      selectedAgentId={targetedAgentId}
-                      onSelectAgent={setTargetedAgentId}
-                    />
-
-                    <div className="controls-row">
-                      <MicrophoneControl state={micState} onToggle={handleMicToggle} />
-                    </div>
-                  </div>
-
-                  {/* Claims & Protocol Traces */}
-                  <div className="evidence-grid">
-                    <ClaimsLedger claims={SAMPLE_CLAIMS} />
-                    <TracePanel traces={SAMPLE_TRACES} />
-                  </div>
-                </div>
-
-                <div className="sidebar-col">
-                  <TranscriptPanel items={SAMPLE_TRANSCRIPTS} currentSpeaker="Sam (Software Developer)" />
-                  <MetricsPanel metrics={SAMPLE_METRICS} />
-                </div>
-              </div>
-            </section>
-          )}
-
-          {/* ============================================================ */}
-          {/* SCREEN C: MOBILE SESSION (390px layout)                      */}
-          {/* ============================================================ */}
-          {currentScreen === 'C' && (
-            <section className="screen-mobile container" aria-label="Screen C: Mobile Session">
-              <div className="mobile-topic-header">
-                <span className="mobile-topic-tag">Topic 1</span>
-                <h2 className="mobile-topic-title">{selectedTopic.title}</h2>
-              </div>
-
-              {/* Vertically stacked role cards */}
-              <div className="mobile-experts-list">
-                {selectedTopic.agents.map((agent) => (
-                  <ExpertCard
-                    key={agent.agent_id}
-                    agent={agent}
-                    status={agent.agent_id === 'software_developer' ? 'speaking' : 'listening'}
-                    isTargeted={targetedAgentId === agent.agent_id}
+            <section className="screen-table-desktop" aria-label="Screen B: Live Roundtable Table">
+              <div className="table-stage-area">
+                {/* Dev Mock Trigger Controls */}
+                <aside className="dev-gateway-controls" aria-label="Dev Gateway Triggers">
+                  <span className="dev-tag">VOICE FOCUS DEV TRIGGERS:</span>
+                  <button
+                    id="btn-speak-alex"
+                    type="button"
+                    className="dev-btn"
                     onClick={() =>
-                      setTargetedAgentId(
-                        targetedAgentId === agent.agent_id ? null : agent.agent_id
+                      simulateSpeaker(
+                        'ai_engineer',
+                        'The economics of software development are shifting. When code generation cost drops toward zero, architectural judgment becomes the primary differentiator.'
                       )
                     }
-                  />
-                ))}
-              </div>
+                  >
+                    Speak: Alex
+                  </button>
+                  <button
+                    id="btn-speak-sam"
+                    type="button"
+                    className="dev-btn"
+                    onClick={() =>
+                      simulateSpeaker(
+                        'software_developer',
+                        'From a team and labor policy standpoint, senior engineers will direct synthetic agents, but the entry-level career progression path requires formal rethinking.'
+                      )
+                    }
+                  >
+                    Speak: Sam
+                  </button>
+                  <button
+                    id="btn-speak-maya"
+                    type="button"
+                    className="dev-btn"
+                    onClick={() =>
+                      simulateSpeaker(
+                        'oss_maintainer',
+                        'Autonomous code commit pipelines present unaccountable failure loops. Security telemetry must be verified before deployment.'
+                      )
+                    }
+                  >
+                    Speak: Maya
+                  </button>
+                  <button
+                    id="btn-barge-in"
+                    type="button"
+                    className="dev-btn"
+                    onClick={handleBargeIn}
+                  >
+                    Barge-in: You
+                  </button>
+                  <button
+                    id="btn-overview"
+                    type="button"
+                    className="dev-btn"
+                    onClick={() => simulateSpeaker(null)}
+                  >
+                    Reset Overview
+                  </button>
+                  <button
+                    id="btn-replay-debate"
+                    type="button"
+                    className="dev-btn"
+                    onClick={() => startSession(selectedTopic.topic_id)}
+                  >
+                    Replay Gateway Fixtures
+                  </button>
+                  <button
+                    id="btn-mock-unknown"
+                    type="button"
+                    className="dev-btn"
+                    onClick={() => triggerMockEvent('unknown_target')}
+                  >
+                    Unknown Target
+                  </button>
+                  <button
+                    id="btn-mock-disconnect"
+                    type="button"
+                    className="dev-btn"
+                    onClick={() => triggerMockEvent('disconnect')}
+                  >
+                    Disconnect
+                  </button>
+                </aside>
 
-              {/* Mobile Transcript */}
-              <div className="mobile-transcript-wrap">
-                <TranscriptPanel items={SAMPLE_TRANSCRIPTS} currentSpeaker="Sam (Software Developer)" />
-              </div>
-
-              {/* Sticky bottom mobile action panel */}
-              <div className="mobile-action-bar">
-                <TargetSelector
-                  agents={selectedTopic.agents}
-                  selectedAgentId={targetedAgentId}
-                  onSelectAgent={setTargetedAgentId}
+                {/* The Cinematic Voice-Focused Round Table */}
+                <CinematicTable
+                  topic={selectedTopic}
+                  activeSpeakerId={activeSpeakerId}
+                  addressedAgentId={addressedAgentId}
+                  activeThread={activeThread}
+                  speechSlip={speechSlip}
+                  isUserListening={sessionState === 'user_speaking'}
+                  isUserProcessing={sessionState === 'processing_user'}
+                  micOn={micOn}
+                  onAddressAgent={addressAgent}
+                  onMicToggle={handleMicToggle}
+                  onBargeIn={handleBargeIn}
                 />
-                <MicrophoneControl state={micState} onToggle={handleMicToggle} />
+              </div>
+
+              {/* The Minutes Drawer */}
+              <MinutesDrawer
+                transcripts={transcripts}
+                claims={claims}
+                traces={traces}
+                metrics={metrics}
+                isOpen={isMinutesOpen}
+                onToggle={() => setIsMinutesOpen(!isMinutesOpen)}
+              />
+            </section>
+          )}
+
+          {/* ============================================================ */}
+          {/* SCREEN C: MOBILE SESSION (390px Viewport)                   */}
+          {/* ============================================================ */}
+          {currentScreen === 'C' && (
+            <section className="screen-mobile-session" aria-label="Screen C: Mobile View">
+              <div className="mobile-table-header">
+                <span className="mobile-tag">Roundtable Session</span>
+                <h2 className="mobile-title">{selectedTopic.title}</h2>
+              </div>
+
+              {/* Mobile Table Arc Representation */}
+              <div className="mobile-arc-wrap">
+                <RoundTable
+                  topic={selectedTopic}
+                  activeSpeakerId={activeSpeakerId}
+                  addressedAgentId={addressedAgentId}
+                  activeThread={activeThread}
+                  speechSlip={speechSlip}
+                  isUserListening={sessionState === 'user_speaking'}
+                  isUserProcessing={sessionState === 'processing_user'}
+                  micOn={micOn}
+                  onAddressAgent={addressAgent}
+                  onMicToggle={handleMicToggle}
+                  onBargeIn={handleBargeIn}
+                />
+              </div>
+
+              {/* Mobile Minutes Bottom Sheet */}
+              <div className="mobile-minutes-sheet">
+                <MinutesDrawer
+                  transcripts={transcripts}
+                  claims={claims}
+                  traces={traces}
+                  metrics={metrics}
+                  isOpen={true}
+                  onToggle={() => {}}
+                />
               </div>
             </section>
           )}
 
           {/* ============================================================ */}
-          {/* SCREEN D: INTERRUPTED / LISTENING STATE                      */}
+          {/* SCREEN D: INTERRUPTED / LISTENING STATE                     */}
           {/* ============================================================ */}
           {currentScreen === 'D' && (
-            <section className="screen-interrupted container" aria-label="Screen D: Interrupted State">
-              <div className="interrupted-banner">
-                <div className="interrupted-icon">
-                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <circle cx="12" cy="12" r="10" />
-                    <line x1="12" y1="8" x2="12" y2="12" />
-                    <line x1="12" y1="16" x2="12.01" y2="16" />
-                  </svg>
-                </div>
-                <div>
-                  <h2 className="interrupted-title">Mid-Sentence Spoken Interruption Detected</h2>
-                  <p className="interrupted-desc">
-                    Client VAD triggered barge-in. Agent playback stopped within 124 ms.
-                    Incoming human speech has priority.
+            <section className="screen-interrupted-state container" aria-label="Screen D: Interrupted">
+              <div className="interrupted-slip-banner paper-surface">
+                <div className="banner-pin" aria-hidden="true" />
+                <div className="banner-content">
+                  <span className="banner-code">[S4: USER_SPEAKING &rarr; S5: PROCESSING_USER]</span>
+                  <h2 className="banner-title">Mid-Sentence Spoken Interruption Detected</h2>
+                  <p className="banner-desc">
+                    Client VAD captured human speech. Prior agent playback halted in 118 ms; floor transferred to you.
                   </p>
                 </div>
               </div>
 
-              <div className="interrupted-cards-row">
-                {selectedTopic.agents.map((agent) => (
-                  <ExpertCard
-                    key={agent.agent_id}
-                    agent={agent}
-                    status={
-                      agent.agent_id === 'software_developer'
-                        ? 'listening'
-                        : agent.agent_id === 'oss_maintainer'
-                        ? 'addressed'
-                        : 'idle'
-                    }
-                    isTargeted={agent.agent_id === 'oss_maintainer'}
-                  />
-                ))}
-              </div>
-
-              <div className="user-interrupted-stage">
-                <div className="user-listening-box">
-                  <span className="live-mic-pulse" />
-                  <div className="listening-details">
-                    <span className="listening-status">S4: user_speaking &rarr; S5: processing_user</span>
-                    <h3 className="user-utterance-text">
-                      "Wait, Maya, what specific security vulnerabilities are maintainers seeing from generated PRs?"
-                    </h3>
-                    <span className="routing-note">
-                      Router: Explicit name match &rarr; Directing to <strong>Maya (Open-Source Maintainer)</strong>
-                    </span>
-                  </div>
-                </div>
-
-                <div className="interrupted-actions">
-                  <button
-                    type="button"
-                    className="resume-demo-btn"
-                    onClick={() => setCurrentScreen('B')}
-                  >
-                    Simulate Addressed Response
-                  </button>
-                </div>
+              <div className="interrupted-table-view">
+                <RoundTable
+                  topic={selectedTopic}
+                  activeSpeakerId={null}
+                  addressedAgentId="oss_maintainer"
+                  activeThread={{
+                    from: 'human',
+                    to: 'oss_maintainer',
+                    summary: 'passing floor to Open-Source Maintainer',
+                    ts: Date.now(),
+                  }}
+                  speechSlip={{
+                    text: 'Wait, Maya, what specific security vulnerabilities are maintainers seeing from generated PRs?',
+                    final: true,
+                  }}
+                  isUserListening={true}
+                  isUserProcessing={false}
+                  micOn={true}
+                  onAddressAgent={addressAgent}
+                  onMicToggle={handleMicToggle}
+                  onBargeIn={handleBargeIn}
+                />
               </div>
             </section>
           )}
 
           {/* ============================================================ */}
-          {/* SCREEN E: ERROR AND RECOVERY STATES                          */}
+          {/* SCREEN E: ERROR & RECOVERY STATES                           */}
           {/* ============================================================ */}
           {currentScreen === 'E' && (
-            <section className="screen-recovery container" aria-label="Screen E: Recovery State">
-              <div className="recovery-header">
-                <h2>Resilience & Failure Recovery (ERR-01 .. ERR-10)</h2>
-                <p>
-                  Truthful feedback: errors are disclosed honestly rather than masked with fake waveforms or synthetic successes.
+            <section className="screen-recovery-state container" aria-label="Screen E: Recovery">
+              <header className="recovery-header">
+                <h2 className="recovery-title">Resilience & Failure Recovery</h2>
+                <p className="recovery-desc">
+                  Honest error slips pinned to the table rim. Mocks and failures are transparently stated.
                 </p>
-              </div>
+              </header>
 
-              <div className="notices-list">
-                {SAMPLE_NOTICES.map((notice, idx) => (
-                  <RecoveryNotice
-                    key={idx}
-                    notice={notice}
-                    onRetry={() => alert(`Retrying recovery action for ${notice.code}`)}
-                    onDismiss={() => {}}
-                  />
-                ))}
-
-                <RecoveryNotice
+              <div className="slips-container">
+                <Slip
+                  notice={{
+                    code: 'mic_denied',
+                    level: 'error',
+                    text: 'Microphone permission blocked. Enable browser mic access to speak or interrupt.',
+                    recoverable: true,
+                  }}
+                  onRetry={() => alert('Requesting mic permissions…')}
+                />
+                <Slip
+                  notice={{
+                    code: 'disconnected',
+                    level: 'warn',
+                    text: 'Connection to gateway was lost. Attempting automatic reconnection…',
+                    recoverable: true,
+                  }}
+                  onRetry={() => window.location.reload()}
+                />
+                <Slip
                   notice={{
                     code: 'agent_timeout',
                     level: 'warn',
-                    text: 'AI Engineer bid timed out (>400 ms). Floor was safely granted to Software Developer.',
+                    text: 'AI Engineer response timed out (>4 s). Seat is marked Away; floor granted to Software Developer.',
                     recoverable: false,
                   }}
                 />
               </div>
 
-              <div className="recovery-actions-card">
-                <button
-                  type="button"
-                  className="retry-all-btn"
-                  onClick={() => setCurrentScreen('B')}
-                >
-                  Clear Errors & Resume Session
-                </button>
+              <div className="recovery-table-preview">
+                <RoundTable
+                  topic={selectedTopic}
+                  activeSpeakerId={null}
+                  addressedAgentId={null}
+                  activeThread={null}
+                  speechSlip={null}
+                  isUserListening={false}
+                  isUserProcessing={false}
+                  micOn={false}
+                  onAddressAgent={addressAgent}
+                  onMicToggle={handleMicToggle}
+                  onBargeIn={handleBargeIn}
+                />
               </div>
             </section>
           )}
 
           {/* ============================================================ */}
-          {/* SCREEN F: SESSION CONCLUDED / ENDED                          */}
+          {/* SCREEN F: ROUNDTABLE CONCLUDED                              */}
           {/* ============================================================ */}
           {currentScreen === 'F' && (
-            <section className="screen-ended container" aria-label="Screen F: Ended State">
-              <div className="ended-card">
-                <div className="ended-icon">
-                  <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <circle cx="12" cy="12" r="10" />
-                    <polyline points="9 11 12 14 22 4" />
-                    <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" />
-                  </svg>
-                </div>
-                <h2 className="ended-title">Roundtable Concluded</h2>
+            <section className="screen-ended-state container" aria-label="Screen F: Ended">
+              <div className="ended-panel paper-surface">
+                <h2 className="ended-title">Roundtable Ended</h2>
                 <p className="ended-desc">
-                  Session ended (S8). All WebSocket audio playback stopped, and queued audio buffers have been discarded.
+                  Session closed (S8). Lights down, chairs pushed back, all audio streams and queues discarded.
                 </p>
-
-                <div className="ended-actions">
-                  <button
-                    type="button"
-                    className="start-new-btn"
-                    onClick={() => {
-                      setCurrentScreen('A')
-                      setMicState('off')
-                      setTargetedAgentId(null)
-                    }}
-                  >
-                    Start New Roundtable
-                  </button>
-                </div>
+                <button
+                  type="button"
+                  className="start-new-btn"
+                  onClick={() => {
+                    setCurrentScreen('A')
+                  }}
+                >
+                  Join Another Roundtable
+                </button>
               </div>
 
-              <div className="ended-transcript-review">
-                <h3>Session Transcript Review</h3>
-                <TranscriptPanel items={SAMPLE_TRANSCRIPTS} />
+              <div className="ended-minutes-wrap">
+                <MinutesDrawer
+                  transcripts={transcripts}
+                  claims={claims}
+                  traces={traces}
+                  metrics={metrics}
+                  isOpen={true}
+                  onToggle={() => {}}
+                />
               </div>
             </section>
           )}
@@ -535,8 +473,9 @@ export const App: React.FC = () => {
           min-height: 100vh;
           display: flex;
           flex-direction: column;
-          background: var(--color-bg);
-          color: var(--color-text);
+          background: var(--room);
+          background: radial-gradient(circle at 45% 45%, var(--room) 0%, var(--room-edge) 100%);
+          color: var(--text);
         }
         .app-viewport {
           flex: 1;
@@ -544,414 +483,369 @@ export const App: React.FC = () => {
           flex-direction: column;
           width: 100%;
         }
-        .main-content {
+        .table-room-main {
           flex: 1;
-          padding: var(--space-6) 0 var(--space-12);
+          display: flex;
+          flex-direction: column;
+          position: relative;
         }
 
-        /* Mobile simulation frame */
-        .simulated-mobile-wrap {
-          background: #080A10;
-          align-items: center;
+        .container {
+          width: 100%;
+          max-width: 1440px;
+          margin: 0 auto;
+          padding: 0 var(--space-4);
         }
-        .mobile-frame {
-          max-width: 390px !important;
-          min-height: 844px;
-          border: 4px solid #2A2F43;
-          border-radius: 36px;
-          margin: var(--space-6) auto;
-          overflow: hidden;
-          box-shadow: 0 20px 50px rgba(0, 0, 0, 0.8);
-          background: var(--color-bg);
+
+        .notices-pinboard {
+          padding-top: var(--space-3);
         }
 
         /* Screen A: Lobby */
-        .hero-banner {
+        .screen-lobby {
+          padding: var(--space-8) var(--space-4) var(--space-12);
+        }
+        .lobby-heading {
           text-align: center;
           margin-bottom: var(--space-8);
         }
-        .hero-badge {
-          display: inline-block;
-          font-size: 12px;
-          font-weight: 700;
-          color: var(--color-accent);
-          background: var(--color-accent-subtle);
-          border: 1px solid var(--color-accent);
-          padding: 4px 12px;
-          border-radius: var(--radius-pill);
+        .lobby-badge {
+          font-family: var(--font-mono);
+          font-size: 11px;
+          font-weight: 600;
+          color: var(--inlay-line);
           text-transform: uppercase;
-          margin-bottom: var(--space-3);
-        }
-        .hero-title {
-          font-size: 36px;
-          font-weight: 800;
-          line-height: 1.2;
-          color: var(--color-text);
+          letter-spacing: 0.08em;
+          display: inline-block;
           margin-bottom: var(--space-2);
         }
-        .hero-tagline {
+        .lobby-title {
+          font-family: var(--font-display);
+          font-size: 40px;
+          font-weight: 700;
+          color: var(--text);
+          margin-bottom: var(--space-2);
+        }
+        .lobby-desc {
+          font-family: var(--font-body);
           font-size: 16px;
-          color: var(--color-text-muted);
+          color: var(--text-muted);
           max-width: 600px;
           margin: 0 auto;
+          line-height: 1.5;
         }
-        .topics-grid {
+        .lobby-tables-row {
           display: grid;
           grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
           gap: var(--space-6);
           margin-bottom: var(--space-8);
         }
-        .lobby-footer-card {
-          background: var(--color-surface);
-          border: 1px solid var(--color-border);
-          border-radius: var(--radius-card);
+        .table-inscription-panel {
           padding: var(--space-6);
           display: flex;
-          align-items: center;
           justify-content: space-between;
           gap: var(--space-6);
           flex-wrap: wrap;
+          align-items: center;
         }
-        .footer-meta {
+        .inscription-meta {
           flex: 1;
-          min-width: 280px;
+          min-width: 300px;
         }
-        .footer-title {
-          font-size: 16px;
-          font-weight: 700;
-          color: var(--color-text);
-          margin-bottom: 4px;
-        }
-        .footer-desc {
-          font-size: 13px;
-          color: var(--color-text-muted);
-          margin-bottom: var(--space-2);
-        }
-        .permissions-notice {
-          display: flex;
-          align-items: center;
-          gap: var(--space-2);
-          font-size: 12px;
-          color: var(--color-text-dim);
-        }
-        .start-roundtable-btn {
-          background: var(--color-accent);
-          color: #0b0e14;
-          font-size: 16px;
-          font-weight: 700;
-          padding: 14px 28px;
-          border-radius: var(--radius-control);
-          display: flex;
-          align-items: center;
-          gap: var(--space-2);
-          transition: background var(--transition-fast), transform var(--transition-fast);
-        }
-        .start-roundtable-btn:hover {
-          background: var(--color-accent-hover);
-          transform: translateY(-2px);
-        }
-
-        /* Screen B: Desktop Live */
-        .session-subnav {
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          margin-bottom: var(--space-4);
-          gap: var(--space-4);
-        }
-        .context-label {
-          font-size: 11px;
-          font-weight: 600;
-          color: var(--color-text-dim);
-          text-transform: uppercase;
-          display: block;
-        }
-        .context-title {
-          font-size: 22px;
-          font-weight: 800;
-          color: var(--color-text);
-          margin: 0;
-        }
-        .angle-badge {
-          background: var(--color-surface-elevated);
-          border: 1px solid var(--color-border);
-          padding: 4px 12px;
-          border-radius: var(--radius-pill);
-          font-size: 12px;
-          color: var(--color-text-muted);
-        }
-        .experts-grid {
-          display: grid;
-          grid-template-columns: repeat(3, 1fr);
-          gap: var(--space-4);
-          margin-bottom: var(--space-6);
-        }
-        .session-body-grid {
-          display: grid;
-          grid-template-columns: 1fr 420px;
-          gap: var(--space-6);
-        }
-        .main-stage-col {
-          display: flex;
-          flex-direction: column;
-          gap: var(--space-4);
-        }
-        .speaker-spotlight {
-          background: var(--color-surface);
-          border: 1px solid var(--color-border);
-          border-left: 4px solid var(--color-agent-dev);
-          border-radius: var(--radius-card);
-          padding: var(--space-4) var(--space-6);
-        }
-        .spotlight-header {
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          margin-bottom: var(--space-2);
-        }
-        .spotlight-tag {
-          font-size: 11px;
-          font-weight: 700;
-          color: var(--color-agent-dev);
-          text-transform: uppercase;
-        }
-        .spotlight-voice {
-          font-size: 11px;
-          color: var(--color-text-dim);
-        }
-        .spotlight-quote {
-          font-size: 17px;
-          color: var(--color-text);
-          line-height: 1.6;
-          font-style: italic;
-          margin: 0;
-        }
-        .session-controls-card {
-          background: var(--color-surface);
-          border: 1px solid var(--color-border);
-          border-radius: var(--radius-card);
-          padding: var(--space-4);
-          display: flex;
-          flex-direction: column;
-          gap: var(--space-4);
-        }
-        .evidence-grid {
-          display: grid;
-          grid-template-columns: 1fr 1fr;
-          gap: var(--space-4);
-        }
-        .sidebar-col {
-          display: flex;
-          flex-direction: column;
-          gap: var(--space-4);
-        }
-
-        /* Screen C: Mobile */
-        .mobile-topic-header {
-          margin-bottom: var(--space-3);
-        }
-        .mobile-topic-tag {
-          font-size: 11px;
-          color: var(--color-accent);
-          text-transform: uppercase;
-          font-weight: 700;
-        }
-        .mobile-topic-title {
-          font-size: 18px;
-          font-weight: 700;
-          margin: 0;
-        }
-        .mobile-experts-list {
-          display: flex;
-          flex-direction: column;
-          gap: var(--space-2);
-          margin-bottom: var(--space-4);
-        }
-        .mobile-transcript-wrap {
-          margin-bottom: var(--space-4);
-        }
-        .mobile-action-bar {
-          display: flex;
-          flex-direction: column;
-          gap: var(--space-2);
-          position: sticky;
-          bottom: 0;
-          background: var(--color-bg);
-          padding: var(--space-2) 0;
-        }
-
-        /* Screen D: Interrupted */
-        .interrupted-banner {
-          background: rgba(181, 160, 255, 0.1);
-          border: 1px solid var(--color-accent);
-          border-radius: var(--radius-card);
-          padding: var(--space-4) var(--space-6);
-          display: flex;
-          align-items: center;
-          gap: var(--space-4);
-          margin-bottom: var(--space-6);
-        }
-        .interrupted-icon {
-          color: var(--color-accent);
-        }
-        .interrupted-title {
-          font-size: 18px;
-          font-weight: 700;
-          color: var(--color-text);
-          margin-bottom: 2px;
-        }
-        .interrupted-desc {
-          font-size: 13px;
-          color: var(--color-text-muted);
-          margin: 0;
-        }
-        .interrupted-cards-row {
-          display: grid;
-          grid-template-columns: repeat(3, 1fr);
-          gap: var(--space-4);
-          margin-bottom: var(--space-6);
-        }
-        .user-interrupted-stage {
-          background: var(--color-surface);
-          border: 1px solid var(--color-border);
-          border-radius: var(--radius-card);
-          padding: var(--space-6);
-          display: flex;
-          flex-direction: column;
-          gap: var(--space-4);
-        }
-        .user-listening-box {
-          display: flex;
-          align-items: flex-start;
-          gap: var(--space-4);
-          background: var(--color-surface-elevated);
-          padding: var(--space-4);
-          border-radius: var(--radius-control);
-          border: 1px solid var(--color-accent);
-        }
-        .live-mic-pulse {
-          width: 14px;
-          height: 14px;
-          border-radius: 50%;
-          background: var(--color-success);
-          margin-top: 4px;
-          box-shadow: 0 0 10px var(--color-success);
-        }
-        .listening-details {
-          display: flex;
-          flex-direction: column;
-          gap: var(--space-1);
-        }
-        .listening-status {
+        .inscription-tag {
           font-family: var(--font-mono);
           font-size: 11px;
-          color: var(--color-accent);
           font-weight: 700;
+          color: #7D6D5F;
+          text-transform: uppercase;
         }
-        .user-utterance-text {
-          font-size: 18px;
-          color: var(--color-text);
-          font-weight: 600;
-        }
-        .routing-note {
-          font-size: 12px;
-          color: var(--color-text-dim);
-        }
-        .resume-demo-btn {
-          align-self: flex-start;
-          background: var(--color-accent);
-          color: #0b0e14;
+        .inscription-title {
+          font-family: var(--font-display);
+          font-size: 20px;
           font-weight: 700;
-          padding: 10px 20px;
-          border-radius: var(--radius-control);
+          color: var(--ink);
+          margin: 2px 0 var(--space-2);
+        }
+        .inscription-background {
+          font-family: var(--font-body);
           font-size: 14px;
+          color: #4A3E36;
+          margin-bottom: var(--space-3);
+          line-height: 1.45;
+        }
+        .opening-quote-box {
+          background: rgba(0, 0, 0, 0.04);
+          border-left: 3px solid var(--inlay-line);
+          padding: 8px 12px;
+          margin-bottom: var(--space-3);
+        }
+        .quote-label {
+          display: block;
+          font-family: var(--font-mono);
+          font-size: 10px;
+          font-weight: 700;
+          color: #6C5B4E;
+          text-transform: uppercase;
+          margin-bottom: 2px;
+        }
+        .quote-text {
+          font-family: var(--font-body);
+          font-size: 13px;
+          color: var(--ink);
+          font-style: italic;
+          margin: 0;
+          line-height: 1.4;
+        }
+        .disclosure-slip {
+          font-size: 12px;
+          color: #4A3E36;
+        }
+        .inscription-cta-col {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          gap: 6px;
+        }
+        .join-roundtable-btn {
+          font-family: var(--font-sans);
+          font-size: 15px;
+          font-weight: 700;
+          background: var(--ink);
+          color: var(--paper);
+          padding: 12px 28px;
+          border-radius: var(--radius-slip);
+          transition: background var(--transition-fast), transform var(--transition-fast);
+        }
+        .join-roundtable-btn:hover {
+          background: #362B24;
+          transform: translateY(-2px);
+        }
+        .cta-note {
+          font-family: var(--font-mono);
+          font-size: 10px;
+          color: #7D6D5F;
         }
 
-        /* Screen E: Recovery */
-        .recovery-header {
-          margin-bottom: var(--space-6);
+        /* Screen B: Desktop Session */
+        .screen-table-desktop {
+          flex: 1;
+          display: flex;
+          height: calc(100vh - 80px);
+          overflow: hidden;
         }
-        .recovery-header h2 {
-          font-size: 24px;
-          font-weight: 800;
-          margin-bottom: var(--space-1);
+        .table-stage-area {
+          flex: 1;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          position: relative;
+          overflow: auto;
+          padding: var(--space-4);
         }
-        .recovery-header p {
-          color: var(--color-text-muted);
-          font-size: 14px;
+        .dev-gateway-controls {
+          display: flex;
+          align-items: center;
+          gap: 6px;
+          flex-wrap: wrap;
+          background: rgba(20, 15, 12, 0.9);
+          border: 1px solid rgba(138, 106, 75, 0.25);
+          padding: 5px 12px;
+          border-radius: 6px;
+          margin-bottom: 10px;
+          width: 100%;
+          max-width: 1100px;
+          z-index: 10;
         }
-        .notices-list {
+        .dev-tag {
+          font-family: var(--font-mono);
+          font-size: 10px;
+          font-weight: 700;
+          color: var(--inlay-line);
+        }
+        .dev-btn {
+          font-family: var(--font-sans);
+          font-size: 11px;
+          font-weight: 600;
+          background: #2A1F18;
+          color: var(--text-muted);
+          border: 1px solid var(--wood-edge);
+          padding: 3px 8px;
+          border-radius: var(--radius-slip);
+        }
+        .dev-btn:hover {
+          color: var(--paper);
+          border-color: var(--inlay-line);
+        }
+
+        /* Screen C: Mobile View */
+        .simulated-mobile-wrap {
+          background: #080605;
+          align-items: center;
+        }
+        .mobile-frame {
+          max-width: 390px !important;
+          min-height: 844px;
+          border: 4px solid var(--wood-edge);
+          border-radius: 36px;
+          margin: var(--space-4) auto;
+          overflow: hidden;
+          background: var(--room);
+          box-shadow: 0 20px 60px rgba(0, 0, 0, 0.9);
+        }
+        .screen-mobile-session {
+          padding: var(--space-3);
           display: flex;
           flex-direction: column;
           gap: var(--space-3);
-          margin-bottom: var(--space-6);
         }
-        .retry-all-btn {
-          background: var(--color-surface-elevated);
-          border: 1px solid var(--color-border);
-          color: var(--color-text);
-          font-weight: 600;
-          padding: 12px 24px;
-          border-radius: var(--radius-control);
+        .mobile-table-header {
+          text-align: center;
+        }
+        .mobile-tag {
+          font-family: var(--font-mono);
+          font-size: 10px;
+          color: var(--inlay-line);
+          text-transform: uppercase;
+        }
+        .mobile-title {
+          font-family: var(--font-display);
+          font-size: 16px;
+          font-weight: 700;
+          margin: 0;
+        }
+        .mobile-arc-wrap {
+          transform: scale(0.5);
+          transform-origin: top center;
+          height: 380px;
+          margin-bottom: -160px;
+        }
+        .mobile-minutes-sheet {
+          flex: 1;
+        }
+
+        /* Screen D: Interrupted */
+        .screen-interrupted-state {
+          padding: var(--space-6) var(--space-4);
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          gap: var(--space-6);
+        }
+        .interrupted-slip-banner {
+          max-width: 600px;
+          padding: var(--space-4);
+          border-left: 4px solid var(--seat-1);
+          display: flex;
+          gap: 12px;
+        }
+        .banner-pin {
+          width: 8px;
+          height: 8px;
+          border-radius: 50%;
+          background: var(--seat-1);
+          margin-top: 4px;
+        }
+        .banner-content {
+          display: flex;
+          flex-direction: column;
+          gap: 2px;
+        }
+        .banner-code {
+          font-family: var(--font-mono);
+          font-size: 10px;
+          font-weight: 700;
+          color: #7D6D5F;
+        }
+        .banner-title {
+          font-family: var(--font-display);
+          font-size: 18px;
+          font-weight: 700;
+          color: var(--ink);
+          margin: 0;
+        }
+        .banner-desc {
+          font-family: var(--font-body);
+          font-size: 13px;
+          color: #4A3E36;
+          margin: 0;
+        }
+
+        /* Screen E: Recovery */
+        .screen-recovery-state {
+          padding: var(--space-6) var(--space-4);
+        }
+        .recovery-header {
+          text-align: center;
+          margin-bottom: var(--space-4);
+        }
+        .recovery-title {
+          font-family: var(--font-display);
+          font-size: 28px;
+          color: var(--text);
+          margin-bottom: 4px;
+        }
+        .recovery-desc {
+          font-family: var(--font-body);
+          color: var(--text-muted);
           font-size: 14px;
+        }
+        .slips-container {
+          max-width: 680px;
+          margin: 0 auto var(--space-6);
+          display: flex;
+          flex-direction: column;
+          gap: 6px;
         }
 
         /* Screen F: Ended */
-        .ended-card {
-          background: var(--color-surface);
-          border: 1px solid var(--color-border);
-          border-radius: var(--radius-card);
+        .screen-ended-state {
+          padding: var(--space-8) var(--space-4);
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          gap: var(--space-6);
+        }
+        .ended-panel {
           padding: var(--space-8);
+          max-width: 500px;
           text-align: center;
           display: flex;
           flex-direction: column;
           align-items: center;
           gap: var(--space-3);
-          margin-bottom: var(--space-6);
-        }
-        .ended-icon {
-          color: var(--color-success);
         }
         .ended-title {
+          font-family: var(--font-display);
           font-size: 26px;
-          font-weight: 800;
-          color: var(--color-text);
+          font-weight: 700;
+          color: var(--ink);
           margin: 0;
         }
         .ended-desc {
+          font-family: var(--font-body);
           font-size: 14px;
-          color: var(--color-text-muted);
-          max-width: 500px;
-          margin: 0 auto;
+          color: #4A3E36;
+          margin: 0;
         }
         .start-new-btn {
-          background: var(--color-accent);
-          color: #0b0e14;
-          font-size: 15px;
+          font-family: var(--font-sans);
+          font-size: 14px;
           font-weight: 700;
-          padding: 12px 24px;
-          border-radius: var(--radius-control);
+          background: var(--ink);
+          color: var(--paper);
+          padding: 10px 22px;
+          border-radius: var(--radius-slip);
           margin-top: var(--space-2);
         }
-        .ended-transcript-review h3 {
-          font-size: 16px;
-          font-weight: 700;
-          margin-bottom: var(--space-3);
-        }
-
-        @media (max-width: 1024px) {
-          .experts-grid {
-            grid-template-columns: 1fr;
-          }
-          .session-body-grid {
-            grid-template-columns: 1fr;
-          }
-          .evidence-grid {
-            grid-template-columns: 1fr;
-          }
+        .ended-minutes-wrap {
+          width: 100%;
+          max-width: 700px;
+          height: 400px;
         }
       `}</style>
     </div>
   )
 }
+
 export default App

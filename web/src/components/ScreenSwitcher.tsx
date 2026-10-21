@@ -16,59 +16,62 @@ export const ScreenSwitcher: React.FC<ScreenSwitcherProps> = ({
   onToggleMobilePreview,
 }) => {
   const screens: { id: ScreenId; label: string; desc: string }[] = [
-    { id: 'A', label: 'Screen A: Topic Select', desc: 'Lobby & Topic Selection' },
-    { id: 'B', label: 'Screen B: Desktop Session', desc: '1440px Live Roundtable' },
-    { id: 'C', label: 'Screen C: Mobile Session', desc: '390px Mobile Viewport' },
-    { id: 'D', label: 'Screen D: Interrupted', desc: 'Barge-In / Listening State' },
-    { id: 'E', label: 'Screen E: Recovery', desc: 'Error & Notice States' },
-    { id: 'F', label: 'Screen F: Ended', desc: 'Session Concluded' },
+    { id: 'A', label: 'Screen A: Lobby', desc: 'Choose a Roundtable' },
+    { id: 'B', label: 'Screen B: 3D Session', desc: 'Live Roundtable Table' },
+    { id: 'C', label: 'Screen C: Mobile', desc: '390px Mobile Viewport' },
+    { id: 'D', label: 'Screen D: Interrupted', desc: 'Barge-In Demonstration' },
+    { id: 'E', label: 'Screen E: Recovery', desc: 'Error Notices & Fallbacks' },
+    { id: 'F', label: 'Screen F: Concluded', desc: 'Session Wrap & Download' },
   ]
 
   return (
     <nav className="switcher-root" aria-label="Development Screen Navigator">
       <div className="switcher-inner container">
-        <span className="switcher-title">Screen Preview:</span>
-        <div className="switcher-buttons">
-          {screens.map((s) => (
-            <button
-              key={s.id}
-              type="button"
-              className={`switcher-btn ${currentScreen === s.id ? 'active' : ''}`}
-              onClick={() => {
-                if (s.id === 'C' && !isMobilePreview) {
-                  onToggleMobilePreview()
-                } else if (s.id !== 'C' && isMobilePreview) {
-                  onToggleMobilePreview()
-                }
-                onSelectScreen(s.id)
-              }}
-              title={s.desc}
-            >
-              {s.label}
-            </button>
-          ))}
+        <div className="switcher-left">
+          <span className="dev-tag">DEV STAGE</span>
+          <div className="switcher-buttons">
+            {screens.map((s) => (
+              <button
+                key={s.id}
+                id={`screen-tab-${s.id.toLowerCase()}`}
+                type="button"
+                className={`switcher-btn ${currentScreen === s.id ? 'active' : ''}`}
+                onClick={() => {
+                  if (s.id === 'C' && !isMobilePreview) {
+                    onToggleMobilePreview()
+                  } else if (s.id !== 'C' && isMobilePreview) {
+                    onToggleMobilePreview()
+                  }
+                  onSelectScreen(s.id)
+                }}
+                title={s.desc}
+              >
+                {s.label}
+              </button>
+            ))}
+          </div>
         </div>
 
         <button
           type="button"
           className={`mobile-toggle-btn ${isMobilePreview ? 'active' : ''}`}
           onClick={onToggleMobilePreview}
-          title="Toggle 390px mobile simulation frame"
+          title="Toggle 390px mobile viewport preview"
         >
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
             <rect x="5" y="2" width="14" height="20" rx="2" ry="2" />
             <line x1="12" y1="18" x2="12.01" y2="18" />
           </svg>
-          <span>{isMobilePreview ? 'Mobile Frame: ON' : 'Mobile Frame: OFF'}</span>
+          <span>{isMobilePreview ? 'Mobile: ON' : 'Mobile: OFF'}</span>
         </button>
       </div>
 
       <style>{`
         .switcher-root {
-          background: #171B26;
-          border-bottom: 1px solid var(--color-border);
-          padding: 6px 0;
-          font-size: 12px;
+          background: #0B0807;
+          border-bottom: 1px solid rgba(138, 106, 75, 0.15);
+          padding: 4px 0;
+          font-size: 11px;
           z-index: 60;
           position: sticky;
           top: 0;
@@ -76,57 +79,69 @@ export const ScreenSwitcher: React.FC<ScreenSwitcherProps> = ({
         .switcher-inner {
           display: flex;
           align-items: center;
-          gap: var(--space-3);
-          flex-wrap: wrap;
           justify-content: space-between;
+          padding: 0 16px;
+          gap: 12px;
         }
-        .switcher-title {
+        .switcher-left {
+          display: flex;
+          align-items: center;
+          gap: 10px;
+        }
+        .dev-tag {
+          font-family: var(--font-mono, monospace);
+          font-size: 9px;
           font-weight: 700;
-          color: var(--color-accent);
-          font-family: var(--font-mono);
-          text-transform: uppercase;
+          letter-spacing: 0.1em;
+          color: #8A6A4B;
+          background: rgba(138, 106, 75, 0.12);
+          padding: 2px 6px;
+          border-radius: 3px;
         }
         .switcher-buttons {
           display: flex;
           align-items: center;
-          gap: 6px;
-          flex-wrap: wrap;
+          gap: 4px;
         }
         .switcher-btn {
-          padding: 4px 10px;
-          border-radius: var(--radius-sm);
-          background: var(--color-surface);
-          border: 1px solid var(--color-border);
-          color: var(--color-text-muted);
+          padding: 3px 9px;
+          border-radius: 4px;
+          background: transparent;
+          border: 1px solid transparent;
+          color: #8A7563;
+          font-family: var(--font-sans, system-ui);
           font-size: 11px;
-          font-weight: 600;
-          transition: background var(--transition-fast), border-color var(--transition-fast);
+          font-weight: 500;
+          transition: all 140ms ease;
+          cursor: pointer;
         }
         .switcher-btn:hover {
-          background: var(--color-surface-elevated);
-          color: var(--color-text);
+          color: #EADFC8;
+          background: rgba(234, 223, 200, 0.05);
         }
         .switcher-btn.active {
-          background: var(--color-accent);
-          color: #0b0e14;
-          border-color: var(--color-accent);
-        }
-        .mobile-toggle-btn {
-          display: flex;
-          align-items: center;
-          gap: 6px;
-          padding: 4px 10px;
-          border-radius: var(--radius-sm);
-          background: var(--color-surface-elevated);
-          border: 1px solid var(--color-border);
-          color: var(--color-text-dim);
-          font-size: 11px;
+          background: rgba(138, 106, 75, 0.22);
+          color: #FAF5EB;
+          border-color: rgba(138, 106, 75, 0.45);
           font-weight: 600;
         }
+        .mobile-toggle-btn {
+          display: inline-flex;
+          align-items: center;
+          gap: 5px;
+          padding: 3px 8px;
+          border-radius: 4px;
+          background: rgba(30, 22, 17, 0.6);
+          border: 1px solid rgba(138, 106, 75, 0.25);
+          color: #B3A18F;
+          font-family: var(--font-mono, monospace);
+          font-size: 10px;
+          cursor: pointer;
+        }
         .mobile-toggle-btn.active {
-          border-color: var(--color-warning);
-          color: var(--color-warning);
-          background: var(--color-warning-subtle);
+          border-color: #D69E2E;
+          color: #D69E2E;
+          background: rgba(214, 158, 46, 0.12);
         }
       `}</style>
     </nav>
