@@ -14,9 +14,8 @@ export const App: React.FC = () => {
   const [isMobilePreview, setIsMobilePreview] = useState<boolean>(false)
   const [selectedTopicId, setSelectedTopicId] = useState<string>(DEFAULT_TOPIC.topic_id)
   const [isMinutesOpen, setIsMinutesOpen] = useState<boolean>(true)
-  const [micOn, setMicOn] = useState<boolean>(false)
 
-  // Real WebSocket state from mock gateway
+  // Real WebSocket state from gateway/mock gateway
   const {
     connected,
     sessionState,
@@ -30,10 +29,12 @@ export const App: React.FC = () => {
     traces,
     metrics,
     notices,
+    micState,
     startSession,
     bargeIn,
     addressAgent,
     endSession,
+    toggleMic,
     triggerMockEvent,
     dismissNotice,
     simulateSpeaker,
@@ -48,10 +49,6 @@ export const App: React.FC = () => {
   const handleStartSession = () => {
     startSession(selectedTopic.topic_id)
     setCurrentScreen('B')
-  }
-
-  const handleMicToggle = () => {
-    setMicOn(!micOn)
   }
 
   const handleBargeIn = () => {
@@ -100,6 +97,7 @@ export const App: React.FC = () => {
                 onRetry={() => {
                   if (n.code === 'disconnected') window.location.reload()
                 }}
+                onAddressAgent={addressAgent}
               />
             ))}
           </aside>
@@ -271,9 +269,9 @@ export const App: React.FC = () => {
                   speechSlip={speechSlip}
                   isUserListening={sessionState === 'user_speaking'}
                   isUserProcessing={sessionState === 'processing_user'}
-                  micOn={micOn}
+                  micOn={micState === 'on'}
                   onAddressAgent={addressAgent}
-                  onMicToggle={handleMicToggle}
+                  onMicToggle={toggleMic}
                   onBargeIn={handleBargeIn}
                 />
               </div>
@@ -310,9 +308,9 @@ export const App: React.FC = () => {
                   speechSlip={speechSlip}
                   isUserListening={sessionState === 'user_speaking'}
                   isUserProcessing={sessionState === 'processing_user'}
-                  micOn={micOn}
+                  micOn={micState === 'on'}
                   onAddressAgent={addressAgent}
-                  onMicToggle={handleMicToggle}
+                  onMicToggle={toggleMic}
                   onBargeIn={handleBargeIn}
                 />
               </div>
@@ -356,7 +354,7 @@ export const App: React.FC = () => {
                     from: 'human',
                     to: 'oss_maintainer',
                     summary: 'passing floor to Open-Source Maintainer',
-                    ts: Date.now(),
+                    ts: 1700000000000,
                   }}
                   speechSlip={{
                     text: 'Wait, Maya, what specific security vulnerabilities are maintainers seeing from generated PRs?',
@@ -364,9 +362,9 @@ export const App: React.FC = () => {
                   }}
                   isUserListening={true}
                   isUserProcessing={false}
-                  micOn={true}
+                  micOn={micState === 'on'}
                   onAddressAgent={addressAgent}
-                  onMicToggle={handleMicToggle}
+                  onMicToggle={toggleMic}
                   onBargeIn={handleBargeIn}
                 />
               </div>
@@ -423,9 +421,9 @@ export const App: React.FC = () => {
                   speechSlip={null}
                   isUserListening={false}
                   isUserProcessing={false}
-                  micOn={false}
+                  micOn={micState === 'on'}
                   onAddressAgent={addressAgent}
-                  onMicToggle={handleMicToggle}
+                  onMicToggle={toggleMic}
                   onBargeIn={handleBargeIn}
                 />
               </div>

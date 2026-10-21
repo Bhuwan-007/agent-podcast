@@ -3,7 +3,7 @@ import { Seat } from './Seat'
 import { YourSeat } from './YourSeat'
 import { Spotlight } from './Spotlight'
 import { ThreadLayer } from './ThreadLayer'
-import type { AgentConfig, TopicConfig } from '../types/protocol'
+import type { TopicConfig } from '../types/protocol'
 import type { ActiveThread } from '../hooks/useGatewayWs'
 
 interface RoundTableProps {

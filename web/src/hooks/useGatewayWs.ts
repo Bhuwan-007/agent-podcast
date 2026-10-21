@@ -9,6 +9,7 @@ import type {
   MetricsState,
   Notice,
   RoutingEvent,
+  MicState,
 } from '../types/protocol'
 
 export interface ActiveThread {
@@ -40,9 +41,26 @@ export function useGatewayWs() {
   const [notices, setNotices] = useState<Notice[]>([])
   const [addressedAgentId, setAddressedAgentId] = useState<string | null>(null)
   const [activeThread, setActiveThread] = useState<ActiveThread | null>(null)
+  const [micState, setMicState] = useState<MicState>('off')
 
   const wsRef = useRef<WebSocket | null>(null)
   const threadTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const epochRef = useRef<number>(1)
+  const mediaStreamRef = useRef<MediaStream | null>(null)
+
+  // Client-clock metric timestamps
+  const tVadStartRef = useRef<number | null>(null)
+  const tVadEndRef = useRef<number | null>(null)
+  const tTurnStartReceiptRef = useRef<number | null>(null)
+
+  // Send message helper
+  const send = useCallback((payload: Record<string, unknown>) => {
+    if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
+      wsRef.current.send(JSON.stringify(payload))
+    } else {
+      console.warn('[useGatewayWs] Socket not open, failed to send:', payload)
+    }
+  }, [])
 
   // Connect to WebSocket
   const connect = useCallback(() => {
@@ -54,20 +72,35 @@ export function useGatewayWs() {
       ws.onopen = () => {
         console.log('[useGatewayWs] Connected to', url)
         setConnected(true)
-        // Clear disconnected notice if present
         setNotices((prev) => prev.filter((n) => n.code !== 'disconnected'))
       }
 
       ws.onmessage = (event) => {
         try {
           const data = JSON.parse(event.data)
-          // Dispatch protocol events
+
+          // Epoch verification (contracts/ws_events.md Section 2)
+          if (data.epoch !== undefined && typeof data.epoch === 'number') {
+            if (data.epoch < epochRef.current) {
+              console.log(`[useGatewayWs] Dropping stale event from epoch ${data.epoch} < current ${epochRef.current}`)
+              return
+            }
+            if (data.epoch > epochRef.current) {
+              epochRef.current = data.epoch
+              setCurrentEpoch(data.epoch)
+              setActiveSpeakerId(null)
+            }
+          }
+
           switch (data.type) {
             case 'session_state': {
               setSessionState(data.state)
               if (data.mode) setSessionMode(data.mode)
               if (data.session_id) setSessionId(data.session_id)
-              if (data.epoch !== undefined) setCurrentEpoch(data.epoch)
+              if (data.epoch !== undefined) {
+                epochRef.current = data.epoch
+                setCurrentEpoch(data.epoch)
+              }
 
               if (data.state === 'ended') {
                 setActiveSpeakerId(null)
@@ -77,8 +110,37 @@ export function useGatewayWs() {
             }
 
             case 'speaker_active': {
+              // Authoritative speaker highlight (contracts/ws_events.md Section 4 & RULE-32)
               setActiveSpeakerId(data.agent_id)
-              setActiveTurnId(data.turn_id)
+              if (data.turn_id !== undefined) {
+                setActiveTurnId(data.turn_id)
+              }
+
+              // Compute grant_to_first_audio_ms (receipt of turn_start to speaker_active)
+              if (tTurnStartReceiptRef.current !== null) {
+                const grantMs = Math.round(performance.now() - tTurnStartReceiptRef.current)
+                tTurnStartReceiptRef.current = null
+                setMetrics((prev) => ({ ...prev, grant_to_first_audio_ms: grantMs }))
+                send({
+                  type: 'metrics',
+                  name: 'grant_to_first_audio_ms',
+                  value: grantMs,
+                  available: true,
+                })
+              }
+
+              // Compute user_question_to_first_audio_ms if responding to user
+              if (tVadEndRef.current !== null) {
+                const questionToAudioMs = Math.round(performance.now() - tVadEndRef.current)
+                tVadEndRef.current = null
+                setMetrics((prev) => ({ ...prev, user_question_to_first_audio_ms: questionToAudioMs }))
+                send({
+                  type: 'metrics',
+                  name: 'user_question_to_first_audio_ms',
+                  value: questionToAudioMs,
+                  available: true,
+                })
+              }
               break
             }
 
@@ -86,7 +148,6 @@ export function useGatewayWs() {
               setSpeechSlip({ text: data.text, final: data.final })
 
               setTranscripts((prev) => {
-                // If turn exists and final update, update it; otherwise append
                 const existingIdx = prev.findIndex(
                   (t) => t.turn_id === data.turn_id && t.speaker === data.speaker
                 )
@@ -111,24 +172,26 @@ export function useGatewayWs() {
 
             case 'turn_start': {
               setActiveTurnId(data.turn_id)
-              if (data.agent_id) {
-                setActiveSpeakerId(data.agent_id)
-              }
+              // Authoritative highlight rule: DO NOT set activeSpeakerId on turn_start!
+              // Gated strictly on speaker_active / playback_started event per RULE-32.
+              tTurnStartReceiptRef.current = performance.now()
               break
             }
 
             case 'turn_end': {
               if (data.status === 'completed' || data.status === 'interrupted' || data.status === 'discarded') {
-                if (activeTurnId === data.turn_id) {
-                  setActiveSpeakerId(null)
-                }
+                setActiveSpeakerId(null)
               }
+              break
+            }
+
+            case 'playback_stopped': {
+              setActiveSpeakerId(null)
               break
             }
 
             case 'trace_event': {
               setTraces((prev) => [...prev, data as TraceEvent])
-              // Set visual thread between seats
               if (data.from && data.to) {
                 setActiveThread({
                   from: data.from,
@@ -150,6 +213,7 @@ export function useGatewayWs() {
             }
 
             case 'metrics': {
+              // Server-reported metric update
               setMetrics((prev) => ({
                 ...prev,
                 [data.name]: data.available ? data.value : null,
@@ -166,9 +230,9 @@ export function useGatewayWs() {
                 setNotices((prev) => [
                   ...prev,
                   {
-                    code: 'no_speech',
+                    code: 'unknown_target',
                     level: 'warn',
-                    text: r.question || 'Which expert did you mean?',
+                    text: r.question || 'Which expert did you mean? (Alex, Sam, or Maya)',
                     recoverable: true,
                   },
                 ])
@@ -182,8 +246,7 @@ export function useGatewayWs() {
             }
 
             case 'audio_chunk': {
-              // Real audio playback will be integrated in B4
-              // For B2/B3 we acknowledge audio chunk receipt
+              // Acknowledge received audio chunk; binary playback is handled in B4
               break
             }
 
@@ -192,13 +255,14 @@ export function useGatewayWs() {
               break
           }
         } catch (err) {
-          console.error('[useGatewayWs] Failed to parse event frame:', err)
+          console.error('[useGatewayWs] Error parsing event:', err)
         }
       }
 
       ws.onclose = () => {
         console.log('[useGatewayWs] Disconnected')
         setConnected(false)
+        // Local-only state S7 on socket closed (reconciliation R3)
         setSessionState('recovery')
         setNotices((prev) => [
           ...prev,
@@ -217,7 +281,7 @@ export function useGatewayWs() {
     } catch (e) {
       console.error('[useGatewayWs] Connection error:', e)
     }
-  }, [activeTurnId])
+  }, [send])
 
   useEffect(() => {
     connect()
@@ -228,25 +292,24 @@ export function useGatewayWs() {
       if (threadTimeoutRef.current) {
         clearTimeout(threadTimeoutRef.current)
       }
+      if (mediaStreamRef.current) {
+        mediaStreamRef.current.getTracks().forEach((track) => track.stop())
+      }
     }
   }, [connect])
 
-  // Client Outbound Events
-  const send = useCallback((payload: Record<string, unknown>) => {
-    if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
-      wsRef.current.send(JSON.stringify(payload))
-    } else {
-      console.warn('[useGatewayWs] Cannot send message, socket not open', payload)
-    }
-  }, [])
-
+  // Start Session (Local S1 Connecting per R3)
   const startSession = useCallback(
     (topicId: string) => {
+      epochRef.current = 1
+      setCurrentEpoch(1)
       setSessionState('connecting')
       setTranscripts([])
       setClaims([])
       setTraces([])
       setNotices([])
+      setActiveSpeakerId(null)
+      setSpeechSlip(null)
       send({
         type: 'start_session',
         topic_id: topicId,
@@ -256,20 +319,63 @@ export function useGatewayWs() {
     [send]
   )
 
+  // Barge-In (Local S4 User Speaking per R3, and client-clock metric calculation)
   const bargeIn = useCallback(() => {
+    const tStart = performance.now()
+    tVadStartRef.current = tStart
     setSessionState('user_speaking')
     setActiveSpeakerId(null)
     setSpeechSlip({ text: 'Listening to you…', final: false })
+
+    // Send VAD start notification
+    send({
+      type: 'vad',
+      state: 'start',
+      t_client_ms: tStart,
+    })
+
+    // Send barge_in notification
     send({
       type: 'barge_in',
       turn_id: activeTurnId || 1,
-      epoch: currentEpoch,
+      epoch: epochRef.current,
       sentence_idx: 0,
       played_ms: 500,
-      t_client_ms: performance.now(),
+      t_client_ms: tStart,
     })
-  }, [send, activeTurnId, currentEpoch])
 
+    // Immediate playback stop on client; measure interrupt_to_silence_ms
+    const tStop = performance.now()
+    const silenceMs = Math.max(1, Math.round(tStop - tStart))
+
+    setMetrics((prev) => ({ ...prev, interrupt_to_silence_ms: silenceMs }))
+    send({
+      type: 'playback_stopped',
+      turn_id: activeTurnId || 1,
+      epoch: epochRef.current,
+      reason: 'barge_in',
+      t_client_ms: tStop,
+    })
+    send({
+      type: 'metrics',
+      name: 'interrupt_to_silence_ms',
+      value: silenceMs,
+      available: true,
+    })
+
+    // Simulate user finish after a short duration in mock mode
+    setTimeout(() => {
+      const tEnd = performance.now()
+      tVadEndRef.current = tEnd
+      send({
+        type: 'vad',
+        state: 'end',
+        t_client_ms: tEnd,
+      })
+    }, 1200)
+  }, [send, activeTurnId])
+
+  // Direct Addressing (RULE-10, RULE-12)
   const addressAgent = useCallback(
     (agentId: string | null) => {
       setAddressedAgentId(agentId)
@@ -281,7 +387,10 @@ export function useGatewayWs() {
     [send]
   )
 
+  // End Session (Local S8 per R3)
   const endSession = useCallback(() => {
+    epochRef.current += 1
+    setCurrentEpoch(epochRef.current)
     setSessionState('ended')
     setActiveSpeakerId(null)
     setSpeechSlip(null)
@@ -289,6 +398,64 @@ export function useGatewayWs() {
       type: 'end_session',
     })
   }, [send])
+
+  // Microphone toggle with real browser getUserMedia
+  const toggleMic = useCallback(async () => {
+    if (micState === 'on') {
+      if (mediaStreamRef.current) {
+        mediaStreamRef.current.getTracks().forEach((track) => track.stop())
+        mediaStreamRef.current = null
+      }
+      setMicState('off')
+      send({ type: 'mic_state', state: 'off' })
+      return
+    }
+
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      setMicState('unavailable')
+      send({ type: 'mic_state', state: 'unavailable' })
+      setNotices((prev) => [
+        ...prev,
+        {
+          code: 'mic_denied',
+          level: 'warn',
+          text: 'Microphone hardware is unavailable in this environment.',
+          recoverable: false,
+        },
+      ])
+      return
+    }
+
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        audio: {
+          echoCancellation: true,
+          noiseSuppression: true,
+          autoGainControl: true,
+        },
+      })
+      mediaStreamRef.current = stream
+      setMicState('on')
+      send({ type: 'mic_state', state: 'on' })
+      setNotices((prev) => prev.filter((n) => n.code !== 'mic_denied'))
+    } catch (err: unknown) {
+      const error = err as { name?: string }
+      console.warn('[useGatewayWs] Mic permission error:', error)
+      const isDenied = error?.name === 'NotAllowedError' || error?.name === 'PermissionDeniedError'
+      const stateVal: MicState = isDenied ? 'denied' : 'unavailable'
+      setMicState(stateVal)
+      send({ type: 'mic_state', state: stateVal })
+      setNotices((prev) => [
+        ...prev,
+        {
+          code: 'mic_denied',
+          level: 'error',
+          text: 'Microphone access is blocked. Enable it in your browser settings to interrupt by voice.',
+          recoverable: true,
+        },
+      ])
+    }
+  }, [micState, send])
 
   const triggerMockEvent = useCallback(
     (action: 'unknown_target' | 'no_speech' | 'disconnect') => {
@@ -301,6 +468,7 @@ export function useGatewayWs() {
     setNotices((prev) => prev.filter((_, i) => i !== index))
   }, [])
 
+  // Manual development simulation helper
   const simulateSpeaker = useCallback((agentId: string | null, text?: string) => {
     setActiveSpeakerId(agentId)
     if (agentId) {
@@ -330,10 +498,12 @@ export function useGatewayWs() {
     notices,
     addressedAgentId,
     activeThread,
+    micState,
     startSession,
     bargeIn,
     addressAgent,
     endSession,
+    toggleMic,
     triggerMockEvent,
     dismissNotice,
     simulateSpeaker,

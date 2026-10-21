@@ -16,41 +16,45 @@ export const TypewriterText: React.FC<TypewriterTextProps> = ({
   const [displayedText, setDisplayedText] = useState('')
   const [isTyping, setIsTyping] = useState(false)
   const fullTextRef = useRef(text)
-  const timerRef = useRef<number | null>(null)
+  const displayedRef = useRef('')
 
   useEffect(() => {
     fullTextRef.current = text
     if (!text) {
-      setDisplayedText('')
-      setIsTyping(false)
-      return
+      displayedRef.current = ''
+      const t = setTimeout(() => {
+        setDisplayedText('')
+        setIsTyping(false)
+      }, 0)
+      return () => clearTimeout(t)
     }
 
-    // If text was extended (streaming), keep existing displayed characters and continue typing
-    let charIndex = displayedText.length
-    if (charIndex > text.length || !text.startsWith(displayedText)) {
+    let charIndex = displayedRef.current.length
+    if (charIndex > text.length || !text.startsWith(displayedRef.current)) {
       charIndex = 0
+      displayedRef.current = ''
     }
 
-    setIsTyping(true)
+    const startTimeout = setTimeout(() => {
+      setIsTyping(true)
+    }, 0)
 
-    if (timerRef.current) {
-      clearInterval(timerRef.current)
-    }
-
-    timerRef.current = window.setInterval(() => {
+    const timer = window.setInterval(() => {
       charIndex++
       const current = fullTextRef.current
       if (charIndex <= current.length) {
-        setDisplayedText(current.slice(0, charIndex))
+        const next = current.slice(0, charIndex)
+        displayedRef.current = next
+        setDisplayedText(next)
       } else {
-        if (timerRef.current) clearInterval(timerRef.current)
+        clearInterval(timer)
         setIsTyping(!isFinal)
       }
     }, speed)
 
     return () => {
-      if (timerRef.current) clearInterval(timerRef.current)
+      clearTimeout(startTimeout)
+      clearInterval(timer)
     }
   }, [text, speed, isFinal])
 

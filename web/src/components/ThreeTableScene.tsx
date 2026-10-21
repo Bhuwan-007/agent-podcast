@@ -1,6 +1,6 @@
 import React, { useEffect, useRef } from 'react'
 import * as THREE from 'three'
-import type { AgentConfig, TopicConfig } from '../types/protocol'
+import type { TopicConfig } from '../types/protocol'
 import type { ActiveThread } from '../hooks/useGatewayWs'
 
 interface ThreeTableSceneProps {
@@ -42,7 +42,7 @@ export const ThreeTableScene: React.FC<ThreeTableSceneProps> = ({
   isUserSpeaking,
   isUserProcessing = false,
   onSelectAgent,
-  onHoverAgent,
+  onHoverAgent: _onHoverAgent,
 }) => {
   const mountRef = useRef<HTMLDivElement>(null)
 

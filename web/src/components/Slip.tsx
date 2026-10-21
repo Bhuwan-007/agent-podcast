@@ -5,9 +5,10 @@ interface SlipProps {
   notice: Notice
   onDismiss?: () => void
   onRetry?: () => void
+  onAddressAgent?: (agentId: string) => void
 }
 
-export const Slip: React.FC<SlipProps> = ({ notice, onDismiss, onRetry }) => {
+export const Slip: React.FC<SlipProps> = ({ notice, onDismiss, onRetry, onAddressAgent }) => {
   const isError = notice.level === 'error'
 
   return (
@@ -35,6 +36,42 @@ export const Slip: React.FC<SlipProps> = ({ notice, onDismiss, onRetry }) => {
       <div className="slip-message">
         <span className="slip-code">[{notice.code.replace('_', ' ')}]</span>
         <span className="slip-text">{notice.text}</span>
+
+        {notice.code === 'unknown_target' && onAddressAgent && (
+          <div className="slip-quick-targets">
+            <span className="quick-label">Select:</span>
+            <button
+              type="button"
+              className="quick-agent-btn"
+              onClick={() => {
+                onAddressAgent('ai_engineer')
+                onDismiss?.()
+              }}
+            >
+              Alex (AI Eng)
+            </button>
+            <button
+              type="button"
+              className="quick-agent-btn"
+              onClick={() => {
+                onAddressAgent('software_developer')
+                onDismiss?.()
+              }}
+            >
+              Sam (Dev)
+            </button>
+            <button
+              type="button"
+              className="quick-agent-btn"
+              onClick={() => {
+                onAddressAgent('oss_maintainer')
+                onDismiss?.()
+              }}
+            >
+              Maya (OSS)
+            </button>
+          </div>
+        )}
       </div>
 
       <div className="slip-actions">
@@ -121,6 +158,34 @@ export const Slip: React.FC<SlipProps> = ({ notice, onDismiss, onRetry }) => {
         }
         .slip-action-btn:hover {
           background: #BFAF91;
+        }
+        .slip-quick-targets {
+          display: flex;
+          align-items: center;
+          gap: 6px;
+          margin-left: 8px;
+        }
+        .quick-label {
+          font-family: var(--font-sans);
+          font-size: 11px;
+          color: #7D6D5F;
+          font-weight: 600;
+        }
+        .quick-agent-btn {
+          font-family: var(--font-sans);
+          font-size: 11px;
+          font-weight: 600;
+          padding: 2px 7px;
+          background: rgba(234, 223, 200, 0.9);
+          border: 1px solid #B0A284;
+          border-radius: var(--radius-slip);
+          color: var(--ink);
+          cursor: pointer;
+          transition: background 0.15s ease;
+        }
+        .quick-agent-btn:hover {
+          background: #D8CCA8;
+          border-color: #8C7D6B;
         }
         .slip-close-btn {
           font-size: 16px;

@@ -68,6 +68,8 @@ export interface MetricsState {
   grant_to_first_audio_ms: number | null
 }
 
+export type MicState = 'on' | 'off' | 'denied' | 'unavailable'
+
 export type NoticeCode =
   | 'mic_denied'
   | 'no_speech'
@@ -77,6 +79,7 @@ export type NoticeCode =
   | 'session_lost'
   | 'collision'
   | 'topic_unavailable'
+  | 'unknown_target'
 
 export interface Notice {
   code: NoticeCode

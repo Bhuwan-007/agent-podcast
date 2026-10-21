@@ -129,9 +129,9 @@ export const MinutesDrawer: React.FC<MinutesDrawerProps> = ({
                       <span className="claim-speaker">{claim.agent_id.replace('_', ' ')}</span>
                       <span className="claim-status-badge">{claim.status}</span>
                       {claim.verified ? (
-                        <span className="verified-badge">Verified by tool</span>
+                        <span className="verified-badge">✓ Verified by tool</span>
                       ) : (
-                        <span className="unverified-badge">Claimed</span>
+                        <span className="unverified-badge">Claimed (Unverified)</span>
                       )}
                     </div>
                     <blockquote className="claim-quote">"{claim.text}"</blockquote>
