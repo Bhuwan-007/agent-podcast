@@ -20,10 +20,15 @@ class ChatModel:
             raise ValueError('Configure LLM_BASE_URL and LLM_MODEL_SPEAK')
         self.client = client or httpx.AsyncClient(timeout=15, trust_env=False)
 
+    @property
+    def supports_structured_speech(self):
+        return (urlsplit(self.base).hostname == 'api.groq.com' and self.speak_model in
+                ('openai/gpt-oss-20b', 'openai/gpt-oss-120b', 'qwen/qwen3.8-27b'))
+
     async def close(self):
         await self.client.aclose()
 
-    async def complete(self, system, data, *, bid=False, repair=False, _fallback=False):
+    async def complete(self, system, data, *, bid=False, repair=False, _fallback=False, response_schema=None):
         model = os.getenv('LLM_MODEL_FALLBACK', '') if _fallback else (self.bid_model if bid else self.speak_model)
         payload = {'model': model, 'messages': [
             {'role': 'system', 'content': system}, {'role': 'user', 'content': data}],
@@ -31,9 +36,16 @@ class ChatModel:
         groq = urlsplit(self.base).hostname == 'api.groq.com'
         if groq and model in ('openai/gpt-oss-20b', 'openai/gpt-oss-120b'):
             payload.update(reasoning_effort='low', include_reasoning=False)
+        elif groq and model == 'qwen/qwen3.8-27b':
+            # Groq documents instruct mode for efficient dialogue. Bid allocation
+            # does not need an unbounded thinking budget, and reasoning stays private.
+            payload.update(reasoning_effort='none', include_reasoning=False)
         token_field = 'max_completion_tokens' if groq else 'max_tokens'
         payload[token_field] = (1536 if repair else 1024) if bid else (2048 if repair else 1024)
-        if bid:
+        if response_schema is not None:
+            payload['response_format'] = {'type': 'json_schema', 'json_schema': {
+                'name': 'roundtable_speech', 'strict': True, 'schema': response_schema}}
+        elif bid:
             payload['response_format'] = {'type': 'json_object'}
         headers = {'Authorization': f'Bearer {self.key}'} if self.key else {}
         try:
@@ -44,7 +56,7 @@ class ChatModel:
                 if (not bid and not _fallback and fallback and fallback != model
                         and (response.status_code == 429 or response.status_code >= 500)):
                     # One configured fallback, inside the original total deadline.
-                    return await self.complete(system, data, repair=repair, _fallback=True)
+                    return await self.complete(system, data, repair=repair, _fallback=True, response_schema=response_schema)
                 response.raise_for_status()
                 choice = response.json()['choices'][0]
                 text = choice['message']['content']

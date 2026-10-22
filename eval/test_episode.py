@@ -207,3 +207,67 @@ async def test_preflight_missing_configuration_is_actionable_and_key_safe(monkey
     result = await preflight()
     assert result['ready'] is False and 'ELEVENLABS_API_KEY' in result['missing_variables']
     assert 'sample_audio_b64' not in result
+
+
+@pytest.mark.asyncio
+async def test_bid_failure_retries_once_and_then_uses_a_real_received_bid(configured):
+    from agents.messages import AGENTS, Bid
+    class TimedOutPool(Pool):
+        bid_rounds = []
+        count = 0
+        async def collect_bids(self, factory):
+            self.count += 1
+            if self.count == 1:
+                self.bid_rounds = [{'agents': [{'status': 'timeout'}]}]
+                return {a: Bid(intent='pass', urgency=0, novelty=0, preview='Unavailable') for a in AGENTS}
+            self.bid_rounds.append({'agents': [{'status': 'received'}]})
+            return await super().collect_bids(factory)
+    pool, socket = TimedOutPool(), Socket()
+    async def factory(*args): return pool, Audio()
+    session = PanelSession(socket, factory, max_turns=1)
+    await session.handle({'type': 'start_session', 'topic_id': 'topic_1'})
+    await socket.until('turn_start')
+    assert pool.count == 2 and session.active is not None
+    await session.cancel_turn()
+
+
+@pytest.mark.asyncio
+async def test_deliberate_pass_is_respected_and_recovery_resume_is_effective(configured):
+    from agents.messages import AGENTS, Bid
+    class PassingPool(Pool):
+        count = 0
+        bid_rounds = []
+        async def collect_bids(self, factory):
+            self.count += 1
+            self.bid_rounds.append({'agents': [{'status': 'received'}]})
+            return {a: Bid(intent='pass', urgency=0, novelty=0, preview='No new point') for a in AGENTS}
+    pool, socket = PassingPool(), Socket()
+    async def factory(*args): return pool, Audio()
+    session = PanelSession(socket, factory)
+    await session.handle({'type': 'start_session', 'topic_id': 'topic_1'})
+    await asyncio.wait_for(session.worker, 2)
+    assert pool.count == 1 and session.paused
+    assert socket.events[-1]['state'] == 'recovery'
+    assert not any(e['type'] == 'turn_start' for e in socket.events)
+    await session.control('resume')
+    await asyncio.wait_for(session.worker, 2)
+    assert pool.count == 2 and session.paused
+
+
+@pytest.mark.asyncio
+async def test_qwen_bid_uses_documented_instruct_mode_without_reasoning_output(monkeypatch):
+    import httpx
+    from agents.model import ChatModel
+    monkeypatch.setenv('LLM_BASE_URL', 'https://api.groq.com/openai/v1')
+    monkeypatch.setenv('LLM_MODEL_SPEAK', 'qwen/qwen3.8-27b')
+    monkeypatch.setenv('LLM_MODEL_BID', 'qwen/qwen3.8-27b')
+    def handle(request):
+        body = json.loads(request.content)
+        assert body['reasoning_effort'] == 'none' and body['include_reasoning'] is False
+        assert body['response_format'] == {'type': 'json_object'}
+        return httpx.Response(200, json={'choices': [{'finish_reason': 'stop', 'message': {'content': '{"ready":true}'}}]})
+    model = ChatModel(httpx.AsyncClient(transport=httpx.MockTransport(handle)))
+    try:
+        assert await model.complete('system', 'data', bid=True) == '{"ready":true}'
+    finally:
+        await model.close()

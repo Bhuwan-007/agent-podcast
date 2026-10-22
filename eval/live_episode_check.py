@@ -118,7 +118,7 @@ async def run(base, output, playback_delay=20):
     except Exception as exc:
         report['error_type'] = type(exc).__name__
     report['elapsed_ms'] = round((time.perf_counter() - started) * 1000, 1)
-    report['protocol_pass'] = (report['pause_resume'] and report['targeted_question'] and report['concluded']
+    report['protocol_pass'] = (len(set(report['completed_experts'])) == 3 and report['pause_resume'] and report['targeted_question'] and report['concluded']
                                and report.get('export_ok', False) and report['end_confirmed'])
     Path(output).write_text(json.dumps(report, indent=2, ensure_ascii=False) + '\n', encoding='utf-8')
     print(json.dumps({k: v for k, v in report.items() if k != 'delivered_episode'}, indent=2))

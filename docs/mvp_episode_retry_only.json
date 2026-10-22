@@ -1,0 +1,49 @@
+{
+  "mode": "real models/A2A/ElevenLabs; SYNTHETIC playback acknowledgements",
+  "acoustic_acceptance": false,
+  "microphone_acceptance": false,
+  "bytes": 643457,
+  "completed_experts": [
+    "oss_maintainer"
+  ],
+  "notices": [
+    {
+      "code": "agent_timeout",
+      "text": "An expert failed or stalled; trying another eligible bid."
+    },
+    {
+      "code": "agent_timeout",
+      "text": "Expert bid requests failed or timed out. Retrying once within the configured deadline."
+    },
+    {
+      "code": "agent_timeout",
+      "text": "No eligible expert bid arrived. Check provider quota and availability, then Resume or End."
+    }
+  ],
+  "turn_timings": [
+    {
+      "turn_id": 1,
+      "agent": "ai_engineer",
+      "turn_receipt_to_first_bytes_ms": 603.1
+    },
+    {
+      "turn_id": 3,
+      "agent": "oss_maintainer",
+      "turn_receipt_to_first_bytes_ms": 1721.3
+    },
+    {
+      "turn_id": 4,
+      "agent": "oss_maintainer",
+      "turn_receipt_to_first_bytes_ms": 3075.0
+    }
+  ],
+  "pause_resume": true,
+  "targeted_question": false,
+  "concluded": false,
+  "end_confirmed": true,
+  "synthetic_ack_delay_seconds": 20,
+  "pause_control_ack_ms": 334.1,
+  "recovery": true,
+  "elapsed_ms": 42711.0,
+  "protocol_pass": false
+}

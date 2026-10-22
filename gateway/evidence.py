@@ -41,7 +41,7 @@ def validate_annotations(metadata, sentences, memory, speaker):
     if not isinstance(annotations, list) or len(annotations) > len(sentences):
         raise ValueError('Invalid annotations')
     result, seen = {}, set()
-    known_turns = {t['turn_id'] for t in memory.get('delivered_turns', [])}
+    known_turns = {t['turn_id'] for t in memory.get('delivered_turns', []) + memory.get('earlier_references', [])}
     claims = {c['id']: c for c in memory.get('claims', [])}
     for item in annotations:
         if not isinstance(item, dict):

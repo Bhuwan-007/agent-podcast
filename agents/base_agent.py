@@ -174,6 +174,14 @@ class ExpertAgent:
     async def speak(self, state, bid, question=None):
         limit = 5 if state.get('closing') else max(1, min(3, int(os.getenv('MAX_SENTENCES_PER_TURN', '3'))))
         word_limit = 150 if state.get('closing') else 100
+        structured = getattr(self.model, 'supports_structured_speech', False)
+        format_rule = (
+            'Return ONLY a JSON object with a sentences array. Each item contains exactly one complete '
+            'spoken sentence in text, act, source_ids, reply_to and corrects, following the supplied schema. '
+            'No markdown, delimiter, private reasoning, or other fields. '
+            if structured else
+            'Return spoken text followed by <<<CLAIMS>>> and JSON containing an annotations array. '
+            'Each annotation has sentence_idx, act, source_ids, reply_to and corrects. ')
         system = (
             f"You are {self.persona['display_name']}, a simulated {self.persona['role']} perspective. "
             f"Stance: {self.persona['stance']}. Priorities: {self.persona.get('priorities', [])}. "
@@ -201,9 +209,8 @@ class ExpertAgent:
             'When challenged, inspect the supplied excerpts, then defend narrowly, qualify, retract or leave unresolved. '
             'Never imply a benchmark establishes employment outcomes or general security. '
             'Answer every part of the human question directly; preserve who is supposed to perform the requested action. '
-            'Return spoken text followed by <<<CLAIMS>>> and JSON: {"annotations":[{"sentence_idx":0,'
-            '"act":"statement|question|challenge|evidence|correction|summary|interpretation",'
-            '"source_ids":[],"reply_to":null,"corrects":[]}]}. '
+            f'{format_rule} '
+            'act is statement, question, challenge, evidence, correction, summary or interpretation. '
             'Annotate each sentence. source_ids may ONLY name supplied sources; cite only a passage that actually supports '
             'that sentence. reply_to is a delivered turn_id or null; corrects contains only your own known claim IDs '
             'that you explicitly retract or qualify in that sentence. Omit unsupported citations. '
@@ -212,15 +219,24 @@ class ExpertAgent:
         async with asyncio.timeout(25):
             for attempt in range(2):
                 try:
-                    raw = await self.model.complete(system, data, repair=bool(attempt))
-                    spoken, separator, metadata = raw.partition('<<<CLAIMS>>>')
-                    if not separator or '<<' in spoken or '>>' in spoken:
-                        raise ValueError('Malformed speech metadata delimiter')
-                    parsed = json.loads(metadata)
+                    if structured:
+                        from agents.speech_output import speech_schema, unpack_speech
+                        raw = await self.model.complete(system, data, repair=bool(attempt),
+                            response_schema=speech_schema(state.get('memory', {}), self.id))
+                        sentences, parsed = unpack_speech(raw)
+                        if any(len(spoken_sentences(s)) != 1 for s in sentences):
+                            raise ValueError('Each structured item must contain exactly one sentence')
+                        spoken = ' '.join(sentences)
+                    else:
+                        raw = await self.model.complete(system, data, repair=bool(attempt))
+                        spoken, separator, metadata = raw.partition('<<<CLAIMS>>>')
+                        if not separator or '<<' in spoken or '>>' in spoken:
+                            raise ValueError('Malformed speech metadata delimiter')
+                        parsed = json.loads(metadata)
+                        spoken = spoken.strip()
+                        sentences = spoken_sentences(spoken)
                     if not isinstance(parsed, dict):
                         raise ValueError('Invalid metadata')
-                    spoken = spoken.strip()
-                    sentences = spoken_sentences(spoken)
                     if not spoken or len(spoken) > 1200 or len(spoken.split()) > word_limit or len(sentences) > limit:
                         raise ValueError('Oversized speech')
                     import re
@@ -253,7 +269,7 @@ class ExpertAgent:
                     data += (f'\nRepair: at most {limit} short sentences and {word_limit} words. '
                              'Use exact supplied source IDs only; reply_to must be an actual delivered turn_id or null. '
                              'Use an empty annotations array if uncertain about references. '
-                             'Never add unsupported research attributions. Required delimiter: <<<CLAIMS>>> followed by valid JSON.')
+                             'Never add unsupported research attributions. ' + format_rule)
                     if state.get('closing'):
                         data += ('\nClosing repair: silence is NEVER agreement. Attribute positions only to speakers with '
                                  'delivered turns. Do not name absent experts. If no explicit agreement is recorded, '

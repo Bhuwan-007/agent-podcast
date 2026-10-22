@@ -24,3 +24,24 @@ Template:
 AudioPlayer.ts repair was explicitly authorized by the user and merged separately in PR #8. Actual-player regression tests and pairing diagnostic pass; other web source is untouched. The new episode controls/source review/export live in the backend-owned demo at /dev/roundtable (also /), not in the cinematic React hook. Existing /ws clients remain compatible; prepared episode setup is an optional HTTP endpoint plus setup_id URL query. No shared WebSocket contract edit was made.
 
 See docs/DEMO.md for setup and a judge walkthrough. The isolated final-development server uses localhost:8001 while the prior port-8000 process is preserved. Real short-episode transport passed with synthetic acks; live microphone/audibility are unverified. A live expert-kill/restore test did not recover speech, so do not label the whole recovery acceptance passed. Long-loop failures and the corrected semantic-summary baseline are retained. Do not turn a source citation into a verification badge: the entailment still needs review.
+
+
+## Current Person A MVP handoff - 2026-10-22
+
+Supersedes the earlier failed recovery note: final `docs/mvp_recovery_results.json`
+passes real disconnect/paused restore, owned Sam kill, survivor speech and reset.
+Final three-expert episode and synthesized voice-question gateway also pass;
+see docs/person_a_mvp.md. Physical microphone/listening acceptance remains open.
+
+The full Person A demo is `http://localhost:8001/`, also `/dev/roundtable`.
+Use the existing optional HTTP episode setup/control/preflight/source/export APIs
+(documented in docs/DEMO.md and gateway/main.py); setup_id is an optional WS URL
+query parameter. No shared WS contract change or teammate hook edit was made.
+
+AudioPlayer.ts repair is already merged via PR #8. Please replace hook fixtures in
+web/src/hooks/useGatewayWs.ts (barge-in sentence_idx 0 / played_ms 500 and simulated
+VAD timing) with actual player sentence/progress and measured mic timing. Please
+wire the episode controls/source review/export into your cinematic UI and perform
+its listening/mic acceptance. The Person A backend page is the current demo path.
+Claims/citations must remain unverified unless independently checked. Historical
+failed baselines stay in docs; use the mvp_* final reports for the current status.

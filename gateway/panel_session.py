@@ -70,6 +70,35 @@ class PanelSession(EpisodeMixin, VoiceSession):
         self.capture_heard()
         await super().cancel_turn()
 
+    async def enter_recovery(self, code, text):
+        """Freeze committed state and make the explicit Resume action effective."""
+        if self.ended:
+            return
+        self.capture_heard()
+        old = self.active
+        self.active = None
+        self.epoch += 1
+        self.paused = True
+        if self.paused_at is None:
+            self.paused_at = time.monotonic()
+        if old and not old['generated']:
+            await self.emit('turn_end', turn_id=old['id'], epoch=old['epoch'], status='failed')
+        await self.notice(code, text)
+        await self.state('recovery')
+
+    async def collect_next(self):
+        """One retry for transport/provider failures, never for deliberate passes."""
+        for attempt in range(2):
+            bids = await self.broadcast(self.latest)
+            winner, scores = self.moderator.choose(bids, addressed=self.addressed)
+            rounds = getattr(self.pool, 'bid_rounds', [])
+            failed = bool(rounds and any(a['status'] in ('timeout', 'error')
+                                        for a in rounds[-1]['agents']))
+            if winner is not None or not failed or attempt:
+                return winner, scores, bids
+            await self.notice('agent_timeout', 'Expert bid requests failed or timed out. Retrying once within the configured deadline.')
+            await asyncio.sleep(.5)
+
     async def restore(self, session_id):
         store = getattr(self, 'store', None)
         if store:
@@ -211,6 +240,9 @@ class PanelSession(EpisodeMixin, VoiceSession):
             idx, played = event.get('sentence_idx'), event.get('played_ms')
             if type(idx) is int and type(played) in (int, float) and played >= 0:
                 self.active['last_progress'] = (idx, played)
+        elif kind == 'playback_stopped' and event.get('reason') == 'error' and self.matches(event):
+            await self.cancel_turn()
+            await self.enter_recovery('tts_failed', 'Browser playback failed. Resume to request a new contribution, or End. No unheard text is committed.')
         elif kind == 'metrics':
             # Timing values remain client observations, never server estimates.
             if event.get('name') in ('interrupt_to_silence_ms', 'user_question_to_first_audio_ms', 'grant_to_first_audio_ms'):
@@ -234,11 +266,9 @@ class PanelSession(EpisodeMixin, VoiceSession):
                     await self.close_episode()
                     return
                 await self.state('waiting_first_speaker')
-                bids = await self.broadcast(self.latest)
-                winner, scores = self.moderator.choose(bids, addressed=self.addressed)
+                winner, scores, bids = await self.collect_next()
                 if winner is None:
-                    await self.notice('agent_timeout', 'No eligible expert bid arrived. Check the bid deadline, provider quota and expert availability.')
-                    await self.state('recovery')
+                    await self.enter_recovery('agent_timeout', 'No eligible expert bid arrived. Check provider quota and availability, then Resume or End.')
                     return
                 candidates = dict(bids)
                 while winner is not None:
@@ -265,7 +295,7 @@ class PanelSession(EpisodeMixin, VoiceSession):
                         candidates.pop(winner, None)
                         winner, _ = self.moderator.choose(candidates)
                 if winner is None:
-                    await self.state('recovery')
+                    await self.enter_recovery('agent_timeout', 'Eligible experts could not complete a contribution. Resume to retry from delivered context or End.')
                     return
                 self.addressed = None
                 jobs = []
@@ -307,13 +337,8 @@ class PanelSession(EpisodeMixin, VoiceSession):
             raise
         except Exception:
             turn = self.active
-            self.epoch += 1
-            self.active = None
-            if turn and not turn['generated']:
-                await self.emit('turn_end', turn_id=turn['id'], epoch=turn['epoch'], status='failed')
-            await self.notice('tts_failed' if turn else 'agent_timeout',
-                'The live turn failed. Check provider access, quota and playback acknowledgement; no successful audio is assumed.')
-            await self.state('recovery')
+            await self.enter_recovery('tts_failed' if turn else 'agent_timeout',
+                'The live turn failed. Check provider access, quota and playback; then Resume or End. No unheard text is committed.')
 
     async def broadcast(self, utterance, bid=True):
         self.context_version += 1
@@ -362,8 +387,9 @@ class PanelSession(EpisodeMixin, VoiceSession):
         await self.state('processing_user')
         try:
             text = await self.stt.transcribe(audio, mime)
-        except STTError:
-            await self.notice('no_speech', 'Speech recognition failed or was unclear. Please repeat or type your question.')
+        except STTError as exc:
+            await self.trace('stt.failed', {'reason': str(exc)})
+            await self.enter_recovery('no_speech', 'Speech recognition failed or was unclear. Repeat, type a question, Resume the discussion, or End.')
             return
         finally:
             audio = b''
@@ -397,7 +423,7 @@ class PanelSession(EpisodeMixin, VoiceSession):
             if winner is None:
                 winner, _ = self.moderator.choose(bids)
             if winner is None:
-                await self.notice('agent_timeout', 'No expert was available to answer. Please retry.')
+                await self.enter_recovery('agent_timeout', 'No expert was available to answer. Retry the question, Resume, or End.')
                 return
             await self.begin_turn(winner, kind='human_reply')
             outputs = await self.pool.call(winner, envelope('human.question', self.session_id,
@@ -417,10 +443,7 @@ class PanelSession(EpisodeMixin, VoiceSession):
         except Exception as exc:
             from gateway.a2a_client import A2AError
             await self.trace('panel.question_failed', {'reason': str(exc) if isinstance(exc, A2AError) else type(exc).__name__})
-            self.epoch += 1
-            self.active = None
-            await self.notice('agent_timeout', 'The question could not be completed. Check provider access and quota, then retry.')
-            await self.state('recovery')
+            await self.enter_recovery('agent_timeout', 'The question could not be completed. Check provider access and quota, then retry the question, Resume, or End.')
 
     @staticmethod
     def speech(outputs):
