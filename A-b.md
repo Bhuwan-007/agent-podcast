@@ -45,3 +45,16 @@ wire the episode controls/source review/export into your cinematic UI and perfor
 its listening/mic acceptance. The Person A backend page is the current demo path.
 Claims/citations must remain unverified unless independently checked. Historical
 failed baselines stay in docs; use the mvp_* final reports for the current status.
+
+
+## Integrated deployment UI - 2026-10-22
+
+User authorized final frontend integration. Cinematic UI now includes real preflight,
+prepared Start, duration, Pause/Resume, closing and transcript export, plus source/
+advanced-controls link. Voice input records real audio for gateway ElevenLabs STT;
+simulated VAD timer, hardcoded played_ms and synthetic confidence were removed.
+Actual player progress feeds interruption; pending pre-audio turns are discarded.
+Fresh sockets isolate prior callbacks. Production hides dev controls and defaults to
+same-origin WSS. Docker serves frontend and backend together; see docs/DEPLOYMENT.md.
+Browser/microphone listening acceptance remains unverified. No Render resources have
+been created; plan/configuration approval is pending. Shared WS contract unchanged.

@@ -78,6 +78,16 @@ export function useGatewayWs() {
   useEffect(() => {
     const player = new AudioPlayer({
       onPlaybackStarted: (turnId, epoch, sentenceIdx, tClientMs) => {
+        if (sentenceIdx === 0) {
+          for (const [name, ref] of [['grant_to_first_audio_ms', tTurnStartReceiptRef], ['user_question_to_first_audio_ms', tVadEndRef]] as const) {
+            if (ref.current !== null) {
+              const value = tClientMs - ref.current; ref.current = null
+              setMetrics(prev => ({...prev, [name]: value}))
+              send({type: 'metrics', name, value, available: true})
+            }
+          }
+        }
+
         send({
           type: 'playback_started',
           turn_id: turnId,
@@ -136,19 +146,24 @@ export function useGatewayWs() {
   }, [activeSpeakerId])
 
   // Connect to WebSocket
-  const connect = useCallback(() => {
+  const connect = useCallback((setupId?: string, topicId?: string) => {
     try {
-      const url = CLIENT_CONFIG.gatewayWsUrl
+      const url = CLIENT_CONFIG.gatewayWsUrl + (setupId ? "?setup_id=" + encodeURIComponent(setupId) : "")
+      const previous = wsRef.current
       const ws = new WebSocket(url)
       wsRef.current = ws
+      previous?.close()
 
       ws.onopen = () => {
+        if (wsRef.current !== ws) return
+        if (topicId) send({type: 'start_session', topic_id: topicId, session_id: null})
         console.log('[useGatewayWs] Connected to', url)
         setConnected(true)
         setNotices((prev) => prev.filter((n) => n.code !== 'disconnected'))
       }
 
       ws.onmessage = (event) => {
+        if (wsRef.current !== ws) return
         try {
           const data = JSON.parse(event.data)
 
@@ -192,31 +207,6 @@ export function useGatewayWs() {
                 setActiveTurnId(data.turn_id)
               }
 
-              // Compute grant_to_first_audio_ms (receipt of turn_start to speaker_active)
-              if (tTurnStartReceiptRef.current !== null) {
-                const grantMs = Math.round(performance.now() - tTurnStartReceiptRef.current)
-                tTurnStartReceiptRef.current = null
-                setMetrics((prev) => ({ ...prev, grant_to_first_audio_ms: grantMs }))
-                send({
-                  type: 'metrics',
-                  name: 'grant_to_first_audio_ms',
-                  value: grantMs,
-                  available: true,
-                })
-              }
-
-              // Compute user_question_to_first_audio_ms if responding to user
-              if (tVadEndRef.current !== null) {
-                const questionToAudioMs = Math.round(performance.now() - tVadEndRef.current)
-                tVadEndRef.current = null
-                setMetrics((prev) => ({ ...prev, user_question_to_first_audio_ms: questionToAudioMs }))
-                send({
-                  type: 'metrics',
-                  name: 'user_question_to_first_audio_ms',
-                  value: questionToAudioMs,
-                  available: true,
-                })
-              }
               break
             }
 
@@ -361,6 +351,8 @@ export function useGatewayWs() {
       }
 
       ws.onclose = () => {
+        if (wsRef.current !== ws) return
+        if (sessionStateRef.current === "ended") {setConnected(false); return}
         console.log('[useGatewayWs] Disconnected')
         setConnected(false)
         audioPlayerRef.current?.stop('error')
@@ -406,88 +398,41 @@ export function useGatewayWs() {
     }
   }, [connect])
 
-  // Start Session (Local S1 Connecting per R3)
-  const startSession = useCallback(
-    (topicId: string) => {
-      epochRef.current = 0
-      setCurrentEpoch(0)
-      audioPlayerRef.current?.reset(0)
-      setSessionState('connecting')
-      setTranscripts([])
-      setClaims([])
-      setTraces([])
-      setNotices([])
-      setActiveSpeakerId(null)
-      setSpeechSlip(null)
-      send({
-        type: 'start_session',
-        topic_id: topicId,
-        session_id: null,
-      })
-    },
-    [send]
-  )
+  const startSession = useCallback((topicId: string, setupId?: string) => {
+    epochRef.current = 0; setCurrentEpoch(0)
+    audioPlayerRef.current?.reset(0)
+    sessionStateRef.current = 'connecting'; setSessionState('connecting')
+    setSessionId(null); setTranscripts([]); setClaims([]); setTraces([]); setNotices([])
+    setActiveSpeakerId(null); setSpeechSlip(null)
+    connect(setupId, topicId)
+  }, [connect])
 
-  // Barge-In (Local S4 User Speaking per R3, audio player stop, and metrics)
-  const bargeIn = useCallback(() => {
-    const tStart = performance.now()
-    tVadStartRef.current = tStart
-    setSessionState('user_speaking')
-    setActiveSpeakerId(null)
-    setSpeechSlip({ text: 'Listening to you…', final: false })
-
-    // Immediately stop in-flight audio playback
-    audioPlayerRef.current?.stop('barge_in')
-
-    // Send VAD start notification
-    send({
-      type: 'vad',
-      state: 'start',
-      t_client_ms: tStart,
-    })
-
-    // Send barge_in notification
-    send({
-      type: 'barge_in',
-      turn_id: activeTurnId || 1,
-      epoch: epochRef.current,
-      sentence_idx: 0,
-      played_ms: 500,
-      t_client_ms: tStart,
-    })
-
-    // Immediate playback stop on client; measure interrupt_to_silence_ms
-    const tStop = performance.now()
-    const silenceMs = Math.max(1, Math.round(tStop - tStart))
-
-    setMetrics((prev) => ({ ...prev, interrupt_to_silence_ms: silenceMs }))
-    send({
-      type: 'playback_stopped',
-      turn_id: activeTurnId || 1,
-      epoch: epochRef.current,
-      reason: 'barge_in',
-      t_client_ms: tStop,
-    })
-    send({
-      type: 'metrics',
-      name: 'interrupt_to_silence_ms',
-      value: silenceMs,
-      available: true,
-    })
-
-    // Fallback simulation timer if VAD mic is not active
-    if (!clientVadRef.current) {
-      setTimeout(() => {
-        const tEnd = performance.now()
-        tVadEndRef.current = tEnd
-        send({
-          type: 'vad',
-          state: 'end',
-          t_client_ms: tEnd,
-        })
-      }, 1200)
+  const bargeIn = useCallback((voiceStart?: number) => {
+    const started = typeof voiceStart === 'number' ? voiceStart : performance.now()
+    const position = audioPlayerRef.current?.getPlaybackPosition() || (activeTurnId !== null ? {
+      turn_id: activeTurnId, epoch: epochRef.current, sentence_idx: 0, played_ms: 0,
+    } : null)
+    if (position) audioPlayerRef.current?.discardTurn(position.turn_id, position.epoch)
+    else audioPlayerRef.current?.stop('barge_in')
+    setSessionState('user_speaking'); setActiveSpeakerId(null)
+    if (typeof voiceStart === 'number') {
+      tVadStartRef.current = started
+      send({type: 'vad', state: 'start', t_client_ms: started})
+    }
+    if (position) send({type: 'barge_in', ...position, t_client_ms: started})
+    if (typeof voiceStart === 'number') {
+      const elapsed = performance.now() - started
+      setMetrics(prev => ({...prev, interrupt_to_silence_ms: elapsed}))
+      send({type: 'metrics', name: 'interrupt_to_silence_ms', value: elapsed, available: true})
     }
   }, [send, activeTurnId])
+
+  const stopLocalAudio = useCallback(() => {
+    audioPlayerRef.current?.stop('barge_in')
+    clientVadRef.current?.stop(); clientVadRef.current = null
+    mediaStreamRef.current?.getTracks().forEach(track => track.stop())
+    setMicState('off'); setActiveSpeakerId(null)
+  }, [])
 
   // Direct Addressing (RULE-10, RULE-12)
   const addressAgent = useCallback(
@@ -503,6 +448,10 @@ export function useGatewayWs() {
 
   // End Session (Local S8 per R3)
   const endSession = useCallback(() => {
+    sessionStateRef.current = 'ended'
+    clientVadRef.current?.stop(); clientVadRef.current = null
+    mediaStreamRef.current?.getTracks().forEach(track => track.stop())
+    setMicState('off')
     epochRef.current += 1
     setCurrentEpoch(epochRef.current)
     audioPlayerRef.current?.stop('end')
@@ -561,38 +510,27 @@ export function useGatewayWs() {
 
       // Start Client VAD for automated voice barge-in
       const vad = new ClientVad({
-        onSpeechStart: (_tStart) => {
-          if (sessionStateRef.current !== 'user_speaking') {
-            bargeIn()
+        onSpeechStart: (tStart) => bargeIn(tStart),
+        onSpeechEnd: () => setSessionState('processing_user'),
+        onAudioLevel: setMicAudioLevel,
+        onAudio: async (blob, tEnd) => {
+          setMicState('off'); setMicAudioLevel(0); clientVadRef.current = null
+          if (sessionStateRef.current === 'ended') return
+          try {
+            if (!blob.size || blob.size > 4000000) throw Error('Invalid recording')
+            const bytes = new Uint8Array(await blob.arrayBuffer())
+            if ((sessionStateRef.current as SessionStateName) === 'ended') return
+            for (let at = 0, seq = 1; at < bytes.length; at += 8192, seq++) {
+              let binary = ''
+              for (const byte of bytes.subarray(at, at + 8192)) binary += String.fromCharCode(byte)
+              send({type: 'user_audio', seq, chunk_b64: btoa(binary), mime: blob.type})
+            }
+            tVadEndRef.current = tEnd
+            send({type: 'vad', state: 'end', t_client_ms: tEnd})
+          } catch {
+            setNotices(prev => [...prev, {code: 'no_speech', level: 'warn', text: 'No clear speech captured. Try again or type a question.', recoverable: true}])
           }
-        },
-        onSpeechEnd: (tEnd) => {
-          tVadEndRef.current = tEnd
-          send({
-            type: 'vad',
-            state: 'end',
-            t_client_ms: tEnd,
-          })
-          setSessionState('processing_user')
-        },
-        onAudioLevel: (lvl) => {
-          setMicAudioLevel(lvl)
-        },
-        onUtterance: (text, isFinal, targetHint) => {
-          setSpeechSlip({ text, final: isFinal })
-          if (targetHint) {
-            setAddressedAgentId(targetHint)
-            send({ type: 'address_agent', agent_id: targetHint })
-          }
-          send({
-            type: 'user_utterance',
-            utterance_id: `u_${Date.now()}`,
-            text,
-            final: isFinal,
-            input_mode: 'voice',
-            confidence: 0.95,
-            target_hint: targetHint,
-          })
+          send({type: 'mic_state', state: 'off'})
         },
       })
       vad.start(stream)
@@ -647,6 +585,7 @@ export function useGatewayWs() {
     (text: string, targetHint?: string) => {
       const cleanText = text.trim()
       if (!cleanText) return
+      bargeIn()
       setSpeechSlip({ text: cleanText, final: true })
       const target = targetHint || addressedAgentId || 'ai_engineer'
       send({
@@ -660,10 +599,11 @@ export function useGatewayWs() {
       })
       setSessionState('processing_user')
     },
-    [send, addressedAgentId]
+    [send, addressedAgentId, bargeIn]
   )
 
   return {
+    unlockAudio: () => audioPlayerRef.current?.reset(epochRef.current),
     connected,
     sessionState,
     sessionMode,
@@ -683,6 +623,7 @@ export function useGatewayWs() {
     micAudioLevel,
     speakerAudioLevel,
     startSession,
+    stopLocalAudio,
     bargeIn,
     addressAgent,
     sendUtterance,

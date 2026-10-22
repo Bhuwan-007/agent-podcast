@@ -40,6 +40,11 @@ test('End during decode invalidates pending sources and late chunks of that turn
   assert.equal(h.events.some(e=>e[3]==='finished'),false);h.player.close();
 });
 
+test('interrupt before the first audio chunk prevents late audio for that turn',async()=>{
+  const h=harness();h.player.discardTurn(1,0);h.chunk(0);h.player.endTurn(1);await settle();
+  assert.equal(h.pending.length,0);assert.equal(h.sources.length,0);h.player.close();
+});
+
 test('next turn starts sentence zero with clean buffers in the same epoch',async()=>{
   const h=harness();h.chunk(0);h.player.endTurn(1);await h.resolve(0);h.sources[0].onended();
   h.chunk(0,2);h.player.endTurn(2);await h.resolve(1);h.sources[1].onended();

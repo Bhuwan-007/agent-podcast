@@ -13,7 +13,8 @@ def main():
               ('A1 player lifecycle',['node','--test','eval/test_a1_player.mjs'],{}),
               ('Panel player lifecycle',['node','--test','eval/test_a1_player.mjs'],{'PANEL_PLAYER_TEST':'1'})]
     if (ROOT/'web/node_modules/typescript').exists():
-        commands += [('Actual frontend player lifecycle', ['node','--test','eval/test_web_player.mjs'], {}),
+        commands += [('Microphone capture lifecycle', ['node','--test','eval/test_client_vad.mjs'], {}),
+                     ('Actual frontend player lifecycle', ['node','--test','eval/test_web_player.mjs'], {}),
                      ('Frontend pairing diagnostic', ['node','eval/check_b5_player.mjs'], {})]
     import os
     for name,command,extra in commands:

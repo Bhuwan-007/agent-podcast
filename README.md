@@ -1,3 +1,8 @@
+> **Deployment:** [Single-service Render setup and acceptance status](docs/DEPLOYMENT.md).
+> Build the cinematic frontend with `npm ci --prefix web` and `npm run build --prefix web`.
+> The gateway serves that build at `/`; backend diagnostics remain at `/dev/roundtable`.
+> Use the `deployment` branch for hosting after it is synchronized with tested `main`.
+
 # AI Roundtable — Real-Time Multi-Agent Voice Podcast
 
 FOSS Forge 2.0 (ElevenLabs Track).
