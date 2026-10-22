@@ -83,7 +83,23 @@ The app cannot guarantee model availability or prevent every unsupported inferen
 ## Final regression gate
 
 89 Python tests passed (one upstream AnyIO deprecation warning); 4 A1 player,
-6 panel player and 6 actual TypeScript player lifecycle tests passed. Frontend
+8 panel player and 6 actual TypeScript player lifecycle tests passed. Frontend
 pairing diagnostic passed. Teammate frontend unit tests: 12 passed; production
 TypeScript/Vite build passed with the existing approximately 896 kB bundle warning.
 No frontend source was changed in this final backend patch.
+
+## Browser restart audio fix
+
+A user reported audible preflight but silent Start. The latest session trace showed
+provider audio at 644.9 ms with no playback-start acknowledgement. A regression
+reproduced cancellation keys surviving pause/end/start: the new episode reused turn
+1/epoch 0 and its audio was discarded as cancelled. Fresh episodes now clear those
+keys and previous report state; restored sessions retain cancellation protection.
+Retired socket callbacks cannot stop a newer session. The restart test failed before
+the fix and passes after it. All eight panel lifecycle tests pass with browser API
+doubles; this does not certify actual audibility. Refresh the page to load the fix.
+
+Retry on the running port-8001 gateway produced 237026 real introduction audio bytes
+in 2802.6 ms from setup through generation completion; End was acknowledged. The
+served page contained the reset fix. Frontend units (12) and build also passed.
+This transport retry still does not establish browser audibility.

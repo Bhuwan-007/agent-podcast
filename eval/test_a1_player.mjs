@@ -55,7 +55,7 @@ async function harness({holdDecode = false} = {}) {
     socket.emit({type:'transcript', ...turn, speaker:'ai_engineer', text:'Test.', final:false, sentence_idx:0});
     socket.emit({type:'audio_chunk', ...turn, sentence_idx:0, data_b64:'eA=='});
   }
-  return {socket, get, nodes, response, turn, release:() => releaseDecode()};
+  return {get socket() {return socket;}, get, nodes, response, turn, release:() => releaseDecode()};
 }
 
 test('playback acks follow source start and actual queue completion', async () => {
@@ -107,6 +107,35 @@ test('three sentence responses play in order without overlap', async () => {
 });
 
 if (process.env.PANEL_PLAYER_TEST) {
+  test('new episode plays turn 1 after the previous episode paused turn 1', async () => {
+    const h = await harness(); h.response();
+    await h.get('pause').onclick();
+    h.get('end').onclick(); h.socket.onclose();
+    await h.get('start').onclick(); h.socket.onopen();
+    h.response();
+    h.socket.emit({type:'turn_end', ...h.turn, status:'completed'});
+    await settle();
+    assert.equal(h.nodes.length, 1);
+    assert.equal(h.nodes[0].started, true);
+    assert.equal(h.socket.sent.some(e => e.type === 'playback_started'), true);
+    h.nodes[0].onended(); await settle();
+    assert.equal(h.socket.sent.at(-1).reason, 'finished');
+  });
+
+  test('retired socket callbacks cannot stop a new episode', async () => {
+    const h = await harness();
+    const old = h.socket;
+    h.get('end').onclick(); old.onclose();
+    await h.get('start').onclick(); h.socket.onopen();
+    h.response();
+    h.socket.emit({type:'turn_end', ...h.turn, status:'completed'});
+    await settle();
+    old.emit({type:'session_state',state:'ended',epoch:9}); old.onclose();
+    assert.equal(h.get('end').disabled, false);
+    h.nodes[0].onended(); await settle();
+    assert.equal(h.socket.sent.at(-1).reason, 'finished');
+  });
+
   test('typed interruption rejects late chunks before a new epoch arrives', async () => {
     const h = await harness({holdDecode:true}); h.response();
     h.socket.emit({type:'turn_end', ...h.turn, status:'completed'}); await settle();

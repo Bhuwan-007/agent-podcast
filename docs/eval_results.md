@@ -33,7 +33,7 @@ Browser automation was denied Chrome access. No microphone/audibility pass or se
     _PortalFactoryType = typing.Callable[[], typing.ContextManager[anyio.abc.BlockingPortal]]
 
 -- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
-89 passed, 1 warning in 6.58s
+89 passed, 1 warning in 7.03s
 
 ```
 
@@ -44,25 +44,25 @@ TAP version 13
 # Subtest: playback acks follow source start and actual queue completion
 ok 1 - playback acks follow source start and actual queue completion
   ---
-  duration_ms: 3.4065
+  duration_ms: 3.7247
   type: 'test'
   ...
 # Subtest: End during asynchronous decoding cannot start obsolete audio
 ok 2 - End during asynchronous decoding cannot start obsolete audio
   ---
-  duration_ms: 0.89
+  duration_ms: 1.1864
   type: 'test'
   ...
 # Subtest: higher epoch stops old playback and suppresses its finished acknowledgement
 ok 3 - higher epoch stops old playback and suppresses its finished acknowledgement
   ---
-  duration_ms: 0.9028
+  duration_ms: 1.2882
   type: 'test'
   ...
 # Subtest: three sentence responses play in order without overlap
 ok 4 - three sentence responses play in order without overlap
   ---
-  duration_ms: 1.0296
+  duration_ms: 1.1956
   type: 'test'
   ...
 1..4
@@ -73,7 +73,7 @@ ok 4 - three sentence responses play in order without overlap
 # cancelled 0
 # skipped 0
 # todo 0
-# duration_ms 125.1974
+# duration_ms 121.1573
 
 ```
 
@@ -84,48 +84,60 @@ TAP version 13
 # Subtest: playback acks follow source start and actual queue completion
 ok 1 - playback acks follow source start and actual queue completion
   ---
-  duration_ms: 3.1452
+  duration_ms: 5.4769
   type: 'test'
   ...
 # Subtest: End during asynchronous decoding cannot start obsolete audio
 ok 2 - End during asynchronous decoding cannot start obsolete audio
   ---
-  duration_ms: 1.3234
+  duration_ms: 1.4236
   type: 'test'
   ...
 # Subtest: higher epoch stops old playback and suppresses its finished acknowledgement
 ok 3 - higher epoch stops old playback and suppresses its finished acknowledgement
   ---
-  duration_ms: 1.264
+  duration_ms: 2.039
   type: 'test'
   ...
 # Subtest: three sentence responses play in order without overlap
 ok 4 - three sentence responses play in order without overlap
   ---
-  duration_ms: 2.6909
+  duration_ms: 2.3262
+  type: 'test'
+  ...
+# Subtest: new episode plays turn 1 after the previous episode paused turn 1
+ok 5 - new episode plays turn 1 after the previous episode paused turn 1
+  ---
+  duration_ms: 1.525
+  type: 'test'
+  ...
+# Subtest: retired socket callbacks cannot stop a new episode
+ok 6 - retired socket callbacks cannot stop a new episode
+  ---
+  duration_ms: 1.1082
   type: 'test'
   ...
 # Subtest: typed interruption rejects late chunks before a new epoch arrives
-ok 5 - typed interruption rejects late chunks before a new epoch arrives
+ok 7 - typed interruption rejects late chunks before a new epoch arrives
   ---
-  duration_ms: 1.1122
+  duration_ms: 1.6591
   type: 'test'
   ...
 # Subtest: pause during decoding prevents the pending source from starting
-ok 6 - pause during decoding prevents the pending source from starting
+ok 8 - pause during decoding prevents the pending source from starting
   ---
-  duration_ms: 1.4104
+  duration_ms: 1.3833
   type: 'test'
   ...
-1..6
-# tests 6
+1..8
+# tests 8
 # suites 0
-# pass 6
+# pass 8
 # fail 0
 # cancelled 0
 # skipped 0
 # todo 0
-# duration_ms 128.1394
+# duration_ms 141.8516
 
 ```
 
@@ -136,37 +148,37 @@ TAP version 13
 # Subtest: out-of-order decoding preserves sentence order and never finishes before playback
 ok 1 - out-of-order decoding preserves sentence order and never finishes before playback
   ---
-  duration_ms: 2.2543
+  duration_ms: 2.1666
   type: 'test'
   ...
 # Subtest: End during decode invalidates pending sources and late chunks of that turn
 ok 2 - End during decode invalidates pending sources and late chunks of that turn
   ---
-  duration_ms: 0.2644
+  duration_ms: 0.2962
   type: 'test'
   ...
 # Subtest: next turn starts sentence zero with clean buffers in the same epoch
 ok 3 - next turn starts sentence zero with clean buffers in the same epoch
   ---
-  duration_ms: 0.4483
+  duration_ms: 0.41
   type: 'test'
   ...
 # Subtest: epoch advance cancels pending decode and rejects old epoch chunks
 ok 4 - epoch advance cancels pending decode and rejects old epoch chunks
   ---
-  duration_ms: 0.4049
+  duration_ms: 0.54
   type: 'test'
   ...
 # Subtest: generation completion after playback drained still reports finished once
 ok 5 - generation completion after playback drained still reports finished once
   ---
-  duration_ms: 0.2699
+  duration_ms: 0.4349
   type: 'test'
   ...
 # Subtest: a second foreground turn cannot overlap the active turn
 ok 6 - a second foreground turn cannot overlap the active turn
   ---
-  duration_ms: 0.3581
+  duration_ms: 0.4591
   type: 'test'
   ...
 1..6
@@ -177,7 +189,7 @@ ok 6 - a second foreground turn cannot overlap the active turn
 # cancelled 0
 # skipped 0
 # todo 0
-# duration_ms 577.1499
+# duration_ms 573.979
 
 ```
 
