@@ -44,6 +44,7 @@ async function harness({holdDecode = false} = {}) {
     WebSocket:MockSocket, location:{protocol:'http:', host:'localhost:8000'},
     performance:{now:() => 123}, crypto:{randomUUID:() => 'mock-id'},
     atob:s => Buffer.from(s,'base64').toString('binary'),
+    fetch:async path=>({ok:true,json:async()=>String(path).endsWith('/prepare')?{setup_id:'mock-setup'}:{turns:[],sources:[],episode:{phase:'test'},elapsed_seconds:0}}),
     setInterval:() => 1, clearInterval() {}});
   vm.runInContext(script, context);
   await get('start').onclick();
@@ -104,3 +105,27 @@ test('three sentence responses play in order without overlap', async () => {
   }
   assert.equal(h.socket.sent.at(-1).reason, 'finished');
 });
+
+if (process.env.PANEL_PLAYER_TEST) {
+  test('typed interruption rejects late chunks before a new epoch arrives', async () => {
+    const h = await harness({holdDecode:true}); h.response();
+    h.socket.emit({type:'turn_end', ...h.turn, status:'completed'}); await settle();
+    h.get('question').value = 'Maya, explain the limitation.';
+    h.get('ask').onclick();
+    h.socket.emit({type:'audio_chunk', ...h.turn, sentence_idx:0, data_b64:'eA=='});
+    h.socket.emit({type:'turn_end', ...h.turn, status:'completed'});
+    h.release(); await settle();
+    assert.equal(h.nodes.length, 0);
+    assert.equal(h.socket.sent.some(e => e.reason === 'finished'), false);
+    assert.equal(h.socket.sent.at(-1).type, 'user_utterance');
+  });
+
+  test('pause during decoding prevents the pending source from starting', async () => {
+    const h = await harness({holdDecode:true}); h.response();
+    h.socket.emit({type:'turn_end', ...h.turn, status:'completed'}); await settle();
+    await h.get('pause').onclick();
+    h.release(); await settle();
+    assert.equal(h.nodes.length, 0);
+    assert.equal(h.socket.sent.some(e => e.reason === 'finished'), false);
+  });
+}

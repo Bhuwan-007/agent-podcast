@@ -1,0 +1,91 @@
+{
+  "mode": "real targeted-model reproduction",
+  "observed": [
+    {
+      "spoken": "No, the Reflexion abstract does not prove that capability. It only supports the claim that verbal feedback improves performance on the specific tasks evaluated there. A concrete test would be a blind benchmark where models select architectures for five distinct, real-world projects, scored by senior engineers on maintainability and security.\n\nI cannot accept the \"for any project\" generalization based on the supplied limits. The source explicitly warns against guaranteeing results on arbitrary projects. This distinction matters for our review capacity discussion.\n\n",
+      "metadata": {
+        "annotations": [
+          {
+            "sentence_idx": 0,
+            "act": "correction",
+            "source_ids": [],
+            "reply_to": null,
+            "corrects": []
+          },
+          {
+            "sentence_idx": 1,
+            "act": "evidence",
+            "source_ids": [
+              "reflexion-abstract"
+            ],
+            "reply_to": null,
+            "corrects": []
+          },
+          {
+            "sentence_idx": 2,
+            "act": "statement",
+            "source_ids": [],
+            "reply_to": null,
+            "corrects": []
+          },
+          {
+            "sentence_idx": 3,
+            "act": "evidence",
+            "source_ids": [
+              "reflexion-abstract"
+            ],
+            "reply_to": null,
+            "corrects": []
+          },
+          {
+            "sentence_idx": 4,
+            "act": "statement",
+            "source_ids": [],
+            "reply_to": null,
+            "corrects": []
+          }
+        ]
+      },
+      "words": 81
+    },
+    {
+      "spoken": "No, Reflexion does not prove an AI can choose the right architecture for any project. The paper’s improvement is bounded to specific tasks using linguistic feedback, not general architectural judgment. To test this, evaluate a model on a fixed dataset of legacy system migrations where it must select network boundaries and verify three edge-case failure modes.\n\n",
+      "metadata": {
+        "annotations": [
+          {
+            "sentence_idx": 0,
+            "act": "correction",
+            "source_ids": [
+              "reflexion-abstract"
+            ],
+            "reply_to": 10,
+            "corrects": []
+          },
+          {
+            "sentence_idx": 1,
+            "act": "evidence",
+            "source_ids": [
+              "reflexion-abstract"
+            ],
+            "reply_to": 10,
+            "corrects": []
+          },
+          {
+            "sentence_idx": 2,
+            "act": "question",
+            "source_ids": [],
+            "reply_to": 10,
+            "corrects": []
+          }
+        ]
+      },
+      "words": 56
+    }
+  ],
+  "sentences": [
+    "No, Reflexion does not prove an AI can choose the right architecture for any project.",
+    "The paper’s improvement is bounded to specific tasks using linguistic feedback, not general architectural judgment.",
+    "To test this, evaluate a model on a fixed dataset of legacy system migrations where it must select network boundaries and verify three edge-case failure modes."
+  ],
+  "elapsed_ms": 1412.6
+}

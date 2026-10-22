@@ -1,0 +1,12 @@
+{
+  "mode": "real models/A2A/TTS; deliberate owned-expert fault",
+  "acoustic_acceptance": false,
+  "restored_paused": true,
+  "no_automatic_replay": true,
+  "surviving_expert_audio": false,
+  "reset_ok": true,
+  "recovery": true,
+  "end_confirmed": true,
+  "elapsed_ms": 14340.8,
+  "protocol_pass": false
+}

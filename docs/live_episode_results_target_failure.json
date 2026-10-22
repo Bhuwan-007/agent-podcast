@@ -1,0 +1,83 @@
+{
+  "mode": "real models/A2A/ElevenLabs; SYNTHETIC playback acknowledgements",
+  "acoustic_acceptance": false,
+  "microphone_acceptance": false,
+  "bytes": 1735560,
+  "completed_experts": [
+    "software_developer",
+    "oss_maintainer",
+    "software_developer",
+    "oss_maintainer",
+    "ai_engineer"
+  ],
+  "notices": [
+    {
+      "code": "agent_timeout",
+      "text": "An expert failed or stalled; trying another eligible bid."
+    },
+    {
+      "code": "agent_timeout",
+      "text": "An expert failed or stalled; trying another eligible bid."
+    },
+    {
+      "code": "agent_timeout",
+      "text": "An expert failed or stalled; trying another eligible bid."
+    },
+    {
+      "code": "agent_timeout",
+      "text": "The question could not be completed. Check provider access and quota, then retry."
+    }
+  ],
+  "turn_timings": [
+    {
+      "turn_id": 1,
+      "agent": "ai_engineer",
+      "turn_receipt_to_first_bytes_ms": 415.5
+    },
+    {
+      "turn_id": 2,
+      "agent": "software_developer",
+      "turn_receipt_to_first_bytes_ms": 1384.0
+    },
+    {
+      "turn_id": 3,
+      "agent": "software_developer",
+      "turn_receipt_to_first_bytes_ms": 1548.5
+    },
+    {
+      "turn_id": 4,
+      "agent": "oss_maintainer",
+      "turn_receipt_to_first_bytes_ms": 1177.4
+    },
+    {
+      "turn_id": 6,
+      "agent": "software_developer",
+      "turn_receipt_to_first_bytes_ms": 4353.1
+    },
+    {
+      "turn_id": 8,
+      "agent": "oss_maintainer",
+      "turn_receipt_to_first_bytes_ms": 1321.8
+    },
+    {
+      "turn_id": 9,
+      "agent": "ai_engineer",
+      "turn_receipt_to_first_bytes_ms": 3126.6
+    },
+    {
+      "turn_id": 11,
+      "agent": "software_developer",
+      "turn_receipt_to_first_bytes_ms": 2255.4
+    }
+  ],
+  "pause_resume": true,
+  "targeted_question": false,
+  "concluded": false,
+  "end_confirmed": true,
+  "synthetic_ack_delay_seconds": 20,
+  "pause_control_ack_ms": 119.7,
+  "routed_target": "oss_maintainer",
+  "recovery": true,
+  "elapsed_ms": 141401.8,
+  "protocol_pass": false
+}

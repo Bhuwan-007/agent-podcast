@@ -1,0 +1,45 @@
+{
+  "mode": "real_provider_probe",
+  "missing_variables": [],
+  "checks": [
+    {
+      "name": "voice_2_access",
+      "ok": true,
+      "elapsed_ms": 7566.1
+    },
+    {
+      "name": "voice_3_access",
+      "ok": true,
+      "elapsed_ms": 7570.9
+    },
+    {
+      "name": "voice_1_access",
+      "ok": true,
+      "elapsed_ms": 7613.5
+    },
+    {
+      "name": "speech_model",
+      "ok": true,
+      "elapsed_ms": 572.8
+    },
+    {
+      "name": "bid_model",
+      "ok": true,
+      "elapsed_ms": 569.0
+    },
+    {
+      "name": "real_speech_synthesis",
+      "ok": true,
+      "elapsed_ms": 1311.1
+    }
+  ],
+  "sources": {
+    "available": 3,
+    "scope": "Three reviewed abstract excerpts; not an organizer-approved evidence pack."
+  },
+  "browser_playback": "Requires the browser to play the returned real audio sample.",
+  "microphone": "Not tested by server preflight.",
+  "sample_mime": "audio/mpeg",
+  "sample_bytes": 32644,
+  "ready": true
+}

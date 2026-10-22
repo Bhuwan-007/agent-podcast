@@ -1,0 +1,31 @@
+{
+  "mode": "real model speech validation reproduction",
+  "observed": [
+    {
+      "words": 49,
+      "metadata": {
+        "annotations": [
+          {
+            "sentence_idx": 0,
+            "act": "statement",
+            "source_ids": [],
+            "reply_to": null,
+            "corrects": []
+          },
+          {
+            "sentence_idx": 1,
+            "act": "question",
+            "source_ids": [],
+            "reply_to": null,
+            "corrects": []
+          }
+        ]
+      },
+      "spoken": "We can strengthen the review step you described by automatically scanning the generated microservice’s dependency tree for known vulnerabilities and license conflicts before a human checks the data‑flow diagram. How would you integrate such an audit without inflating the CI pipeline’s runtime or trusting a single vendor’s vulnerability feed? "
+    }
+  ],
+  "sentences": [
+    "We can strengthen the review step you described by automatically scanning the generated microservice’s dependency tree for known vulnerabilities and license conflicts before a human checks the data‑flow diagram.",
+    "How would you integrate such an audit without inflating the CI pipeline’s runtime or trusting a single vendor’s vulnerability feed?"
+  ]
+}

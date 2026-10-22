@@ -1,0 +1,73 @@
+{
+  "mode": "real models/A2A/ElevenLabs; SYNTHETIC playback acknowledgements",
+  "acoustic_acceptance": false,
+  "microphone_acceptance": false,
+  "bytes": 1330599,
+  "completed_experts": [
+    "ai_engineer",
+    "oss_maintainer",
+    "ai_engineer",
+    "software_developer"
+  ],
+  "notices": [
+    {
+      "code": "agent_timeout",
+      "text": "An expert failed or stalled; trying another eligible bid."
+    },
+    {
+      "code": "agent_timeout",
+      "text": "An expert failed or stalled; trying another eligible bid."
+    },
+    {
+      "code": "agent_timeout",
+      "text": "The question could not be completed. Check provider access and quota, then retry."
+    }
+  ],
+  "turn_timings": [
+    {
+      "turn_id": 1,
+      "agent": "ai_engineer",
+      "turn_receipt_to_first_bytes_ms": 437.3
+    },
+    {
+      "turn_id": 2,
+      "agent": "software_developer",
+      "turn_receipt_to_first_bytes_ms": 1139.5
+    },
+    {
+      "turn_id": 3,
+      "agent": "ai_engineer",
+      "turn_receipt_to_first_bytes_ms": 1018.2
+    },
+    {
+      "turn_id": 5,
+      "agent": "oss_maintainer",
+      "turn_receipt_to_first_bytes_ms": 1284.6
+    },
+    {
+      "turn_id": 7,
+      "agent": "ai_engineer",
+      "turn_receipt_to_first_bytes_ms": 2118.1
+    },
+    {
+      "turn_id": 8,
+      "agent": "software_developer",
+      "turn_receipt_to_first_bytes_ms": 1658.0
+    },
+    {
+      "turn_id": 9,
+      "agent": "oss_maintainer",
+      "turn_receipt_to_first_bytes_ms": 2277.8
+    }
+  ],
+  "pause_resume": true,
+  "targeted_question": false,
+  "concluded": false,
+  "end_confirmed": true,
+  "synthetic_ack_delay_seconds": 20,
+  "pause_control_ack_ms": 20.0,
+  "routed_target": "oss_maintainer",
+  "recovery": true,
+  "elapsed_ms": 112579.6,
+  "protocol_pass": false
+}

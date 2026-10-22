@@ -1,0 +1,78 @@
+{
+  "mode": "real models/A2A/ElevenLabs; SYNTHETIC playback acknowledgements",
+  "acoustic_acceptance": false,
+  "microphone_acceptance": false,
+  "bytes": 1979316,
+  "completed_experts": [
+    "ai_engineer",
+    "oss_maintainer",
+    "ai_engineer",
+    "software_developer"
+  ],
+  "notices": [
+    {
+      "code": "agent_timeout",
+      "text": "An expert failed or stalled; trying another eligible bid."
+    },
+    {
+      "code": "agent_timeout",
+      "text": "An expert failed or stalled; trying another eligible bid."
+    },
+    {
+      "code": "agent_timeout",
+      "text": "Closing audio failed. The delivered transcript is preserved; retry Finish or download it."
+    }
+  ],
+  "turn_timings": [
+    {
+      "turn_id": 1,
+      "agent": "ai_engineer",
+      "turn_receipt_to_first_bytes_ms": 418.7
+    },
+    {
+      "turn_id": 3,
+      "agent": "oss_maintainer",
+      "turn_receipt_to_first_bytes_ms": 1223.3
+    },
+    {
+      "turn_id": 4,
+      "agent": "ai_engineer",
+      "turn_receipt_to_first_bytes_ms": 1519.1
+    },
+    {
+      "turn_id": 5,
+      "agent": "oss_maintainer",
+      "turn_receipt_to_first_bytes_ms": 1778.5
+    },
+    {
+      "turn_id": 7,
+      "agent": "ai_engineer",
+      "turn_receipt_to_first_bytes_ms": 2546.8
+    },
+    {
+      "turn_id": 8,
+      "agent": "software_developer",
+      "turn_receipt_to_first_bytes_ms": 2379.4
+    },
+    {
+      "turn_id": 9,
+      "agent": "ai_engineer",
+      "turn_receipt_to_first_bytes_ms": 1475.3
+    },
+    {
+      "turn_id": 10,
+      "agent": "oss_maintainer",
+      "turn_receipt_to_first_bytes_ms": 2755.5
+    }
+  ],
+  "pause_resume": true,
+  "targeted_question": true,
+  "concluded": false,
+  "end_confirmed": true,
+  "synthetic_ack_delay_seconds": 20,
+  "pause_control_ack_ms": 92.9,
+  "routed_target": "oss_maintainer",
+  "recovery": true,
+  "elapsed_ms": 138801.8,
+  "protocol_pass": false
+}

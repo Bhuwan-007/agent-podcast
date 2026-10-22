@@ -1,0 +1,14 @@
+[
+  {
+    "model": "qwen/qwen3.8-27b",
+    "bid": true,
+    "ok": true,
+    "elapsed_ms": 306.9
+  },
+  {
+    "model": "qwen/qwen3.8-27b",
+    "bid": false,
+    "ok": true,
+    "elapsed_ms": 114.0
+  }
+]
