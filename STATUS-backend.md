@@ -1,3 +1,5 @@
+> **Hosted update:** Render Free is live. Public health/assets/WSS and real episode/voice-question transport passed. First cold startup failed; a bounded 60-second readiness fix passed 93 Python tests and is being deployed for fresh-start validation. Physical browser sound/mic remains unverified. See docs/DEPLOYMENT.md.
+
 > Deployment preparation update: cinematic UI controls and real microphone upload are
 > integrated; 91 backend tests and frontend production build pass. See docs/DEPLOYMENT.md.
 > Public deployment is pending the user's Render resource/plan approval. Browser

@@ -1,0 +1,17 @@
+{
+  "url": "https://ai-roundtable-vpme.onrender.com",
+  "service_id": "srv-dbcrottg1s2s73eanofg",
+  "deploy_id": "dep-dbcroutg1s2s73eanqj0",
+  "status": "live",
+  "commit": "ce4eee5ab893338cce3c5d9db3514be3ef2bd341",
+  "branch": "deployment",
+  "plan": "free",
+  "health_http": 200,
+  "frontend_http": 200,
+  "frontend_asset_http": 200,
+  "wss_public_origin_connected": true,
+  "real_preflight_ready": true,
+  "real_preflight_audio_returned": true,
+  "browser_audibility_verified": false,
+  "physical_microphone_verified": false
+}

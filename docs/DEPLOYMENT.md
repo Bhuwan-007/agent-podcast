@@ -1,7 +1,10 @@
 # Single-service Render deployment
 
-Status: prepared locally; no Roundtable Render service has been created. The user's
-approval of the resource configuration and cost is required before creation.
+Status: deployed on the user-approved Free plan at https://ai-roundtable-vpme.onrender.com.
+Initial deployed code: ce4eee5. Public health, frontend assets and browser-Origin WSS
+passed. Real full-episode and synthesized voice-question transport passed; see
+`render_episode_results.json` and `render_voice_gateway_results.json`. Physical
+microphone and audible browser playback are not certified by these automated runs.
 
 The cinematic React build and FastAPI gateway share one HTTPS origin. `/` serves
 the built frontend, `/assets` its compiled assets, `/ws` the real WebSocket, and
@@ -25,7 +28,7 @@ The gateway starts three owned localhost A2A subprocesses on ports 9101-9103.
   uses a Bearer header in memory, and prints only safe status/metadata.
 
 Read-only Render authentication and workspace/service inspection returned HTTP 200.
-No service creation, billing change, or deployment-setting mutation has occurred.
+The ai-roundtable service was created after Free-plan approval. Existing services were untouched.
 Render CLI is not installed in this session; REST authentication works. The official
 [Render Codex integration](https://render.com/agents/codex) supports OAuth if preferred.
 
@@ -45,9 +48,25 @@ Frontend production build and 12 existing frontend tests pass. Backend regressio
 player queue tests, microphone capture lifecycle tests, and static frontend serving
 tests are recorded in `docs/eval_results.md`. Browser API doubles do not establish
 physical microphone or audible playback success. Docker CLI is available, but the
-local Docker daemon is stopped; a container build has not been certified locally.
+local Docker daemon is stopped; the actual Docker build succeeded on Render.
 
 After approval: create the service from `deployment`, securely supply only the listed
 application variables, wait for build/deploy completion, check `/health`, verify the
 frontend/assets, test WSS handshake, then run a real audio/question/End check on the
 public URL. Record provider and transport evidence separately from browser listening.
+
+## Hosted acceptance and cold-start repair
+
+First attempt failed expert startup (retained in render_episode_initial.json). After
+cold imports completed, the full episode passed: all three experts, 2102526 bytes,
+Pause/Resume, Maya question, generated closing, export and End in 129018.7 ms. Two
+expert failures were transparently skipped. Real synthesized user speech through
+hosted STT routed to Maya, produced 389668 reply bytes, resumed and ended in 9156.4 ms.
+These use synthetic playback acknowledgements, not acoustic measurements.
+
+The previous 60-retry startup loop could expire during CPU-throttled imports. The
+repair allows a hard 60-second wall-clock window with bounded individual probes,
+retains immediate failure for exited child processes, and closes unsuccessful pools.
+93 Python tests passed, including late readiness beyond the old retry count and
+hard-deadline cleanup. A fresh deployed first-start check is still required after
+shipping this repair. Free-tier idle sleeps still apply.

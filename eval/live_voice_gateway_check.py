@@ -18,7 +18,7 @@ from websockets.asyncio.client import connect
 from gateway.voice.tts import ElevenLabsTTS, TTSConfig
 
 
-async def run(base, env_file):
+async def run(base, env_file, output='docs/mvp_voice_gateway_results.json'):
     load_dotenv(env_file, override=True)
     result = {'mode': 'real providers; synthesized user audio; synthetic playback acknowledgements',
               'microphone_acceptance': False, 'acoustic_acceptance': False,
@@ -92,7 +92,7 @@ async def run(base, env_file):
     result['protocol_pass'] = bool(result.get('actual_stt_text') and result['routed_target'] == 'oss_maintainer'
                                    and result['reply_audio_bytes'] > 0 and result['delivered_answer']
                                    and result['resumed'] and result['end_confirmed'])
-    Path('docs/mvp_voice_gateway_results.json').write_text(json.dumps(result, indent=2, ensure_ascii=False)+'\n', encoding='utf-8')
+    Path(output).write_text(json.dumps(result, indent=2, ensure_ascii=False)+'\n', encoding='utf-8')
     print(json.dumps(result, indent=2, ensure_ascii=True))
     return result['protocol_pass']
 
@@ -101,5 +101,6 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--base', default='http://127.0.0.1:8000')
     parser.add_argument('--env-file', required=True, type=Path)
+    parser.add_argument('--output', default='docs/mvp_voice_gateway_results.json')
     args = parser.parse_args()
-    raise SystemExit(0 if asyncio.run(run(args.base, args.env_file)) else 1)
+    raise SystemExit(0 if asyncio.run(run(args.base, args.env_file, args.output)) else 1)
