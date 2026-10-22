@@ -60,10 +60,12 @@ function flush(){
 el('start').onclick=async()=>{
  try{context=context||new AudioContext();await context.resume();
  const restoring=restoreId;let setup=null;if(!restoring){const response=await fetch('/api/episodes/prepare',{method:'POST',headers:{'Content-Type':'application/json','X-Roundtable-Client':'1'},body:JSON.stringify({duration_minutes:Number(el('duration').value)||3,voice_order:(el('voices').value||'0,1,2').split(',').map(Number)})});if(!response.ok)throw Error('Episode setup failed');setup=await response.json()}
- intentionalEnd=false;ended=false;el('preflight').disabled=true;el('sample').disabled=true;epoch=0;turn=null;stopAudio();el('start').disabled=true;el('end').disabled=false;el('transcript').textContent='';
- ws=new WebSocket((location.protocol==='https:'?'wss://':'ws://')+location.host+'/ws'+(setup?'?setup_id='+encodeURIComponent(setup.setup_id):''));
- ws.onopen=()=>{if(ended){ws.close();return}if(restoring){send({type:'resume_session',session_id:restoring,last_seq:0});restoreId=null}else send({type:'start_session',topic_id:'topic_1',session_id:null})};
+ if(!restoring){invalidTurns.clear();sessionId=null;latestReport=null}
+ intentionalEnd=false;ended=false;el('preflight').disabled=true;el('sample').disabled=true;epoch=0;turn=null;stopAudio();el('start').disabled=true;el('end').disabled=false;el('transcript').textContent='';el('draft').textContent='';el('notice').textContent='';
+ const socket=new WebSocket((location.protocol==='https:'?'wss://':'ws://')+location.host+'/ws'+(setup?'?setup_id='+encodeURIComponent(setup.setup_id):''));ws=socket;
+ ws.onopen=()=>{if(socket!==ws||ended){socket.close();return}if(restoring){send({type:'resume_session',session_id:restoring,last_seq:0});restoreId=null}else send({type:'start_session',topic_id:'topic_1',session_id:null})};
  ws.onmessage=({data})=>{
+  if(socket!==ws)return;
   const e=JSON.parse(data);if(invalidTurns.has(e.turn_id+':'+e.epoch)&&['audio_chunk','transcript','turn_end'].includes(e.type))return;log(JSON.stringify(e.type==='audio_chunk'?{...e,data_b64:'[audio bytes]'}:e));if(ended)return;
   if(typeof e.epoch==='number'){if(e.epoch<epoch)return;if(e.epoch>epoch){epoch=e.epoch;stopAudio()}}
   if(e.type==='notice'){el('notice').textContent=e.text}
@@ -74,8 +76,8 @@ el('start').onclick=async()=>{
   else if(e.type==='audio_chunk'&&turn&&e.turn_id===turn.turn_id){if(e.sentence_idx!==sentence){flush();sentence=e.sentence_idx}const raw=atob(e.data_b64);parts.push(Uint8Array.from(raw,c=>c.charCodeAt(0)))}
   else if(e.type==='turn_end'){if(e.status!=='completed'){stopAudio();return}flush();const t=token,c={...turn};chain.then(()=>{if(!ended&&t===token)send({type:'playback_stopped',...c,reason:'finished',t_client_ms:performance.now()})})}
  };
- ws.onclose=()=>{ended=true;stopAudio();stopMic(false);el('pause').disabled=true;el('resume').disabled=true;el('close').disabled=true;el('reconnect').disabled=intentionalEnd||!sessionId;refreshReport();el('state').textContent='Disconnected / ended';el('start').disabled=false;el('preflight').disabled=false;el('sample').disabled=!sampleBuffer;el('end').disabled=true;el('ask').disabled=true;el('mic').disabled=true};
- ws.onerror=()=>log('WebSocket error');
+ ws.onclose=()=>{if(socket!==ws)return;ended=true;stopAudio();stopMic(false);el('pause').disabled=true;el('resume').disabled=true;el('close').disabled=true;el('reconnect').disabled=intentionalEnd||!sessionId;refreshReport();el('state').textContent='Disconnected / ended';el('start').disabled=false;el('preflight').disabled=false;el('sample').disabled=!sampleBuffer;el('end').disabled=true;el('ask').disabled=true;el('mic').disabled=true};
+ ws.onerror=()=>{if(socket===ws)log('WebSocket error')};
  }catch{ended=true;el('start').disabled=false;log('Could not initialize browser audio')}
 };
 el('end').onclick=()=>{intentionalEnd=true;ended=true;send({type:'end_session'});stopAudio();stopMic(false);el('ask').disabled=true;el('mic').disabled=true};
