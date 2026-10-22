@@ -16,6 +16,8 @@ from gateway.tracing import trace_logger
 from gateway.router import route_question
 from gateway.voice.stt import ElevenLabsSTT, STTError
 from gateway.ledger import Ledger
+from gateway.episodes import EpisodeMixin
+from gateway.evidence import retrieve
 
 
 class PublicTrace:
@@ -33,9 +35,11 @@ class PublicTrace:
         return result
 
 
-class PanelSession(VoiceSession):
-    def __init__(self, socket, services_factory, max_turns=20):
+class PanelSession(EpisodeMixin, VoiceSession):
+    def __init__(self, socket, services_factory, max_turns=20, options=None):
         super().__init__(socket, services_factory)
+        self.episode_init(options)
+        self.seen_utterances = set()
         self.pool = None
         self.moderator = Moderator()
         self.latest = None
@@ -55,11 +59,60 @@ class PanelSession(VoiceSession):
         try:
             await super().run()
         finally:
+            self.connected = False
+            self.detached_at = time.monotonic()
+            if self.paused_at is None:
+                self.paused_at = self.detached_at
             if self.pool:
                 await self.pool.close()
 
+    async def cancel_turn(self):
+        self.capture_heard()
+        await super().cancel_turn()
+
+    async def restore(self, session_id):
+        store = getattr(self, 'store', None)
+        if store:
+            store.clean()
+        old = store.sessions.get(session_id) if store and isinstance(session_id, str) else None
+        if old is None or old is self or old.connected or old.ended:
+            await self.notice('session_lost', 'That disconnected session cannot be restored. Start a new episode.')
+            return
+        old.connected = True  # Reserve before awaiting; two sockets cannot restore it.
+        new_id = self.session_id
+        self.session_id = session_id
+        try:
+            self.pool, self.tts = await self.services_factory(session_id, PublicTrace(self))
+        except Exception:
+            old.connected = False
+            self.session_id = new_id
+            await self.notice('agent_timeout', 'Experts could not reconnect. Retry within 60 seconds or start a new episode.')
+            return
+        for name in ('topic', 'personas', 'voices', 'ledger', 'history', 'latest', 'context_version',
+                     'moderator', 'turn_id', 'sequence', 'target', 'options', 'introduced', 'concluded',
+                     'episode_started', 'paused_seconds', 'paused_at', 'committed_turns', 'seen_utterances', 'metrics'):
+            setattr(self, name, getattr(old, name))
+        self.epoch = old.epoch + 1
+        self.paused = True
+        store.sessions.pop(new_id, None)
+        store.sessions[session_id] = self
+        await self.state('waiting_first_speaker')
+        await self.trace('episode.restored', {'automatic_audio_replay': False})
+
     async def handle(self, event):
         kind = event['type']
+        if kind == 'resume_session':
+            await self.restore(event.get('session_id'))
+            return
+        if kind == 'end_session':
+            self.capture_heard()
+        if kind == 'user_utterance' and event.get('final') is True and event.get('utterance_id'):
+            uid = event['utterance_id']
+            if not isinstance(uid, str) or len(uid) > 100 or uid in self.seen_utterances:
+                return
+            if len(self.seen_utterances) >= 128:
+                self.seen_utterances.clear()
+            self.seen_utterances.add(uid)
         if kind == 'start_session':
             if self.topic:
                 await self.notice('collision', 'End the existing session before starting another.')
@@ -78,6 +131,9 @@ class PanelSession(VoiceSession):
                 await self.state('recovery')
                 return
             self.topic, self.personas, self.voices = topic, personas, voices
+            selected = (self.options or {}).get('voice_order')
+            if selected:
+                self.voices = {agent: voices[AGENTS[selected[i]]] for i, agent in enumerate(AGENTS)}
             self.ledger = Ledger(topic['title'])
             self.latest = {'speaker': 'organizer_prompt', 'text': topic['opening_prompt']}
             await self.state('connecting')
@@ -159,13 +215,23 @@ class PanelSession(VoiceSession):
             if event.get('name') in ('interrupt_to_silence_ms', 'user_question_to_first_audio_ms', 'grant_to_first_audio_ms'):
                 value = event.get('value')
                 if event.get('available') is True and type(value) in (int, float) and 0 <= value < 300000:
+                    self.metrics.append({'name': event['name'], 'value': value, 'observation': 'client_reported'})
+                    self.metrics = self.metrics[-100:]
                     await self.trace('client.metric', {'name': event['name'], 'value': value})
         else:
             await super().handle(event)
 
     async def debate(self):
         try:
+            if self.options is not None and not self.introduced:
+                await self.introduce()
             for _ in range(self.max_turns):
+                if self.paused or self.concluded or self.ended:
+                    return
+                if self.options is not None and (self.elapsed() >= self.options.get('duration_minutes', 3) * 60
+                        or len(self.ledger.turns) >= self.options.get('max_turns', 18)):
+                    await self.close_episode()
+                    return
                 await self.state('waiting_first_speaker')
                 bids = await self.broadcast(self.latest)
                 winner, scores = self.moderator.choose(bids, addressed=self.addressed)
@@ -179,29 +245,28 @@ class PanelSession(VoiceSession):
                     try:
                         outputs = await self.pool.call(winner, envelope('floor.grant', self.session_id,
                             self.context_version + 1, 'gateway', winner,
-                            context_version=self.context_version, reason='highest deterministic score'), timeout=4)
+                            context_version=self.context_version, reason='highest deterministic score'), timeout=10)
                         sentences = self.speech(outputs)
                         break
                     except asyncio.CancelledError:
                         raise
-                    except Exception:
+                    except Exception as exc:
+                        from gateway.a2a_client import A2AError
+                        safe_reason = str(exc) if isinstance(exc, A2AError) else type(exc).__name__
+                        await self.trace('panel.grant_failed', {'expert': winner, 'reason': safe_reason})
                         old = self.active
                         self.active = None
                         self.epoch += 1
                         await self.emit('turn_end', turn_id=old['id'], epoch=old['epoch'], status='failed')
-                        await self.notice('agent_timeout', 'An expert failed or stalled; trying another eligible bid.')
+                        await self.notice('agent_timeout',
+                            'The language-model provider rate-limited this expert (HTTP 429). Trying another eligible bid; pause before retrying if quota remains exhausted.'
+                            if '429' in safe_reason else 'An expert failed or stalled; trying another eligible bid.')
                         candidates.pop(winner, None)
                         winner, _ = self.moderator.choose(candidates)
                 if winner is None:
                     await self.state('recovery')
                     return
                 self.addressed = None
-                for direct in (output for output in outputs if output.type == 'agent.direct'):
-                    try:
-                        await self.pool.call(direct.to, direct, timeout=4)
-                        self.addressed = direct.to
-                    except Exception:
-                        await self.notice('agent_timeout', 'A peer message could not be delivered; the discussion continues.')
                 jobs = []
                 if self.drafts:
                     projected = copy.deepcopy(self.ledger)
@@ -213,6 +278,7 @@ class PanelSession(VoiceSession):
                             jobs.append(asyncio.create_task(self.pool.call(peer,envelope('floor.prepare',
                                 self.session_id,self.context_version+1,'gateway',peer,speaker=winner,
                                 text=' '.join(sentences),memory=projected.context(' '.join(sentences))),timeout=8)))
+                self.set_annotations(outputs)
                 try:
                     await self.play_turn(winner, sentences)
                 finally:
@@ -220,11 +286,20 @@ class PanelSession(VoiceSession):
                         if not job.done(): job.cancel()
                     if jobs: await asyncio.gather(*jobs,return_exceptions=True)
                 for direct in (output for output in outputs if output.type == 'agent.direct'):
+                    try:
+                        await self.pool.call(direct.to, direct, timeout=4)
+                        if direct.payload.get('act') in ('challenge', 'clarify'):
+                            self.addressed = direct.to
+                    except Exception:
+                        await self.notice('agent_timeout', 'A peer message could not be delivered; the discussion continues.')
                     self.ledger.transition(direct.payload.get('claim_id'), winner, direct.payload.get('act'))
                 self.moderator.record(winner)
                 self.latest = {'speaker': winner, 'text': ' '.join(sentences)}
                 self.remember(self.latest | {'turn_id': self.turn_id})
                 await self.emit('claims_update', claims=self.ledger.public_claims())
+            if self.options is not None:
+                await self.close_episode()
+                return
             await self.notice('agent_timeout', 'Development session turn limit reached. End and start a fresh session.')
             await self.state('waiting_first_speaker')
         except asyncio.CancelledError:
@@ -239,18 +314,33 @@ class PanelSession(VoiceSession):
                 'The live turn failed. Check provider access, quota and playback acknowledgement; no successful audio is assumed.')
             await self.state('recovery')
 
-    async def broadcast(self, utterance):
+    async def broadcast(self, utterance, bid=True):
         self.context_version += 1
         return await self.pool.collect_bids(lambda agent: envelope('floor.utterance',
             self.session_id, self.context_version, utterance['speaker'], agent,
             text=utterance['text'], final=True, interrupted=utterance.get('interrupted', False),
-            memory=self.ledger.context(utterance['text']) if self.ledger else {}))
+            memory=self.shared_context(utterance['text']), request_bid=bid))
+
+    def shared_context(self, query=''):
+        memory = self.ledger.context(query) if self.ledger else {}
+        memory['sources'] = retrieve(query + ' ' + (self.ledger.focus if self.ledger else ''))
+        memory['episode'] = self.episode_context()
+        memory['corrections'] = [c for c in self.ledger.claims if c['status'] == 'conceded'][-8:] if self.ledger else []
+        return memory
 
     def remember(self, turn):
+        if turn['turn_id'] in self.committed_turns and turn['speaker'] != 'human':
+            return
+        if turn['speaker'] != 'human':
+            self.committed_turns.add(turn['turn_id'])
+            if 'annotations' not in turn:
+                turn['annotations'] = self.commit_annotations(turn['speaker'], self.pending_annotations)
         self.history.append(turn)
         self.history = self.history[-20:]
         if self.ledger:
-            self.ledger.remember(turn['speaker'], turn['text'], turn['turn_id'])
+            self.ledger.remember(turn['speaker'], turn['text'], turn['turn_id'],
+                annotations=turn.get('annotations'), interrupted=turn.get('interrupted', False),
+                kind=turn.get('kind', 'statement'))
 
     def capture_heard(self):
         turn = self.active
@@ -264,7 +354,8 @@ class PanelSession(VoiceSession):
         text = ' '.join(turn['sentences'][idx] for idx in indices)
         if text:
             self.latest = {'speaker': self.persona['id'], 'text': text, 'interrupted': True}
-            self.remember(self.latest | {'turn_id': turn['id']})
+            self.remember(self.latest | {'turn_id': turn['id'],
+                'annotations': self.commit_annotations(self.persona['id'], indices)})
 
     async def transcribe_and_answer(self, audio, mime):
         await self.state('processing_user')
@@ -278,6 +369,11 @@ class PanelSession(VoiceSession):
         await self.answer(text, self.target)
 
     async def answer(self, text, hint=None, utterance_id=None):
+        self.concluded = False
+        if self.paused_at is not None:
+            self.paused_seconds += time.monotonic() - self.paused_at
+        self.paused_at = None
+        self.paused = False
         await self.state('processing_user')
         routing = route_question(text, self.topic['agents'], hint)
         await self.emit('routing', utterance_id=utterance_id, **routing)
@@ -291,11 +387,11 @@ class PanelSession(VoiceSession):
             await self.emit('claims_update', claims=[])
         try:
             if self.latest:
-                await self.broadcast(self.latest)
+                await self.broadcast(self.latest, bid=False)
             await self.emit('transcript', turn_id=self.turn_id + 1, epoch=self.epoch,
                             speaker='human', text=text, final=True, sentence_idx=0)
             self.remember({'speaker': 'human', 'text': text, 'turn_id': self.turn_id + 1})
-            bids = await self.broadcast({'speaker': 'human', 'text': text})
+            bids = await self.broadcast({'speaker': 'human', 'text': text}, bid=routing['target'] is None)
             winner = routing['target']
             if winner is None:
                 winner, _ = self.moderator.choose(bids)
@@ -304,8 +400,9 @@ class PanelSession(VoiceSession):
                 return
             await self.begin_turn(winner, kind='human_reply')
             outputs = await self.pool.call(winner, envelope('human.question', self.session_id,
-                self.context_version + 1, 'gateway', winner, text=text))
+                self.context_version + 1, 'gateway', winner, text=text, memory=self.shared_context(text)))
             sentences = self.speech(outputs)
+            self.set_annotations(outputs)
             await self.play_turn(winner, sentences, kind='human_reply')
             self.moderator.record(winner)
             self.latest = {'speaker': winner, 'text': ' '.join(sentences)}
@@ -316,7 +413,9 @@ class PanelSession(VoiceSession):
             await self.debate()
         except asyncio.CancelledError:
             raise
-        except Exception:
+        except Exception as exc:
+            from gateway.a2a_client import A2AError
+            await self.trace('panel.question_failed', {'reason': str(exc) if isinstance(exc, A2AError) else type(exc).__name__})
             self.epoch += 1
             self.active = None
             await self.notice('agent_timeout', 'The question could not be completed. Check provider access and quota, then retry.')
@@ -332,6 +431,7 @@ class PanelSession(VoiceSession):
         return [e.payload['text'] for e in speech]
 
     async def begin_turn(self, speaker, kind='agent'):
+        self.pending_annotations = {}
         self.persona = self.personas[speaker]
         self.voice_id = self.voices[speaker]
         self.turn_id += 1

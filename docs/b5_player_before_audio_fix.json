@@ -1,0 +1,12 @@
+{
+  "mode": "mocked-browser-APIs / actual B5 AudioPlayer source",
+  "premature_finished_before_decode": true,
+  "expected_sentence_starts": [
+    0,
+    1
+  ],
+  "observed_sentence_starts": [
+    1
+  ],
+  "decode_requests": 2
+}

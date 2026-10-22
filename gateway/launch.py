@@ -19,6 +19,10 @@ def main():
     parser.add_argument('--port', type=int, default=8000)
     args = parser.parse_args()
     load_dotenv(args.env_file, override=True)
+    # Keep the canonical default port, while allowing an explicitly isolated local demo.
+    allowed = [v.strip() for v in os.getenv('CORS_ORIGINS', 'http://localhost:5173').split(',') if v.strip()]
+    os.environ['CORS_ORIGINS'] = ','.join(dict.fromkeys(allowed + [
+        f'http://localhost:{args.port}', f'http://127.0.0.1:{args.port}']))
     os.environ['ROUNDTABLE_MODE'] = 'panel'
     if args.chaos:
         os.environ['ENABLE_CHAOS'] = '1'

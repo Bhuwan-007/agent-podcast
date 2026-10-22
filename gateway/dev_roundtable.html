@@ -1,32 +1,43 @@
 <!doctype html><html lang="en"><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>AI Roundtable · live integration</title>
-<style>body{font:16px system-ui;max-width:950px;margin:24px auto;padding:16px;background:#f5f7fb;color:#172033}button,input,select{font:inherit;padding:10px;margin:5px}input{width:90%}pre{white-space:pre-wrap;overflow-wrap:anywhere;max-height:300px;overflow:auto;background:white;padding:12px}.note{padding:12px;border-left:4px solid #463c88;background:white}</style>
-<h1>AI Roundtable · live integration</h1>
-<p class="note">Backend test page: real A2A experts and ElevenLabs voices. Sentence-buffered audio.
-Use headphones for microphone tests. Microphone audio goes to ElevenLabs for transcription;
-this app keeps it in memory only. Topic 1 roles; no research tools or verified claims.</p>
-<button id="start">Start Topic 1</button><button id="end" disabled>End</button>
+<title>AI Roundtable ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â· live integration</title>
+<style>body{font:16px system-ui;max-width:1100px;margin:24px auto;padding:16px;background:#f5f7fb;color:#172033}button,input,select{font:inherit;padding:10px;margin:5px}input{width:90%}pre{white-space:pre-wrap;overflow-wrap:anywhere;max-height:300px;overflow:auto;background:white;padding:12px}.note{padding:12px;border-left:4px solid #463c88;background:white}.toolbar{display:flex;flex-wrap:wrap;align-items:center;gap:6px}.card{background:white;border:1px solid #d9dfeb;border-radius:12px;padding:16px;margin:12px 0}h1{letter-spacing:-1px}h2{font-size:1.15rem}button{cursor:pointer;border:1px solid #bbc5d8;border-radius:8px;background:white}button:disabled{cursor:default;opacity:.5}#start{background:#193c73;color:white}#end{color:#a22435}a{color:#214e99}progress{width:100%}.draft{color:#69758a;font-style:italic}label{display:inline-block}pre{border-radius:8px}details{margin:10px 0}#sources a{display:block;margin:8px 0}</style>
+<h1>AI Roundtable</h1>
+<p class="note">Live models ? independent A2A experts ? real ElevenLabs voices. Topic 1: Will AI Replace Software Developers?
+Sources below are a small reviewed research library, not a fact-checking guarantee. Use headphones for voice interruption.
+Microphone audio is sent to ElevenLabs for transcription and kept in memory only. No audio recording/export. Episode length is a target; closing waits for the current turn boundary and an 18-turn safety cap also applies.</p>
+<div class="card"><h2>Set up your episode</h2>
+<label>Topic <select id="topic"><option>Will AI Replace Software Developers?</option><option disabled>Other organizer topics ? unavailable</option></select></label>
+<label>Episode length <select id="duration"><option value="1">1 minute</option><option value="3" selected>3 minutes</option><option value="5">5 minutes</option><option value="10">10 minutes</option></select></label>
+<p>Participants: Alex, AI Engineer ? Sam, Software Developer ? Maya, Open-Source Maintainer. This tested Topic 1 roster is fixed.</p>
+<label>Distinct configured voice assignment <select id="voices"><option value="0,1,2">Alex: Voice 1 ? Sam: Voice 2 ? Maya: Voice 3</option><option value="1,2,0">Alex: Voice 2 ? Sam: Voice 3 ? Maya: Voice 1</option><option value="2,0,1">Alex: Voice 3 ? Sam: Voice 1 ? Maya: Voice 2</option></select></label>
+<div class="toolbar"><button id="review">Review source passages</button><button id="preflight">Run real preflight &amp; audio check</button><button id="sample" disabled>Replay real audio check</button></div>
+<pre id="preflightResult">Preflight has not run. It makes real provider requests and consumes a small amount of quota.</pre><div id="sources"></div></div>
+<div class="toolbar"><button id="start" disabled>Start live episode</button><button id="pause" disabled>Pause</button><button id="resume" disabled>Resume</button><button id="close" disabled>Finish with takeaways</button><button id="end" disabled>End immediately</button><button id="reconnect" disabled>Restore disconnected episode</button><button id="export" disabled>Download delivered transcript</button></div>
+<progress id="progress" value="0" max="100"></progress><p id="episodeStatus">No episode running</p>
 <p id="state" role="status">Ready</p>
 <label>Address <select id="target"><option value="">Best-fit expert</option><option value="ai_engineer">Alex</option><option value="software_developer">Sam</option><option value="oss_maintainer">Maya</option></select></label>
-<input id="question" maxlength="2000" placeholder="Ask a question, challenge a point, or say ‘switch to …’">
+<input id="question" maxlength="2000" placeholder="Ask a question, challenge a point, or say ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¹Ã…â€œswitch to ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â¦ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â‚¬Å¾Ã‚Â¢">
 <button id="ask" disabled>Interrupt and ask (typed)</button>
 <button id="mic" disabled>Speak a question</button><button id="finish" disabled>Finish speaking</button>
-<h2>Public transcript</h2><pre id="transcript"></pre><h2>Evidence and timing</h2><pre id="events"></pre>
+<div class="card"><h2>Delivered conversation</h2><p>Only complete, playback-confirmed sentences appear in the export. A cut-off sentence is omitted conservatively.</p><pre id="transcript"></pre><h3>Currently generated ? may not have been heard</h3><pre class="draft" id="draft"></pre><div id="citations"></div></div><details><summary>Public protocol evidence and measured timing</summary><pre id="events"></pre></details>
 <script>
 'use strict';
 const el=id=>document.getElementById(id);
 let ws,context,source,turn=null,epoch=0,token=0,ended=true,parts=[],sentence=0,playingSentence=0,chain=Promise.resolve(),turnReceived=0,turnKind='agent',sourceStarted=0;
+const invalidTurns=new Set();
+let sessionId=null,latestReport=null,restoreId=null,intentionalEnd=false,sampleBuffer=null,sampleSource=null,pollTimer=null;
 let recorder,micStream,micSource,micAnalyser,micFrame,micTimeout,micActive=false,firstVoice=null,lastVoice=0,detected=false,vadEnded=null;
 function log(s){el('events').textContent=(el('events').textContent+s+'\n').slice(-24000)}
 function send(e){if(ws?.readyState===WebSocket.OPEN)ws.send(JSON.stringify(e))}
-function stopAudio(){token++;parts=[];chain=Promise.resolve();if(source){source.stop();source=null}}
+function stopAudio(){if(sampleSource){sampleSource.stop();sampleSource=null}token++;parts=[];chain=Promise.resolve();if(source){source.stop();source=null}}
 function interrupt(voice=false,tStart=performance.now()){
  const active=turn?{...turn}:null,played=source?Math.max(0,(context.currentTime-sourceStarted)*1000):0;
+ if(active)invalidTurns.add(active.turn_id+':'+active.epoch);
  stopAudio();
  if(voice)send({type:'vad',state:'start',t_client_ms:tStart});
  if(active)send({type:'barge_in',...active,sentence_idx:playingSentence,played_ms:played,t_client_ms:performance.now()});
- if(voice&&active){const stop=performance.now();send({type:'playback_stopped',...active,reason:'barge_in',t_client_ms:stop});send({type:'metrics',name:'interrupt_to_silence_ms',value:stop-tStart,available:true});log('Client VAD first frame → stop request: '+(stop-tStart).toFixed(1)+' ms; acoustic stop unmeasured')}
+ if(voice&&active){const stop=performance.now();send({type:'playback_stopped',...active,reason:'barge_in',t_client_ms:stop});send({type:'metrics',name:'interrupt_to_silence_ms',value:stop-tStart,available:true});log('Client VAD first frame ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ stop request: '+(stop-tStart).toFixed(1)+' ms; acoustic stop unmeasured')}
 }
 function flush(){
  if(!parts.length||!turn)return;
@@ -42,28 +53,41 @@ function flush(){
   await new Promise(resolve=>{
    node.onended=()=>{clearInterval(timer);if(source===node)source=null;resolve()};node.start();
    const now=performance.now();send({type:'playback_started',...c.turn,sentence_idx:c.sentence,t_client_ms:now});
-   if(c.sentence===0){send({type:'metrics',name:'grant_to_first_audio_ms',value:now-turnReceived,available:true});log('Turn receipt → playback started: '+(now-turnReceived).toFixed(1)+' ms');if(turnKind==='human_reply'&&vadEnded!==null){send({type:'metrics',name:'user_question_to_first_audio_ms',value:now-vadEnded,available:true});log('VAD end → reply playback started: '+(now-vadEnded).toFixed(1)+' ms');vadEnded=null}}
+   if(c.sentence===0){send({type:'metrics',name:'grant_to_first_audio_ms',value:now-turnReceived,available:true});log('Turn receipt ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ playback started: '+(now-turnReceived).toFixed(1)+' ms');if(turnKind==='human_reply'&&vadEnded!==null){send({type:'metrics',name:'user_question_to_first_audio_ms',value:now-vadEnded,available:true});log('VAD end ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ reply playback started: '+(now-vadEnded).toFixed(1)+' ms');vadEnded=null}}
   });
  }).catch(()=>{if(!ended&&c.token===token){send({type:'playback_stopped',...c.turn,reason:'error',t_client_ms:performance.now()});stopAudio();log('Browser decoding/playback failed')}})
 }
 el('start').onclick=async()=>{
- try{context=context||new AudioContext();await context.resume();ended=false;epoch=0;turn=null;stopAudio();el('start').disabled=true;el('end').disabled=false;el('transcript').textContent='';
- ws=new WebSocket((location.protocol==='https:'?'wss://':'ws://')+location.host+'/ws');
- ws.onopen=()=>send({type:'start_session',topic_id:'topic_1',session_id:null});
+ try{context=context||new AudioContext();await context.resume();
+ const restoring=restoreId;let setup=null;if(!restoring){const response=await fetch('/api/episodes/prepare',{method:'POST',headers:{'Content-Type':'application/json','X-Roundtable-Client':'1'},body:JSON.stringify({duration_minutes:Number(el('duration').value)||3,voice_order:(el('voices').value||'0,1,2').split(',').map(Number)})});if(!response.ok)throw Error('Episode setup failed');setup=await response.json()}
+ intentionalEnd=false;ended=false;el('preflight').disabled=true;el('sample').disabled=true;epoch=0;turn=null;stopAudio();el('start').disabled=true;el('end').disabled=false;el('transcript').textContent='';
+ ws=new WebSocket((location.protocol==='https:'?'wss://':'ws://')+location.host+'/ws'+(setup?'?setup_id='+encodeURIComponent(setup.setup_id):''));
+ ws.onopen=()=>{if(ended){ws.close();return}if(restoring){send({type:'resume_session',session_id:restoring,last_seq:0});restoreId=null}else send({type:'start_session',topic_id:'topic_1',session_id:null})};
  ws.onmessage=({data})=>{
-  const e=JSON.parse(data);log(JSON.stringify(e.type==='audio_chunk'?{...e,data_b64:'[audio bytes]'}:e));if(ended)return;
+  const e=JSON.parse(data);if(invalidTurns.has(e.turn_id+':'+e.epoch)&&['audio_chunk','transcript','turn_end'].includes(e.type))return;log(JSON.stringify(e.type==='audio_chunk'?{...e,data_b64:'[audio bytes]'}:e));if(ended)return;
   if(typeof e.epoch==='number'){if(e.epoch<epoch)return;if(e.epoch>epoch){epoch=e.epoch;stopAudio()}}
-  if(e.type==='session_state'){el('state').textContent=e.state;el('ask').disabled=false;el('mic').disabled=micActive;if(e.state==='ended'){ended=true;stopAudio()}}
+  if(e.type==='session_state'){if(e.session_id){sessionId=e.session_id;el('pause').disabled=false;el('close').disabled=false;el('export').disabled=false;if(!pollTimer)pollTimer=setInterval(()=>refreshReport(),1000);refreshReport()}el('state').textContent=e.state;el('ask').disabled=false;el('mic').disabled=micActive;if(e.state==='ended'){ended=true;stopAudio()}}
+  else if(e.type==='speaker_active'){el('state').textContent='Speaking: '+({ai_engineer:'Alex',software_developer:'Sam',oss_maintainer:'Maya',system:'Host'}[e.agent_id]||e.agent_id)}
   else if(e.type==='turn_start'){stopAudio();turn={turn_id:e.turn_id,epoch:e.epoch};sentence=0;turnReceived=performance.now();turnKind=e.kind}
-  else if(e.type==='transcript'){if(!e.final&&e.speaker!=='human'&&e.sentence_idx!==sentence){flush();sentence=e.sentence_idx}el('transcript').textContent+='['+(e.final?'confirmed':'generated')+' '+e.speaker+'] '+e.text+'\n'}
+  else if(e.type==='transcript'){if(!e.final&&e.speaker!=='human'&&e.sentence_idx!==sentence){flush();sentence=e.sentence_idx}if(!e.final)el('draft').textContent=e.speaker+': '+e.text;else refreshReport()}
   else if(e.type==='audio_chunk'&&turn&&e.turn_id===turn.turn_id){if(e.sentence_idx!==sentence){flush();sentence=e.sentence_idx}const raw=atob(e.data_b64);parts.push(Uint8Array.from(raw,c=>c.charCodeAt(0)))}
   else if(e.type==='turn_end'){if(e.status!=='completed'){stopAudio();return}flush();const t=token,c={...turn};chain.then(()=>{if(!ended&&t===token)send({type:'playback_stopped',...c,reason:'finished',t_client_ms:performance.now()})})}
  };
- ws.onclose=()=>{ended=true;stopAudio();stopMic(false);el('state').textContent='Disconnected / ended';el('start').disabled=false;el('end').disabled=true;el('ask').disabled=true;el('mic').disabled=true};
+ ws.onclose=()=>{ended=true;stopAudio();stopMic(false);el('pause').disabled=true;el('resume').disabled=true;el('close').disabled=true;el('reconnect').disabled=intentionalEnd||!sessionId;refreshReport();el('state').textContent='Disconnected / ended';el('start').disabled=false;el('preflight').disabled=false;el('sample').disabled=!sampleBuffer;el('end').disabled=true;el('ask').disabled=true;el('mic').disabled=true};
  ws.onerror=()=>log('WebSocket error');
  }catch{ended=true;el('start').disabled=false;log('Could not initialize browser audio')}
 };
-el('end').onclick=()=>{ended=true;send({type:'end_session'});stopAudio();stopMic(false);el('ask').disabled=true;el('mic').disabled=true};
+el('end').onclick=()=>{intentionalEnd=true;ended=true;send({type:'end_session'});stopAudio();stopMic(false);el('ask').disabled=true;el('mic').disabled=true};
+async function api(path,body){const response=await fetch(path,{method:'POST',headers:{'Content-Type':'application/json','X-Roundtable-Client':'1'},body:JSON.stringify(body||{})});if(!response.ok)throw Error('Request failed ('+response.status+'). Check the recovery message or retry.');return response.json()}
+async function showSources(){try{const response=await fetch('/api/sources');const data=await response.json();el('sources').textContent='';for(const source of data.sources){const link=document.createElement('a');link.href='/api/sources/'+source.id;link.target='_blank';link.rel='noopener';link.textContent=source.title+' ? '+source.locator;el('sources').appendChild(link)}}catch{log('Source passages could not be loaded')}}
+el('review').onclick=showSources;
+el('sample').onclick=async()=>{if(!ended)return;try{if(sampleSource)sampleSource.stop();context=context||new AudioContext();await context.resume();const node=context.createBufferSource();node.buffer=sampleBuffer;node.connect(context.destination);sampleSource=node;node.onended=()=>{if(sampleSource===node)sampleSource=null};node.start();el('preflightResult').textContent+='\nReal audio sample scheduled. Confirm that you can hear it; browser scheduling is not acoustic verification.'}catch{log('Browser audio is blocked or decoding failed. Click again after allowing playback.')}};
+el('preflight').onclick=async()=>{if(!ended)return;el('preflight').disabled=true;el('start').disabled=true;try{context=context||new AudioContext();await context.resume();el('preflightResult').textContent='Checking real model, voices and synthesis?';const result=await api('/api/preflight');const audio=result.sample_audio_b64;delete result.sample_audio_b64;el('preflightResult').textContent=JSON.stringify(result,null,2);if(audio){const binary=atob(audio);const bytes=Uint8Array.from(binary,c=>c.charCodeAt(0));sampleBuffer=await context.decodeAudioData(bytes.buffer);el('sample').disabled=false;await el('sample').onclick()}el('start').disabled=!result.ready;await showSources()}catch(error){el('preflightResult').textContent='Preflight failed: '+error.message+' Check provider quota and configuration; no successful playback is assumed.'}finally{el('preflight').disabled=false}};
+async function refreshReport(){if(!sessionId)return;try{const response=await fetch('/api/episodes/'+sessionId);if(!response.ok)return;latestReport=await response.json();const report=latestReport;el('transcript').textContent=report.turns.map(t=>'['+t.speaker+(t.kind==='closing_summary'?' ? closing':'')+(t.interrupted?' ? interrupted':'')+'] '+t.text).join('\n\n');const duration=Number(el('duration').value)||3;el('progress').value=Math.min(100,100*report.elapsed_seconds/(duration*60));el('episodeStatus').textContent=report.concluded?'Episode concluded. Download the transcript; End closes the connection.':(report.paused?'Paused ? state preserved':report.episode.phase)+' ? '+report.elapsed_seconds+' seconds';el('resume').disabled=!report.paused||report.concluded||ended;el('pause').disabled=report.paused||ended;el('citations').textContent='';const used=new Set(report.turns.flatMap(t=>Object.values(t.annotations||{}).flatMap(a=>a.source_ids||[])));for(const id of used){const source=report.sources.find(s=>s.id===id);if(source){const link=document.createElement('a');link.href='/api/sources/'+id;link.target='_blank';link.rel='noopener';link.textContent=' Inspect cited passage: '+source.title+' (model-selected; support needs review) ';el('citations').appendChild(link)}}}catch{log('Episode snapshot unavailable. Completed transcript remains in the current page.')}}
+async function control(action){try{if(action!=='resume'){if(turn)invalidTurns.add(turn.turn_id+':'+turn.epoch);stopAudio();stopMic(false)}await api('/api/episodes/'+sessionId+'/control',{action});await refreshReport()}catch(error){log(error.message)}}
+el('pause').onclick=()=>control('pause');el('resume').onclick=()=>control('resume');el('close').onclick=()=>control('finish');
+el('reconnect').onclick=()=>{restoreId=sessionId;el('reconnect').disabled=true;return el('start').onclick()};
+el('export').onclick=async()=>{await refreshReport();if(!latestReport)return;const blob=new Blob([JSON.stringify(latestReport,null,2)],{type:'application/json'}),url=URL.createObjectURL(blob),link=document.createElement('a');link.href=url;link.download='roundtable-transcript.json';link.click();URL.revokeObjectURL(url)};
 el('ask').onclick=()=>{const text=el('question').value.trim();if(!text||ended)return;interrupt(false);send({type:'user_utterance',utterance_id:crypto.randomUUID(),text,final:true,input_mode:'text',target_hint:el('target').value||null});log('Typed input: excluded from spoken interruption evidence')};
 el('target').onchange=()=>send({type:'address_agent',agent_id:el('target').value||null});
 function stopMic(submit=true){

@@ -1,0 +1,46 @@
+{
+  "mode": "real models/A2A/ElevenLabs; SYNTHETIC playback acknowledgements",
+  "acoustic_acceptance": false,
+  "microphone_acceptance": false,
+  "bytes": 743854,
+  "completed_experts": [
+    "oss_maintainer",
+    "ai_engineer"
+  ],
+  "notices": [
+    {
+      "code": "agent_timeout",
+      "text": "An expert failed or stalled; trying another eligible bid."
+    }
+  ],
+  "turn_timings": [
+    {
+      "turn_id": 1,
+      "agent": "ai_engineer",
+      "turn_receipt_to_first_bytes_ms": 448.0
+    },
+    {
+      "turn_id": 2,
+      "agent": "ai_engineer",
+      "turn_receipt_to_first_bytes_ms": 2738.3
+    },
+    {
+      "turn_id": 3,
+      "agent": "oss_maintainer",
+      "turn_receipt_to_first_bytes_ms": 1373.5
+    },
+    {
+      "turn_id": 4,
+      "agent": "ai_engineer",
+      "turn_receipt_to_first_bytes_ms": 2267.7
+    }
+  ],
+  "pause_resume": true,
+  "targeted_question": false,
+  "concluded": false,
+  "end_confirmed": true,
+  "pause_control_ack_ms": 101.0,
+  "recovery": true,
+  "elapsed_ms": 17785.7,
+  "protocol_pass": false
+}

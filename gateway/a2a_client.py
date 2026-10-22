@@ -99,6 +99,12 @@ class AgentPool:
                                     detail = p.root.data.get('error', '')
                                     if detail.startswith('Model service returned HTTP ') and detail[-3:].isdigit():
                                         reason = 'model_http_' + detail[-3:]
+                                    elif detail in ('Expert speech failed validation: reference',
+                                                     'Expert speech failed validation: length',
+                                                     'Expert speech failed validation: format',
+                                                     'Model output incomplete', 'Invalid public model output',
+                                                     'Model request failed'):
+                                        reason = detail
                                     elif p.root.data.get('error_kind') == 'ValidationError':
                                         fields = [f for f in p.root.data.get('invalid_fields', []) if f in Bid.model_fields]
                                         reason = 'invalid_model_bid:' + ','.join(fields)

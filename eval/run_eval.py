@@ -12,6 +12,9 @@ def main():
     commands=[('Backend regressions',[sys.executable,'-B','-m','pytest','eval/','-q','-p','no:cacheprovider','--tb=short'],{}),
               ('A1 player lifecycle',['node','--test','eval/test_a1_player.mjs'],{}),
               ('Panel player lifecycle',['node','--test','eval/test_a1_player.mjs'],{'PANEL_PLAYER_TEST':'1'})]
+    if (ROOT/'web/node_modules/typescript').exists():
+        commands += [('Actual frontend player lifecycle', ['node','--test','eval/test_web_player.mjs'], {}),
+                     ('Frontend pairing diagnostic', ['node','eval/check_b5_player.mjs'], {})]
     import os
     for name,command,extra in commands:
         result=subprocess.run(command,cwd=ROOT,env=os.environ|extra,text=True,capture_output=True)
@@ -30,6 +33,14 @@ def main():
           ('A6 recovery','AUTOMATED ONLY','Failed expert failover, guarded chaos, bounded configured fallback; live chaos not certified.'),
           ('A7 drafting','EXPERIMENTAL / DISABLED','Cache tests pass; real timing probe failed; no live speedup claimed.'),
           ('A8 submission','PARTIAL','Eval runner, traces and run guide exist; final UI acceptance, README assembly and demo video remain.')]
+    for filename, title in [('live_smoke_episode_results', 'Short complete episode'),
+                            ('live_episode_final_results', 'Long panel acceptance'),
+                            ('live_recovery_results', 'Live reconnect/expert fault')]:
+        path = ROOT/f'docs/{filename}.json'
+        if path.exists():
+            result = json.loads(path.read_text(encoding='utf-8'))
+            rows.append((title, 'PASS (protocol)' if result.get('protocol_pass') else 'NOT PASSED',
+                         f'Actual report: docs/{filename}.json; no acoustic/microphone inference.'))
     text='# Evaluation results — 2026-10-22\n\n'
     text+='| Check | Result | Evidence boundary |\n|---|---|---|\n'
     text+=''.join('| '+ ' | '.join(row)+' |\n' for row in rows)
