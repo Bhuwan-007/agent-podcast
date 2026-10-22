@@ -1,0 +1,94 @@
+{
+  "mode": "real models/A2A/ElevenLabs; SYNTHETIC playback acknowledgements",
+  "acoustic_acceptance": false,
+  "microphone_acceptance": false,
+  "bytes": 2970141,
+  "completed_experts": [
+    "ai_engineer",
+    "oss_maintainer",
+    "ai_engineer",
+    "oss_maintainer",
+    "ai_engineer",
+    "software_developer"
+  ],
+  "notices": [
+    {
+      "code": "agent_timeout",
+      "text": "An expert failed or stalled; trying another eligible bid."
+    },
+    {
+      "code": "agent_timeout",
+      "text": "An expert failed or stalled; trying another eligible bid."
+    },
+    {
+      "code": "agent_timeout",
+      "text": "An expert failed or stalled; trying another eligible bid."
+    },
+    {
+      "code": "agent_timeout",
+      "text": "Closing audio failed. The delivered transcript is preserved; retry Finish or download it."
+    }
+  ],
+  "turn_timings": [
+    {
+      "turn_id": 1,
+      "agent": "ai_engineer",
+      "turn_receipt_to_first_bytes_ms": 553.0
+    },
+    {
+      "turn_id": 2,
+      "agent": "oss_maintainer",
+      "turn_receipt_to_first_bytes_ms": 1084.9
+    },
+    {
+      "turn_id": 3,
+      "agent": "ai_engineer",
+      "turn_receipt_to_first_bytes_ms": 4172.7
+    },
+    {
+      "turn_id": 4,
+      "agent": "oss_maintainer",
+      "turn_receipt_to_first_bytes_ms": 1726.8
+    },
+    {
+      "turn_id": 6,
+      "agent": "ai_engineer",
+      "turn_receipt_to_first_bytes_ms": 1515.3
+    },
+    {
+      "turn_id": 8,
+      "agent": "oss_maintainer",
+      "turn_receipt_to_first_bytes_ms": 1267.2
+    },
+    {
+      "turn_id": 9,
+      "agent": "ai_engineer",
+      "turn_receipt_to_first_bytes_ms": 2721.4
+    },
+    {
+      "turn_id": 10,
+      "agent": "software_developer",
+      "turn_receipt_to_first_bytes_ms": 2791.5
+    },
+    {
+      "turn_id": 12,
+      "agent": "oss_maintainer",
+      "turn_receipt_to_first_bytes_ms": 2900.4
+    },
+    {
+      "turn_id": 13,
+      "agent": "oss_maintainer",
+      "turn_receipt_to_first_bytes_ms": 2886.9
+    }
+  ],
+  "pause_resume": true,
+  "targeted_question": true,
+  "concluded": false,
+  "end_confirmed": true,
+  "synthetic_ack_delay_seconds": 20,
+  "pause_control_ack_ms": 119.4,
+  "routed_target": "oss_maintainer",
+  "recovery": true,
+  "elapsed_ms": 196944.5,
+  "protocol_pass": false
+}

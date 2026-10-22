@@ -4,6 +4,7 @@ import base64
 import json
 from pathlib import Path
 import time
+import os
 
 import httpx
 from websockets.asyncio.client import connect
@@ -42,6 +43,10 @@ async def run():
                         await asyncio.sleep(2 if e['turn_id'] == 1 else 8)
                         await send({'type': 'playback_stopped', 'turn_id': e['turn_id'], 'epoch': e['epoch'], 'reason': 'finished'})
                         if e['turn_id'] == 1:
+                            if os.getenv('INJECT_CLOSING_FAILURE') == '1':
+                                response = await client.post(base + '/admin/chaos/ai_engineer/error', headers={'X-Demo-Chaos': '1'})
+                                response.raise_for_status()
+                                report['deliberate_host_model_failure'] = True
                             await send({'type': 'user_utterance', 'utterance_id': 'source-smoke', 'input_mode': 'text',
                                         'final': True, 'target_hint': 'oss_maintainer',
                                         'text': 'What does the Reflexion abstract actually establish, and does it prove general architectural judgment?'})
@@ -62,6 +67,10 @@ async def run():
                         break
         except Exception as exc:
             report['error_type'] = type(exc).__name__
+        finally:
+            if report.get('deliberate_host_model_failure'):
+                response = await client.post(base + '/admin/chaos/ai_engineer/reset', headers={'X-Demo-Chaos': '1'})
+                report['host_reset_ok'] = response.status_code == 200
     report['elapsed_ms'] = round((time.perf_counter() - began) * 1000, 1)
     report['protocol_pass'] = all(report.get(k, False) for k in ('targeted_reply', 'concluded', 'export_ok', 'end_confirmed'))
     Path('docs/live_smoke_episode_results.json').write_text(json.dumps(report, indent=2, ensure_ascii=False)+'\n', encoding='utf-8')

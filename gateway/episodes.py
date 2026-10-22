@@ -5,6 +5,7 @@ from collections import OrderedDict
 
 from agents.messages import envelope
 from gateway.evidence import SOURCES
+from agents.llm import spoken_sentences
 
 
 class EpisodeStore:
@@ -41,6 +42,7 @@ class EpisodeMixin:
         self.introduced = False
         self.concluded = False
         self.closing = False
+        self.closing_method = None
         self.episode_started = None
         self.paused_at = None
         self.paused_seconds = 0
@@ -70,6 +72,7 @@ class EpisodeMixin:
         turns = ledger.turns if ledger else []
         return {'session_id': self.session_id, 'epoch': self.epoch, 'mode': 'live', 'connected': self.connected,
                 'paused': self.paused, 'concluded': self.concluded, 'ended': self.ended,
+                'closing_method': self.closing_method,
                 'topic': self.topic['title'] if self.topic else None,
                 'elapsed_seconds': round(self.elapsed(), 1), 'episode': self.episode_context(),
                 'turns': turns, 'claims': ledger.claims if ledger else [],
@@ -141,10 +144,21 @@ class EpisodeMixin:
                         'Scope any missing evidence to this conversation, not all research. '
                         'If little discussion was delivered, say so. Do not invent a consensus or evidence.')
             await self.begin_turn('ai_engineer', 'agent')
-            outputs = await self.pool.call('ai_engineer', envelope('human.question', self.session_id,
-                self.context_version + 1, 'gateway', 'ai_engineer', text=question, memory=memory, closing=True))
-            sentences = self.speech(outputs)
-            self.set_annotations(outputs)
+            try:
+                outputs = await self.pool.call('ai_engineer', envelope('human.question', self.session_id,
+                    self.context_version + 1, 'gateway', 'ai_engineer', text=question, memory=memory, closing=True))
+                sentences = self.speech(outputs)
+                self.set_annotations(outputs)
+                self.closing_method = 'model_synthesis'
+            except asyncio.CancelledError:
+                raise
+            except Exception:
+                # Useful, honest fallback: quote delivered material instead of
+                # fabricating a successful model synthesis or an agreement.
+                self.closing_method = 'attributed_extractive_fallback'
+                self.pending_annotations = {}
+                sentences = self.extractive_recap()
+                await self.notice('agent_timeout', 'Generated closing could not be validated or completed. Speaking a clearly labelled recap of delivered excerpts instead.')
             await self.play_turn('ai_engineer', sentences)
             self.remember({'speaker': 'ai_engineer', 'text': ' '.join(sentences),
                            'turn_id': self.turn_id, 'kind': 'closing_summary'})
@@ -169,6 +183,20 @@ class EpisodeMixin:
     def set_annotations(self, outputs):
         self.pending_annotations = {e.payload['sentence_idx']: e.payload.get('annotation', {})
                                     for e in outputs if e.type == 'agent.speech'}
+
+    def extractive_recap(self):
+        latest = {}
+        for turn in self.ledger.turns:
+            if turn['speaker'] in self.personas and turn.get('kind') != 'closing_summary':
+                latest[turn['speaker']] = turn['text']
+        if not latest:
+            return ['No complete expert contribution was confirmed, so this episode has no supported discussion conclusion yet.']
+        sentences = ['Here is an extractive recap, using delivered excerpts rather than a generated consensus.']
+        for speaker, text in latest.items():
+            name = self.personas[speaker]['display_name']
+            sentences.append(f'{name} said: ' + spoken_sentences(text)[0])
+        sentences.append('These are participant claims, not verified findings; the transcript contains the full context and available source passages.')
+        return sentences
 
     def commit_annotations(self, speaker, indices):
         return {str(i): self.pending_annotations[i] for i in indices if self.pending_annotations.get(i)}

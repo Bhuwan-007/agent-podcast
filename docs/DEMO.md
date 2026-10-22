@@ -25,7 +25,7 @@ Open `http://localhost:8000/dev/roundtable`. An existing gateway is running on p
 5. Ask Maya: “Does Reflexion prove an AI can choose the right architecture for any project? What does the passage actually support?” Inspect the citation against the original passage. A defensible answer distinguishes evaluated feedback-based improvement from a general architecture guarantee.
 6. Pause during speech, then Resume. The local source stops; server work is cancelled and stale chunks are invalidated. The cut-off sentence is deliberately omitted from committed memory. Resume continues from committed context instead of replaying it.
 7. With headphones and explicit mic permission, try a spoken question. Audio is transcribed by real ElevenLabs Scribe. This manual microphone/audibility step has not been certified by browser automation.
-8. Use **Finish with takeaways**, or let the episode reach its duration/turn boundary. The closing model sees the committed conversation and corrections. Inspect the generated conclusion; do not assume an AI summary is infallible.
+8. Use **Finish with takeaways**, or let the episode reach its duration/turn boundary. The closing model sees the committed conversation and corrections. Inspect the generated conclusion; do not assume an AI summary is infallible. When synthesis cannot be validated, the host explicitly labels an extractive fallback and reads attributed delivered excerpts through real ElevenLabs. It does not infer consensus or pretend model generation succeeded.
 9. Download the delivered transcript JSON, including claims, source annotations, corrections and available client measurements. End stops current speech and generation immediately. No recorded audio export is implemented.
 
 ## How the components connect

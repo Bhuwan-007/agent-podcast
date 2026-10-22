@@ -90,6 +90,7 @@ class PanelSession(EpisodeMixin, VoiceSession):
             return
         for name in ('topic', 'personas', 'voices', 'ledger', 'history', 'latest', 'context_version',
                      'moderator', 'turn_id', 'sequence', 'target', 'options', 'introduced', 'concluded',
+                     'closing_method',
                      'episode_started', 'paused_seconds', 'paused_at', 'committed_turns', 'seen_utterances', 'metrics'):
             setattr(self, name, getattr(old, name))
         self.epoch = old.epoch + 1

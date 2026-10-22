@@ -62,6 +62,18 @@ def test_disagreeing_positions_are_not_overwritten_by_one_peer_agreeing():
     assert ledger.claims[0]['status'] == 'conceded'
 
 
+def test_extractive_closing_fallback_quotes_only_delivered_expert_text():
+    session = PanelSession(Socket(), None)
+    session.personas = {'software_developer': {'display_name': 'Sam'}}
+    session.ledger = Ledger('Topic')
+    session.ledger.remember('human', 'Unanswered question?', 1)
+    assert 'No complete expert contribution' in session.extractive_recap()[0]
+    session.ledger.remember('software_developer', 'A bounded proposal. Its qualification.', 2)
+    recap = session.extractive_recap()
+    assert 'Sam said: A bounded proposal.' in recap
+    assert not any('agreed' in text for text in recap)
+
+
 @pytest.mark.asyncio
 async def test_targeted_question_context_sync_does_not_spend_model_bid_calls():
     from eval.test_a2 import expert, MockModel

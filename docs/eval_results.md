@@ -12,6 +12,7 @@
 | A7 drafting | EXPERIMENTAL / DISABLED | Cache tests pass; real timing probe failed; no live speedup claimed. |
 | A8 submission | PARTIAL | Eval runner, traces and run guide exist; final UI acceptance, README assembly and demo video remain. |
 | Short complete episode | PASS (protocol) | Actual report: docs/live_smoke_episode_results.json; no acoustic/microphone inference. |
+| Long panel acceptance | NOT PASSED | Actual report: docs/live_episode_final_results.json; no acoustic/microphone inference. |
 | Live reconnect/expert fault | NOT PASSED | Actual report: docs/live_recovery_results.json; no acoustic/microphone inference. |
 
 Browser automation was denied Chrome access. No microphone/audibility pass or semantic quality score is inferred.
@@ -21,15 +22,15 @@ Browser automation was denied Chrome access. No microphone/audibility pass or se
 ### Backend regressions: PASS
 
 ```text
-........................................................................ [ 87%]
-..........                                                               [100%]
+........................................................................ [ 86%]
+...........                                                              [100%]
 ============================== warnings summary ===============================
 ..\a1-b2-integration\.codex-local\a2-clean-venv\Lib\site-packages\starlette\testclient.py:40
   C:\Dev\Hacks\multiagent podcast\.codex-local\worktrees\a1-b2-integration\.codex-local\a2-clean-venv\Lib\site-packages\starlette\testclient.py:40: DeprecationWarning: The anyio.abc.BlockingPortal alias is deprecated, use anyio.from_thread.BlockingPortal instead.
     _PortalFactoryType = typing.Callable[[], typing.ContextManager[anyio.abc.BlockingPortal]]
 
 -- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
-82 passed, 1 warning in 11.67s
+83 passed, 1 warning in 5.34s
 
 ```
 
@@ -40,25 +41,25 @@ TAP version 13
 # Subtest: playback acks follow source start and actual queue completion
 ok 1 - playback acks follow source start and actual queue completion
   ---
-  duration_ms: 10.0992
+  duration_ms: 2.8852
   type: 'test'
   ...
 # Subtest: End during asynchronous decoding cannot start obsolete audio
 ok 2 - End during asynchronous decoding cannot start obsolete audio
   ---
-  duration_ms: 2.5718
+  duration_ms: 0.7707
   type: 'test'
   ...
 # Subtest: higher epoch stops old playback and suppresses its finished acknowledgement
 ok 3 - higher epoch stops old playback and suppresses its finished acknowledgement
   ---
-  duration_ms: 2.8188
+  duration_ms: 0.8048
   type: 'test'
   ...
 # Subtest: three sentence responses play in order without overlap
 ok 4 - three sentence responses play in order without overlap
   ---
-  duration_ms: 3.5819
+  duration_ms: 1.1568
   type: 'test'
   ...
 1..4
@@ -69,7 +70,7 @@ ok 4 - three sentence responses play in order without overlap
 # cancelled 0
 # skipped 0
 # todo 0
-# duration_ms 277.7452
+# duration_ms 81.1999
 
 ```
 
@@ -80,37 +81,37 @@ TAP version 13
 # Subtest: playback acks follow source start and actual queue completion
 ok 1 - playback acks follow source start and actual queue completion
   ---
-  duration_ms: 14.2187
+  duration_ms: 3.1395
   type: 'test'
   ...
 # Subtest: End during asynchronous decoding cannot start obsolete audio
 ok 2 - End during asynchronous decoding cannot start obsolete audio
   ---
-  duration_ms: 5.9005
+  duration_ms: 1.055
   type: 'test'
   ...
 # Subtest: higher epoch stops old playback and suppresses its finished acknowledgement
 ok 3 - higher epoch stops old playback and suppresses its finished acknowledgement
   ---
-  duration_ms: 5.9253
+  duration_ms: 1.053
   type: 'test'
   ...
 # Subtest: three sentence responses play in order without overlap
 ok 4 - three sentence responses play in order without overlap
   ---
-  duration_ms: 10.1989
+  duration_ms: 1.6419
   type: 'test'
   ...
 # Subtest: typed interruption rejects late chunks before a new epoch arrives
 ok 5 - typed interruption rejects late chunks before a new epoch arrives
   ---
-  duration_ms: 5.5134
+  duration_ms: 0.9572
   type: 'test'
   ...
 # Subtest: pause during decoding prevents the pending source from starting
 ok 6 - pause during decoding prevents the pending source from starting
   ---
-  duration_ms: 4.9826
+  duration_ms: 0.9791
   type: 'test'
   ...
 1..6
@@ -121,7 +122,7 @@ ok 6 - pause during decoding prevents the pending source from starting
 # cancelled 0
 # skipped 0
 # todo 0
-# duration_ms 399.1208
+# duration_ms 90.8088
 
 ```
 
@@ -132,37 +133,37 @@ TAP version 13
 # Subtest: out-of-order decoding preserves sentence order and never finishes before playback
 ok 1 - out-of-order decoding preserves sentence order and never finishes before playback
   ---
-  duration_ms: 6.0856
+  duration_ms: 1.906
   type: 'test'
   ...
 # Subtest: End during decode invalidates pending sources and late chunks of that turn
 ok 2 - End during decode invalidates pending sources and late chunks of that turn
   ---
-  duration_ms: 0.7592
+  duration_ms: 0.2413
   type: 'test'
   ...
 # Subtest: next turn starts sentence zero with clean buffers in the same epoch
 ok 3 - next turn starts sentence zero with clean buffers in the same epoch
   ---
-  duration_ms: 1.1851
+  duration_ms: 0.342
   type: 'test'
   ...
 # Subtest: epoch advance cancels pending decode and rejects old epoch chunks
 ok 4 - epoch advance cancels pending decode and rejects old epoch chunks
   ---
-  duration_ms: 1.8088
+  duration_ms: 0.3451
   type: 'test'
   ...
 # Subtest: generation completion after playback drained still reports finished once
 ok 5 - generation completion after playback drained still reports finished once
   ---
-  duration_ms: 0.8445
+  duration_ms: 0.2322
   type: 'test'
   ...
 # Subtest: a second foreground turn cannot overlap the active turn
 ok 6 - a second foreground turn cannot overlap the active turn
   ---
-  duration_ms: 1.1214
+  duration_ms: 0.3164
   type: 'test'
   ...
 1..6
@@ -173,7 +174,7 @@ ok 6 - a second foreground turn cannot overlap the active turn
 # cancelled 0
 # skipped 0
 # todo 0
-# duration_ms 1520.5321
+# duration_ms 439.9119
 
 ```
 

@@ -148,3 +148,8 @@ browser path is `/dev/a1`. Functional completion does not claim the 1.5 s goal.
 - The live reconnect/fault experiment restored paused without replay and reset the killed expert, but did NOT recover live speech. It remains a failed acceptance result. Long panel runs have failed on quota/output validation/closing paths; inspect the latest final report, not optimistic phase labels.
 - Automated regression/player checks pass; exact latest counts and actual report outputs are in docs/eval_results.md. Existing frontend tests/build pass with a bundle-size warning. Chrome access was denied earlier; microphone/audibility and acoustic latency are unverified.
 - DEMO.md and demo_acceptance_matrix.md document reproduction, proposed judging evidence, limitations and source scope. Only Topic 1, its three participants and configured voice permutations are enabled. No audio recording, document upload, arbitrary roster or verified official scoring claim is made.
+
+### Subsequent closing recovery verification
+- Added a labelled attributed-excerpt fallback when model synthesis fails; it never substitutes mock audio or infers consensus.
+- Real deliberate host-model failure check passed: targeted Maya reply, attributed fallback closing, export, End and fault reset; 983,301 audio bytes in 28,003.4 ms with disclosed synthetic playback acknowledgements. See docs/live_smoke_episode_results.json. The normal model-synthesis sample is retained separately.
+- The long panel experiment in docs/live_episode_final_results.json failed its closing before this fallback was added; it remains a failed historical acceptance report. The separate expert-kill recovery test also remains failed. No acoustic/microphone pass is claimed.
