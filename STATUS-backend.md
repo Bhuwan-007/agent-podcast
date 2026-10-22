@@ -1,5 +1,13 @@
 # STATUS-backend.md — Lane A Progress & Verification
 
+**Shipping update (2026-10-22):** A2 merged in PR #6 (`892711d`). A3/A4 live provider
+protocol works across all experts with targeted typed input, resume and End. A5 bounded
+verbatim memory/ledger and A6 recovery controls have automated coverage. A7 optional cache
+is implemented but disabled because the real probe failed. A8 eval runner/run guide exists.
+70 backend and 8 player lifecycle checks pass. No acoustic/microphone, default 400 ms bid,
+<1.5 s audible-start, live chaos or semantic accuracy pass is claimed. See
+`docs/live_progress.md` and `docs/eval_results.md` for current truth; older notes below are history.
+
 **Latest A2 verification (2026-10-22):** branch `agents/a2-floor-protocol`; real
 10-turn text discussion across three independent A2A processes passed with explicit
 120B speech / 20B bid models, 2,500 ms bid deadline and 12 s quota pacing. Median bid
@@ -33,12 +41,12 @@ browser path is `/dev/a1`. Functional completion does not claim the 1.5 s goal.
 | **A0** | Scaffold & Architecture Skeleton | **DONE** | `pytest eval/` passed (2/2); `/health` returns `{"status":"ok"}`; JSONL tracing active |
 | **A1** | One real agent speaking + live WS | Functional pass; latency goal outstanding | 34 Python + 4 player tests; real voice and question-quality samples; user confirmed speech, typed reply and End |
 | **A2** | Three A2A agents + floor protocol | Text functional pass with diagnostic settings; default latency blocked | Real 10-turn/3-process run; 400 ms window failed; see docs/a2_acceptance.md |
-| **A3** | Voice for all agents (multi-voice TTS) | Planned | — |
-| **A4** | Mid-sentence barge-in, routing, STT | Planned | — |
-| **A5** | Claims ledger & rolling memory | Planned | — |
-| **A6** | Reliability & chaos endpoints | Planned | — |
-| **A7** | Pipelined drafting | Planned | — |
-| **A8** | Eval replay & protocol documentation | Planned | — |
+| **A3** | Voice for all agents (multi-voice TTS) | Implemented; acoustic acceptance open | Three real TTS voices; real-provider/synthetic-client protocol pass |
+| **A4** | Mid-sentence barge-in, routing, STT | Implemented; microphone acceptance open | Targeted typed reply, resume, End and real STT probe pass |
+| **A5** | Claims ledger & rolling memory | Bounded implementation; semantic eval open | Verbatim archive, unverified ledger, extractive context and explicit focus shifts |
+| **A6** | Reliability & chaos endpoints | Implemented; live chaos acceptance open | Automated failover, health checks, guarded fault controls, configured fallback |
+| **A7** | Pipelined drafting | Experimental, disabled | Strict cache tests pass; real timing probe failed |
+| **A8** | Eval replay & protocol documentation | Implemented foundation; submission partial | eval/run_eval.py, reports and run guide; final UI/README/video still pending |
 
 ---
 

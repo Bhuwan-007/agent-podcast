@@ -14,13 +14,14 @@ AGENTS = ('ai_engineer', 'software_developer', 'oss_maintainer')
 class Envelope(BaseModel):
     model_config = ConfigDict(populate_by_name=True, extra='forbid')
     type: Literal['floor.utterance', 'floor.bid', 'floor.grant', 'agent.direct',
-                  'agent.speech', 'agent.ack', 'human.question']
+                  'agent.speech', 'agent.ack', 'human.question', 'floor.resume', 'floor.prepare']
     trace_id: str = Field(min_length=1, max_length=100)
     turn_id: int = Field(ge=0)
     sender: str = Field(alias='from', min_length=1, max_length=60)
     to: str = Field(min_length=1, max_length=60)
     ts: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
     payload: dict = Field(default_factory=dict)
+    cache_hit: bool = False
 
     def wire(self):
         return self.model_dump(by_alias=True)

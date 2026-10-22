@@ -23,9 +23,30 @@ class AgentPool:
         self.http = httpx.AsyncClient(timeout=30, trust_env=False)
         self.clients = {}
         self.bid_rounds = []
+        self.unavailable = set()
+        self.health_task = None
 
     async def close(self):
+        if self.health_task:
+            self.health_task.cancel()
+            await asyncio.gather(self.health_task, return_exceptions=True)
         await self.http.aclose()
+
+    def start_health(self):
+        async def monitor():
+            while True:
+                async def check(agent, url):
+                    try:
+                        response = await self.http.get(url.rstrip('/') + '/.well-known/agent-card.json', timeout=.8)
+                        if response.status_code == 200:
+                            self.unavailable.discard(agent)
+                            return
+                    except Exception:
+                        pass
+                    self.unavailable.add(agent)
+                await asyncio.gather(*(check(a, u) for a, u in self.urls.items()))
+                await asyncio.sleep(3)
+        self.health_task = asyncio.create_task(monitor())
 
     async def connect(self):
         async def one(agent, url):
@@ -105,12 +126,16 @@ class AgentPool:
         async def one(agent):
             begin = time.perf_counter()
             event = make_event(agent)
+            if agent in self.unavailable:
+                return agent, Bid(intent='pass', urgency=0, novelty=0, preview='Unavailable'), {
+                    'agent': agent, 'status': 'health_down', 'elapsed_ms': 0.0}
             try:
                 outputs = await self.call(agent, event, timeout=self.bid_timeout_ms / 1000)
                 if len(outputs) != 1 or outputs[0].type != 'floor.bid' or outputs[0].to != 'gateway':
                     raise A2AError('Expected one bid')
                 bid = Bid.model_validate(outputs[0].payload)
                 return agent, bid, {'agent': agent, 'status': 'received',
+                    'cache_hit': outputs[0].cache_hit,
                     'elapsed_ms': round((time.perf_counter() - begin) * 1000, 1)}
             except Exception as exc:
                 status = 'timeout' if isinstance(exc, TimeoutError) else 'error'

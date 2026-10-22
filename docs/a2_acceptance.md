@@ -76,7 +76,8 @@ starting out of expected sentences 0 and 1. Reproduce with `node eval/check_b5_p
 the script exits 1 while those bugs exist. See `docs/b5_player_pairing_diagnostic.json`.
 This is not an acoustic test. Teammate source was not modified. B5 improves epoch 0,
 sentence assembly and decode invalidation, but those fixes do not prove live acceptance.
-Playback completion acknowledgements also still omit A1's required sentence index.
+Correction: whole-turn completion needs no sentence index; A1 checks per-sentence
+playback starts. The earlier index requirement was an incorrect review finding.
 
 A3 will connect granted public sentence output to the existing ElevenLabs adapter,
 using three distinct voices and real playback acknowledgements. First coordinate the

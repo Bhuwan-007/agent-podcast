@@ -3,6 +3,7 @@ import argparse
 import asyncio
 from contextlib import asynccontextmanager
 import json
+import os
 from pathlib import Path
 
 from a2a.server.agent_execution import AgentExecutor
@@ -40,6 +41,10 @@ class ExpertExecutor(AgentExecutor):
             request = Envelope.model_validate(parts[0].data)
             if context.context_id != request.trace_id:
                 raise ValueError('Context does not match trace')
+            if getattr(self.expert, 'chaos', None) == 'stall':
+                await asyncio.sleep(60)
+            if getattr(self.expert, 'chaos', None) == 'error':
+                raise AgentError('Demo injected expert failure')
             outputs = await self.expert.handle(request)
             # Model output is validated before emission. This is sentence SSE,
             # not token pipelining; each sentence is a distinct A2A artifact.
@@ -94,7 +99,20 @@ def create_app(agent_id, port, model=None):
         await model.close()
 
     handler = DefaultRequestHandler(agent_executor=ExpertExecutor(expert), task_store=InMemoryTaskStore())
-    return A2AStarletteApplication(card, handler).build(lifespan=lifespan)
+    app = A2AStarletteApplication(card, handler).build(lifespan=lifespan)
+    from starlette.routing import Route
+    from starlette.responses import JSONResponse
+    async def chaos(request):
+        if (os.getenv('ENABLE_CHAOS') != '1' or request.headers.get('x-demo-chaos') != '1'
+                or request.client.host not in ('127.0.0.1', '::1', 'testclient')):
+            return JSONResponse({'error': 'disabled'}, status_code=403)
+        action = (await request.json()).get('action')
+        if action not in ('stall', 'error', 'reset'):
+            return JSONResponse({'error': 'invalid action'}, status_code=400)
+        expert.chaos = None if action == 'reset' else action
+        return JSONResponse({'status': 'set', 'action': action})
+    app.routes.append(Route('/admin/chaos', chaos, methods=['POST']))
+    return app
 
 
 def main():
