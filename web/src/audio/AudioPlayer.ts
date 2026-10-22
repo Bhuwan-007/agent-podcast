@@ -44,6 +44,7 @@ export class AudioPlayer {
   private sentenceBuffers = new Map<number, { turnId: number; epoch: number; seqMap: Map<number, Uint8Array> }>()
   private flushedSentences = new Set<number>()
   private currentActiveTurnId: number | null = null
+  private currentTurnEpoch = 0
   private isGenerationCompleted = false
 
   // Playback queues and lifecycle
@@ -56,6 +57,10 @@ export class AudioPlayer {
 
   // Token to cancel in-flight async decoding
   private playbackToken = 0
+  private pendingDecodes = 0
+  private nextSentenceIdx = 0
+  private finishedReported = false
+  private discardedTurns = new Set<string>()
 
   constructor(callbacks: PlaybackCallbacks) {
     this.callbacks = callbacks
@@ -75,9 +80,6 @@ export class AudioPlayer {
         this.callbacks.onAnalyserNode(this.analyser)
       }
     }
-    if (this.audioCtx.state === 'suspended') {
-      this.audioCtx.resume()
-    }
     return this.audioCtx
   }
 
@@ -95,9 +97,16 @@ export class AudioPlayer {
     this.flushedSentences.clear()
     this.currentActiveTurnId = null
     this.isGenerationCompleted = false
+    this.discardedTurns.clear()
+    // reset is called by the Start button: unlock audio within that user gesture.
+    try {
+      const ctx = this.initContext()
+      if (ctx.state === 'suspended') void ctx.resume().catch(() => {})
+    } catch { /* A decode/play attempt will report the actionable playback error. */ }
   }
 
   public enqueueChunk(chunk: QueuedChunk): void {
+    if (this.discardedTurns.has(`${chunk.epoch}:${chunk.turnId}`)) return
     // Drop older epochs (contracts/ws_events.md Section 2)
     if (chunk.epoch < this.currentEpoch) {
       return
@@ -107,7 +116,21 @@ export class AudioPlayer {
       this.setEpoch(chunk.epoch)
     }
 
-    this.currentActiveTurnId = chunk.turnId
+    if (this.currentActiveTurnId !== chunk.turnId) {
+      if (this.currentActiveTurnId !== null && !this.finishedReported) {
+        // Never mix two foreground turns; the gateway will recover from the error.
+        this.callbacks.onPlaybackStopped(chunk.turnId, chunk.epoch, 'error', performance.now())
+        return
+      }
+      this.sentenceBuffers.clear()
+      this.flushedSentences.clear()
+      this.isGenerationCompleted = false
+      this.finishedReported = false
+      this.nextSentenceIdx = 0
+      this.currentActiveTurnId = chunk.turnId
+      this.currentTurnEpoch = chunk.epoch
+    }
+    if (this.finishedReported || this.flushedSentences.has(chunk.sentenceIdx)) return
 
     // Decode base64 bytes for this chunk
     let pieceBytes: Uint8Array
@@ -173,6 +196,7 @@ export class AudioPlayer {
   }
 
   public endTurn(turnId: number): void {
+    if (this.currentActiveTurnId !== turnId || this.finishedReported) return
     this.isGenerationCompleted = true
 
     // Flush any pending unflushed sentences for this turn
@@ -183,16 +207,26 @@ export class AudioPlayer {
     }
 
     // If nothing was buffered or playing at all, report completion
-    if (!this.isPlaying && this.playQueue.length === 0 && this.currentActiveTurnId === turnId) {
-      this.callbacks.onPlaybackStopped(turnId, this.currentEpoch, 'finished', performance.now())
+    this.reportFinished()
+  }
+
+  private reportFinished(): void {
+    if (this.isGenerationCompleted && !this.finishedReported && !this.isPlaying &&
+        this.pendingDecodes === 0 && this.playQueue.length === 0 && this.nextSentenceIdx > 0 &&
+        this.currentActiveTurnId !== null) {
+      this.finishedReported = true
+      this.callbacks.onPlaybackStopped(this.currentActiveTurnId, this.currentEpoch, 'finished', performance.now())
     }
   }
 
   private async decodeAndEnqueueSentence(sentence: AssembledSentence): Promise<void> {
-    const token = ++this.playbackToken
+    const token = this.playbackToken
+    this.pendingDecodes++
 
     try {
       const ctx = this.initContext()
+      if (ctx.state === 'suspended') await ctx.resume()
+      if (ctx.state !== 'running') throw new Error('Browser audio is not running')
       // Copy bytes buffer slice so decodeAudioData can detach it safely
       const arrayBuffer = sentence.bytes.buffer.slice(
         sentence.bytes.byteOffset,
@@ -220,28 +254,27 @@ export class AudioPlayer {
     } catch (err) {
       console.warn('[AudioPlayer] decodeAudioData error for sentence', sentence.sentenceIdx, err)
       if (token === this.playbackToken) {
-        this.callbacks.onPlaybackStopped(sentence.turnId, sentence.epoch, 'error', performance.now())
+        this.stop('error')
+      }
+    } finally {
+      if (token === this.playbackToken) {
+        this.pendingDecodes--
+        this.reportFinished()
       }
     }
   }
 
   private playNext(): void {
+    if (this.isPlaying) return
     if (this.playQueue.length === 0) {
       this.isPlaying = false
-      const lastSentence = this.activePlayingSentence
       this.activePlayingSentence = null
-
-      // If generation is complete and queue is fully drained, notify gateway that playback finished
-      if (this.isGenerationCompleted && lastSentence) {
-        this.callbacks.onPlaybackStopped(
-          lastSentence.turnId,
-          lastSentence.epoch,
-          'finished',
-          performance.now()
-        )
-      }
+      this.reportFinished()
       return
     }
+
+    // decodeAudioData may finish out of order; wait for the expected sentence.
+    if (this.playQueue[0].sentenceIdx !== this.nextSentenceIdx) return
 
     const item = this.playQueue.shift()!
     if (item.epoch < this.currentEpoch) {
@@ -250,6 +283,7 @@ export class AudioPlayer {
     }
 
     this.isPlaying = true
+    this.nextSentenceIdx++
     this.activePlayingSentence = item
 
     const ctx = this.initContext()
@@ -265,14 +299,6 @@ export class AudioPlayer {
     this.currentSource = source
     this.chunkStartTime = ctx.currentTime
 
-    const tStartClient = performance.now()
-    this.callbacks.onPlaybackStarted(
-      item.turnId,
-      item.epoch,
-      item.sentenceIdx,
-      tStartClient
-    )
-
     // Progress interval every 200ms
     if (this.progressInterval) clearInterval(this.progressInterval)
     this.progressInterval = setInterval(() => {
@@ -287,6 +313,7 @@ export class AudioPlayer {
     }, 200)
 
     source.onended = () => {
+      if (this.currentSource !== source) return
       if (this.progressInterval) {
         clearInterval(this.progressInterval)
         this.progressInterval = null
@@ -294,16 +321,30 @@ export class AudioPlayer {
 
       if (this.currentSource === source) {
         this.currentSource = null
+        this.isPlaying = false
+        this.activePlayingSentence = null
         // Advance to next sentence in queue without emitting 'finished' prematurely!
         this.playNext()
       }
     }
 
-    source.start(0)
+    try {
+      source.start(0)
+      this.callbacks.onPlaybackStarted(item.turnId, item.epoch, item.sentenceIdx, performance.now())
+    } catch {
+      this.stop('error')
+    }
   }
 
   public stop(reason: 'finished' | 'barge_in' | 'end' | 'error' = 'barge_in'): void {
     this.playbackToken++
+    const stoppedTurn = this.currentActiveTurnId
+    const stoppedEpoch = this.currentTurnEpoch
+    if (stoppedTurn !== null) {
+      this.discardedTurns.add(`${stoppedEpoch}:${stoppedTurn}`)
+      if (this.discardedTurns.size > 64) this.discardedTurns.delete(this.discardedTurns.values().next().value!)
+    }
+    this.pendingDecodes = 0
 
     if (this.progressInterval) {
       clearInterval(this.progressInterval)
@@ -315,6 +356,7 @@ export class AudioPlayer {
     this.flushedSentences.clear()
 
     if (this.currentSource) {
+      this.currentSource.onended = null
       try {
         this.currentSource.stop()
         this.currentSource.disconnect()
@@ -324,12 +366,11 @@ export class AudioPlayer {
       this.currentSource = null
     }
 
-    if (this.activePlayingSentence) {
-      const last = this.activePlayingSentence
-      this.activePlayingSentence = null
+    this.activePlayingSentence = null
+    if (stoppedTurn !== null && !this.finishedReported) {
       this.callbacks.onPlaybackStopped(
-        last.turnId,
-        last.epoch,
+        stoppedTurn,
+        stoppedEpoch,
         reason,
         performance.now()
       )
@@ -337,6 +378,9 @@ export class AudioPlayer {
 
     this.isPlaying = false
     this.isGenerationCompleted = false
+    this.currentActiveTurnId = null
+    this.nextSentenceIdx = 0
+    this.finishedReported = false
   }
 
   public getAnalyser(): AnalyserNode | null {
