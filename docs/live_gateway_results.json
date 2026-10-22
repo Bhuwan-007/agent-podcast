@@ -1,0 +1,10 @@
+{
+  "mode": "real model/A2A/TTS/WS; no synthetic playback acknowledgements",
+  "audio_bytes": 455289,
+  "notices": [],
+  "session_id": "29c329c2d1c44d8b8307b946a73fbae8",
+  "speaker": "software_developer",
+  "start_to_first_bytes_ms": 3830.3,
+  "generation_completed": true,
+  "end_confirmed": true
+}

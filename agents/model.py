@@ -23,8 +23,8 @@ class ChatModel:
     async def close(self):
         await self.client.aclose()
 
-    async def complete(self, system, data, *, bid=False, repair=False):
-        model = self.bid_model if bid else self.speak_model
+    async def complete(self, system, data, *, bid=False, repair=False, _fallback=False):
+        model = os.getenv('LLM_MODEL_FALLBACK', '') if _fallback else (self.bid_model if bid else self.speak_model)
         payload = {'model': model, 'messages': [
             {'role': 'system', 'content': system}, {'role': 'user', 'content': data}],
             'stream': False}
@@ -32,7 +32,7 @@ class ChatModel:
         if groq and model in ('openai/gpt-oss-20b', 'openai/gpt-oss-120b'):
             payload.update(reasoning_effort='low', include_reasoning=False)
         token_field = 'max_completion_tokens' if groq else 'max_tokens'
-        payload[token_field] = (1024 if repair else 512) if bid else (2048 if repair else 1024)
+        payload[token_field] = (1536 if repair else 1024) if bid else (2048 if repair else 1024)
         if bid:
             payload['response_format'] = {'type': 'json_object'}
         headers = {'Authorization': f'Bearer {self.key}'} if self.key else {}
@@ -40,6 +40,11 @@ class ChatModel:
             async with asyncio.timeout(20):
                 response = await self.client.post(f'{self.base}/chat/completions',
                                                   json=payload, headers=headers)
+                fallback = os.getenv('LLM_MODEL_FALLBACK', '')
+                if (not bid and not _fallback and fallback and fallback != model
+                        and (response.status_code == 429 or response.status_code >= 500)):
+                    # One configured fallback, inside the original total deadline.
+                    return await self.complete(system, data, repair=repair, _fallback=True)
                 response.raise_for_status()
                 choice = response.json()['choices'][0]
                 text = choice['message']['content']

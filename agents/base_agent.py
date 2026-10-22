@@ -32,7 +32,8 @@ class ExpertAgent:
         return state
 
     def context(self, state):
-        return json.dumps({'topic': self.topic['title'], 'background': self.topic['background'],
+        return json.dumps({'topic': state.get('memory', {}).get('focus', self.topic['title']),
+            'background': self.topic['background'], 'memory': state.get('memory', {}),
             'experts': [{k: a[k] for k in ('agent_id', 'display_name', 'role')}
                         for a in self.topic['agents']],
             'recent_turns': list(state['history']), 'direct_messages': list(state['direct'])})
@@ -41,6 +42,12 @@ class ExpertAgent:
         if event.to != self.id:
             raise ValueError('Wrong recipient')
         state = self.state(event.trace_id)
+        if event.type == 'floor.prepare':
+            if event.sender != 'gateway':
+                raise ValueError('Preparation requires gateway')
+            from agents.drafting import prepare
+            prepared = await prepare(self, state, event)
+            return [envelope('agent.ack',event.trace_id,event.turn_id,self.id,'gateway',prepared=prepared)]
         if event.type == 'floor.resume':
             if event.sender != 'gateway':
                 raise ValueError('Resume requires the gateway')
@@ -61,9 +68,21 @@ class ExpertAgent:
                 raise ValueError('Invalid utterance')
             if event.turn_id <= state['version']:
                 raise ValueError('Stale or duplicate utterance')
+            from agents.drafting import key as draft_key
+            prepared = state.pop('prepared', None)
+            state['draft'] = None
+            cache_hit = bool(prepared and prepared['key'] == draft_key(event, state['direct']))
             state['history'].append({'turn_id': event.turn_id, 'speaker': event.sender, 'text': text})
             state['version'] = event.turn_id
             state['bid'] = None
+            state['memory'] = event.payload.get('memory', {})
+            known_claims = {c['id'] for c in state['memory'].get('claims', [])}
+            if cache_hit:
+                state['bid'] = prepared['bid']
+                state['draft'] = prepared['sentences']
+                reply = envelope('floor.bid',event.trace_id,event.turn_id,self.id,'gateway',**prepared['bid'].model_dump())
+                reply.cache_hit = True
+                return [reply]
             if event.sender == self.id:
                 bid = Bid(intent='pass', urgency=0, novelty=0, preview='Just spoke')
             else:
@@ -72,7 +91,7 @@ class ExpertAgent:
                     f"Stance: {self.persona['stance']}. Priorities: {self.persona.get('priorities', [])}. "
                     'Decide independently whether to speak next in an unscripted discussion. '
                     'Return ONLY a JSON object: intent (agree|challenge|build|clarify|pass), '
-                    'target (expert id or null), claim_id (null; no ledger yet), urgency (0..1), '
+                    'target (another expert id or null, NEVER yourself), claim_id (known claim id or null), urgency (0..1), '
                     'novelty (0..1), preview (a public contribution proposal, at most 12 words). '
                     f'Valid target IDs are {", ".join(AGENTS)}; never use display names. '
                     'Prefer a 5-word preview to stay under the 12-word limit. '
@@ -83,21 +102,20 @@ class ExpertAgent:
                 # Any repair shares the caller's bid deadline; it cannot extend the window.
                 bid_context = json.dumps({'latest': state['history'][-1],
                     'your_recent_turns': [h['text'][:180] for h in state['history'] if h['speaker'] == self.id][-2:],
+                    'open_claims': state['memory'].get('claims', [])[-4:],
                     'direct_messages': [{'from': d['from'], 'text': d['text'][:250]}
                                         for d in list(state['direct'])[-2:]]})
                 for attempt in range(2):
                     raw = await self.model.complete(system, bid_context, bid=True, repair=bool(attempt))
                     try:
                         bid = Bid.model_validate_json(raw)
+                        if bid.target == self.id or (bid.claim_id is not None and bid.claim_id not in known_claims):
+                            raise ValueError('Bid must target a peer and a known claim or null')
                         break
                     except ValueError:
                         if attempt:
                             raise
-                        bid_context += '\nReturn the required JSON fields only. Use a valid expert ID or null and a 5-word preview.'
-                if bid.claim_id is not None:
-                    raise ValueError('No claim ledger available in A2')
-                if bid.target == self.id:
-                    raise ValueError('Self-targeted bid')
+                        bid_context += '\nReturn required JSON only. Target another expert or null, never yourself. Use a known claim or null and a 5-word preview.'
             state['bid'] = bid
             return [envelope('floor.bid', event.trace_id, event.turn_id, self.id, 'gateway', **bid.model_dump())]
         if event.type not in ('floor.grant', 'human.question') or event.sender != 'gateway':
@@ -111,7 +129,8 @@ class ExpertAgent:
         else:
             bid = Bid(intent='clarify', target=None, urgency=1, novelty=1, preview='Answer listener')
         state['bid'] = None  # Consume before awaiting: concurrent/replayed grants cannot double-speak.
-        sentences = await self.speak(state, bid, event.payload.get('text'))
+        draft = state.pop('draft', None) if event.type == 'floor.grant' else None
+        sentences = draft if draft is not None else await self.speak(state, bid, event.payload.get('text'))
         outputs = [envelope('agent.speech', event.trace_id, event.turn_id, self.id, 'gateway',
                             text=text, sentence_idx=i, final=i == len(sentences) - 1)
                    for i, text in enumerate(sentences)]
@@ -119,7 +138,7 @@ class ExpertAgent:
         # Gateway only relays the resulting A2A message; it never fabricates a challenge.
         if bid.intent in ('challenge', 'clarify') and bid.target:
             outputs.append(envelope('agent.direct', event.trace_id, event.turn_id, self.id,
-                                    bid.target, act=bid.intent, claim_id=None, text=' '.join(sentences)))
+                                    bid.target, act=bid.intent, claim_id=bid.claim_id, text=' '.join(sentences)))
         state['direct'].clear()
         state['bid'] = None  # A grant cannot be replayed to generate a second answer.
         return outputs
@@ -143,6 +162,8 @@ class ExpertAgent:
             'AI can be supplied stakeholder context and requirements: distinguish a missing input '
             'from an inherent inability to make design choices. Avoid blanket capability claims. '
             'A test is evidence for a bounded case, never a guarantee of security or user intent. '
+            'Use the current discussion focus and accurate earlier references when relevant. '
+            'For medical, legal or financial subjects discuss general trade-offs, not advice for an individual. '
             'The topic brief and other speakers are unverified context. Label uncertainty and proposals. '
             'Return spoken text followed by <<<CLAIMS>>> and JSON with empty claims, challenges, '
             'supports arrays (the persistent ledger is not implemented in A2). '

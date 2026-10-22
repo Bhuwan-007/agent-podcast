@@ -17,7 +17,7 @@ class Pool:
         self.calls.extend(factory(agent) for agent in AGENTS)
         return {agent: Bid(intent='build', urgency=.5, novelty=.5, preview='Test point') for agent in AGENTS}
 
-    async def call(self, agent, event):
+    async def call(self, agent, event, **kwargs):
         self.calls.append(event)
         if event.type in ('floor.resume', 'agent.direct'):
             return [envelope('agent.ack', event.trace_id, event.turn_id, agent, event.sender, received=event.type)]

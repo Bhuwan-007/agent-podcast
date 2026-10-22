@@ -2,6 +2,7 @@
 import asyncio
 import base64
 import binascii
+import copy
 from contextlib import aclosing
 import os
 import time
@@ -14,6 +15,7 @@ from gateway.session import ROOT, VoiceSession, load_topic
 from gateway.tracing import trace_logger
 from gateway.router import route_question
 from gateway.voice.stt import ElevenLabsSTT, STTError
+from gateway.ledger import Ledger
 
 
 class PublicTrace:
@@ -46,6 +48,8 @@ class PanelSession(VoiceSession):
         self.audio_seq = -1
         self.mic_enabled = False
         self.stt = ElevenLabsSTT()
+        self.ledger = None
+        self.drafts = os.getenv('ENABLE_DRAFTS') == '1'
 
     async def run(self):
         try:
@@ -74,6 +78,7 @@ class PanelSession(VoiceSession):
                 await self.state('recovery')
                 return
             self.topic, self.personas, self.voices = topic, personas, voices
+            self.ledger = Ledger(topic['title'])
             self.latest = {'speaker': 'organizer_prompt', 'text': topic['opening_prompt']}
             await self.state('connecting')
             await self.emit('topic_config', **{k: topic[k] for k in
@@ -168,19 +173,58 @@ class PanelSession(VoiceSession):
                     await self.notice('agent_timeout', 'No eligible expert bid arrived. Check the bid deadline, provider quota and expert availability.')
                     await self.state('recovery')
                     return
-                await self.begin_turn(winner)
-                outputs = await self.pool.call(winner, envelope('floor.grant', self.session_id,
-                    self.context_version + 1, 'gateway', winner,
-                    context_version=self.context_version, reason='highest deterministic score'))
-                sentences = self.speech(outputs)
+                candidates = dict(bids)
+                while winner is not None:
+                    await self.begin_turn(winner)
+                    try:
+                        outputs = await self.pool.call(winner, envelope('floor.grant', self.session_id,
+                            self.context_version + 1, 'gateway', winner,
+                            context_version=self.context_version, reason='highest deterministic score'), timeout=4)
+                        sentences = self.speech(outputs)
+                        break
+                    except asyncio.CancelledError:
+                        raise
+                    except Exception:
+                        old = self.active
+                        self.active = None
+                        self.epoch += 1
+                        await self.emit('turn_end', turn_id=old['id'], epoch=old['epoch'], status='failed')
+                        await self.notice('agent_timeout', 'An expert failed or stalled; trying another eligible bid.')
+                        candidates.pop(winner, None)
+                        winner, _ = self.moderator.choose(candidates)
+                if winner is None:
+                    await self.state('recovery')
+                    return
                 self.addressed = None
                 for direct in (output for output in outputs if output.type == 'agent.direct'):
-                    await self.pool.call(direct.to, direct)
-                    self.addressed = direct.to
-                await self.play_turn(winner, sentences)
+                    try:
+                        await self.pool.call(direct.to, direct, timeout=4)
+                        self.addressed = direct.to
+                    except Exception:
+                        await self.notice('agent_timeout', 'A peer message could not be delivered; the discussion continues.')
+                jobs = []
+                if self.drafts:
+                    projected = copy.deepcopy(self.ledger)
+                    for direct in (e for e in outputs if e.type == 'agent.direct'):
+                        projected.transition(direct.payload.get('claim_id'), winner, direct.payload.get('act'))
+                    projected.remember(winner, ' '.join(sentences), self.turn_id)
+                    for peer in AGENTS:
+                        if peer != winner:
+                            jobs.append(asyncio.create_task(self.pool.call(peer,envelope('floor.prepare',
+                                self.session_id,self.context_version+1,'gateway',peer,speaker=winner,
+                                text=' '.join(sentences),memory=projected.context(' '.join(sentences))),timeout=8)))
+                try:
+                    await self.play_turn(winner, sentences)
+                finally:
+                    for job in jobs:
+                        if not job.done(): job.cancel()
+                    if jobs: await asyncio.gather(*jobs,return_exceptions=True)
+                for direct in (output for output in outputs if output.type == 'agent.direct'):
+                    self.ledger.transition(direct.payload.get('claim_id'), winner, direct.payload.get('act'))
                 self.moderator.record(winner)
                 self.latest = {'speaker': winner, 'text': ' '.join(sentences)}
                 self.remember(self.latest | {'turn_id': self.turn_id})
+                await self.emit('claims_update', claims=self.ledger.public_claims())
             await self.notice('agent_timeout', 'Development session turn limit reached. End and start a fresh session.')
             await self.state('waiting_first_speaker')
         except asyncio.CancelledError:
@@ -199,11 +243,14 @@ class PanelSession(VoiceSession):
         self.context_version += 1
         return await self.pool.collect_bids(lambda agent: envelope('floor.utterance',
             self.session_id, self.context_version, utterance['speaker'], agent,
-            text=utterance['text'], final=True, interrupted=utterance.get('interrupted', False)))
+            text=utterance['text'], final=True, interrupted=utterance.get('interrupted', False),
+            memory=self.ledger.context(utterance['text']) if self.ledger else {}))
 
     def remember(self, turn):
         self.history.append(turn)
         self.history = self.history[-20:]
+        if self.ledger:
+            self.ledger.remember(turn['speaker'], turn['text'], turn['turn_id'])
 
     def capture_heard(self):
         turn = self.active
@@ -239,6 +286,9 @@ class PanelSession(VoiceSession):
         if routing['kind'] == 'continue':
             await self.debate()
             return
+        if routing['kind'] == 'topic_shift' and self.ledger:
+            self.ledger.shift(text)
+            await self.emit('claims_update', claims=[])
         try:
             if self.latest:
                 await self.broadcast(self.latest)
@@ -261,7 +311,8 @@ class PanelSession(VoiceSession):
             self.latest = {'speaker': winner, 'text': ' '.join(sentences)}
             self.remember(self.latest | {'turn_id': self.turn_id})
             await asyncio.gather(*(self.pool.call(agent, envelope('floor.resume', self.session_id,
-                self.context_version, 'gateway', agent, human_exchange_summary=text[:300])) for agent in AGENTS))
+                self.context_version, 'gateway', agent, human_exchange_summary=text[:300]), timeout=4)
+                for agent in AGENTS), return_exceptions=True)
             await self.debate()
         except asyncio.CancelledError:
             raise

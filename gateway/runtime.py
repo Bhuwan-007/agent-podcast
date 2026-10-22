@@ -50,6 +50,7 @@ class AgentRuntime:
             for attempt in range(60):
                 try:
                     await pool.connect()
+                    pool.start_health()
                     return pool
                 except Exception:
                     if attempt == 59 or any(child.poll() is not None for child in self.children):
@@ -71,3 +72,28 @@ class AgentRuntime:
                 await asyncio.to_thread(child.wait, timeout=3)
         self.children.clear()
         self.started = False
+
+    async def chaos(self, agent, action):
+        if agent not in self.urls:
+            raise ValueError('Unknown expert')
+        if action == 'kill':
+            index = AGENTS.index(agent)
+            if index >= len(self.children):
+                raise ValueError('Only owned child processes can be killed')
+            child = self.children[index]
+            if child.poll() is None:
+                child.terminate()
+                await asyncio.to_thread(child.wait, timeout=3)
+        else:
+            index = AGENTS.index(agent)
+            if action == 'reset' and index < len(self.children) and self.children[index].poll() is not None:
+                self.children[index] = subprocess.Popen([
+                    sys.executable, '-B', '-m', 'agents.agent_server', '--agent', agent,
+                    '--port', str(9101 + index)], cwd=ROOT, stdout=subprocess.DEVNULL,
+                    stderr=subprocess.DEVNULL, creationflags=getattr(subprocess, 'CREATE_NO_WINDOW', 0))
+                return
+            import httpx
+            async with httpx.AsyncClient(timeout=3, trust_env=False) as client:
+                response = await client.post(self.urls[agent] + 'admin/chaos',
+                    json={'action': action}, headers={'X-Demo-Chaos': '1'})
+                response.raise_for_status()

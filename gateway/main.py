@@ -8,7 +8,7 @@ from pathlib import Path
 from typing import Dict, List
 
 from dotenv import load_dotenv
-from fastapi import FastAPI, WebSocket
+from fastapi import FastAPI, WebSocket, Request, HTTPException
 from fastapi.responses import FileResponse
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -121,6 +121,22 @@ async def a1_test_page():
 @app.get('/dev/roundtable', include_in_schema=False)
 async def roundtable_test_page():
     return FileResponse(Path(__file__).with_name('dev_roundtable.html'))
+
+
+@app.post('/admin/chaos/{agent}/{action}')
+async def chaos(agent: str, action: str, request: Request):
+    if (os.getenv('ENABLE_CHAOS') != '1' or request.headers.get('x-demo-chaos') != '1'
+            or request.client.host not in ('127.0.0.1', '::1', 'testclient')
+            or request.headers.get('origin', 'http://localhost:8000') not in
+                origins + ['http://localhost:8000', 'http://127.0.0.1:8000']):
+        raise HTTPException(403, 'Chaos controls are disabled')
+    if action not in ('kill', 'stall', 'error', 'reset') or not hasattr(app.state, 'runtime'):
+        raise HTTPException(400, 'Invalid action or runtime not started')
+    try:
+        await app.state.runtime.chaos(agent, action)
+    except Exception:
+        raise HTTPException(409, 'Could not apply chaos action') from None
+    return {'status': 'applied', 'agent': agent, 'action': action}
 
 
 @app.websocket('/ws/a1')
