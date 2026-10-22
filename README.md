@@ -1,3 +1,6 @@
+> **Live demo:** https://ai-roundtable-vpme.onrender.com (Render Free; cold starts apply).
+> Actual hosted test reports: [deployment](docs/render_deployment_results.json), [episode](docs/render_episode_results.json), [voice question](docs/render_voice_gateway_results.json).
+
 > **Deployment:** [Single-service Render setup and acceptance status](docs/DEPLOYMENT.md).
 > Build the cinematic frontend with `npm ci --prefix web` and `npm run build --prefix web`.
 > The gateway serves that build at `/`; backend diagnostics remain at `/dev/roundtable`.

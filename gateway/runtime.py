@@ -46,16 +46,22 @@ class AgentRuntime:
                 self.started = True
         pool = AgentPool(self.urls, logger or trace_logger, session_id,
                          int(os.getenv('BID_TIMEOUT_MS', '400')))
+        return await self.wait_for_agents(pool)
+
+    async def wait_for_agents(self, pool, timeout=60):
+        """Bound the wall-clock wait, allowing CPU-throttled cold process imports."""
         try:
-            for attempt in range(60):
-                try:
-                    await pool.connect()
-                    pool.start_health()
-                    return pool
-                except Exception:
-                    if attempt == 59 or any(child.poll() is not None for child in self.children):
-                        raise RuntimeError('A2A expert startup failed') from None
-                    await asyncio.sleep(.1)
+            async with asyncio.timeout(timeout):
+                while True:
+                    try:
+                        async with asyncio.timeout(2):
+                            await pool.connect()
+                        pool.start_health()
+                        return pool
+                    except Exception:
+                        if any(child.poll() is not None for child in self.children):
+                            raise RuntimeError('A2A expert process exited during startup') from None
+                        await asyncio.sleep(.1)
         except BaseException:
             await pool.close()
             raise

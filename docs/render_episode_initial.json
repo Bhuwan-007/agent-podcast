@@ -1,0 +1,22 @@
+{
+  "mode": "real models/A2A/ElevenLabs; SYNTHETIC playback acknowledgements",
+  "acoustic_acceptance": false,
+  "microphone_acceptance": false,
+  "bytes": 0,
+  "completed_experts": [],
+  "notices": [
+    {
+      "code": "topic_unavailable",
+      "text": "Panel startup failed. Check Topic 1, three distinct voice IDs, model configuration and expert ports."
+    }
+  ],
+  "turn_timings": [],
+  "pause_resume": false,
+  "targeted_question": false,
+  "concluded": false,
+  "end_confirmed": true,
+  "synthetic_ack_delay_seconds": 20,
+  "recovery": true,
+  "elapsed_ms": 19702.3,
+  "protocol_pass": false
+}
