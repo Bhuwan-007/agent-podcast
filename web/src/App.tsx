@@ -6,6 +6,7 @@ import { TableCard } from './components/TableCard'
 import { Slip } from './components/Slip'
 import { TOPICS, DEFAULT_TOPIC } from './data/topics'
 import { useGatewayWs } from './hooks/useGatewayWs'
+import { EpisodeControls } from './components/EpisodeControls'
 
 export const App: React.FC = () => {
   const [currentScreen, setCurrentScreen] = useState<'A' | 'B' | 'F'>('B')
@@ -18,6 +19,9 @@ export const App: React.FC = () => {
     connected,
     sessionState,
     sessionMode,
+    sessionId,
+    unlockAudio,
+    stopLocalAudio,
     activeSpeakerId,
     addressedAgentId,
     activeThread,
@@ -77,13 +81,15 @@ export const App: React.FC = () => {
         onToggleMinutes={() => setIsMinutesOpen(!isMinutesOpen)}
         minutesCount={transcripts.length + claims.length}
         isDevOpen={isDevOpen}
-        onToggleDev={() => setIsDevOpen(!isDevOpen)}
+        onToggleDev={import.meta.env.DEV ? () => setIsDevOpen(!isDevOpen) : undefined}
         micState={micState}
         onToggleMic={toggleMic}
         onBargeIn={handleBargeIn}
         topicTitle={selectedTopic.title}
       />
 
+      <EpisodeControls sessionId={sessionId} state={sessionState} onUnlock={unlockAudio}
+        onStopAudio={stopLocalAudio} onStart={setup => {startSession('topic_1', setup); setCurrentScreen('B')}} />
       {/* Global Notices Pinboard */}
       {notices.length > 0 && (
         <aside className="notices-pinboard" aria-label="Notices">

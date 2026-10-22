@@ -1,3 +1,8 @@
+> Deployment preparation update: cinematic UI controls and real microphone upload are
+> integrated; 91 backend tests and frontend production build pass. See docs/DEPLOYMENT.md.
+> Public deployment is pending the user's Render resource/plan approval. Browser
+> audibility and container-build acceptance remain open; older notes below are history.
+
 # Person A backend status - 2026-10-22
 
 Person A's Topic 1 MVP has passed the final real-provider protocol checks below.

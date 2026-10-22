@@ -90,6 +90,18 @@ export class AudioPlayer {
     }
   }
 
+  public getPlaybackPosition() {
+    const sentence = this.activePlayingSentence;
+    return sentence ? {turn_id: sentence.turnId, epoch: sentence.epoch,
+      sentence_idx: sentence.sentenceIdx,
+      played_ms: Math.max(0, ((this.audioCtx?.currentTime ?? this.chunkStartTime) - this.chunkStartTime) * 1000)} : null;
+  }
+
+  public discardTurn(turnId: number, epoch: number) {
+    this.discardedTurns.add(`${epoch}:${turnId}`)
+    this.stop('barge_in')
+  }
+
   public reset(initialEpoch = 0): void {
     this.stop('end')
     this.currentEpoch = initialEpoch

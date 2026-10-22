@@ -1,0 +1,36 @@
+# Review plan and provider usage costs before creating this service.
+services:
+  - type: web
+    name: ai-roundtable
+    runtime: docker
+    branch: deployment
+    plan: free
+    healthCheckPath: /health
+    dockerfilePath: ./Dockerfile
+    envVars:
+      - key: ROUNDTABLE_MODE
+        value: panel
+      - key: BID_TIMEOUT_MS
+        value: "2500"
+      - key: LLM_MODEL_BID
+        value: qwen/qwen3.8-27b
+      - key: LLM_MODEL_SPEAK
+        value: openai/gpt-oss-120b
+      - key: LLM_MODEL_FALLBACK
+        value: openai/gpt-oss-20b
+      - key: ENABLE_CHAOS
+        value: "0"
+      - key: ENABLE_DRAFTS
+        value: "0"
+      - key: ELEVENLABS_API_KEY
+        sync: false
+      - key: VOICE_ID_AGENT1
+        sync: false
+      - key: VOICE_ID_AGENT2
+        sync: false
+      - key: VOICE_ID_AGENT3
+        sync: false
+      - key: LLM_BASE_URL
+        sync: false
+      - key: LLM_API_KEY
+        sync: false

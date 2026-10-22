@@ -1,7 +1,7 @@
 // Client configuration for AI Roundtable
 
 export const CLIENT_CONFIG = {
-  gatewayWsUrl: import.meta.env.VITE_GATEWAY_WS_URL || 'ws://localhost:8000/ws',
+  gatewayWsUrl: import.meta.env.VITE_GATEWAY_WS_URL || `${location.protocol === 'https:' ? 'wss:' : 'ws:'}//${location.host}/ws`,
   appTitle: 'AI Roundtable',
   tagline: 'Three perspectives. One live conversation.',
   reconnectTimeoutMs: 15000,

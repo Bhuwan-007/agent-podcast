@@ -16,6 +16,7 @@ from fastapi import FastAPI, WebSocket, Request, HTTPException
 from fastapi.responses import FileResponse
 from fastapi.responses import Response, HTMLResponse
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 
 from gateway.tracing import trace_logger
 from gateway.session import VoiceSession
@@ -69,6 +70,9 @@ episode_store = EpisodeStore()
 # CORS configuration per contracts section 8 (allow frontend dev server)
 cors_origins_str = os.getenv("CORS_ORIGINS", "http://localhost:5173")
 origins: List[str] = [origin.strip() for origin in cors_origins_str.split(",") if origin.strip()]
+public_url = os.getenv('RENDER_EXTERNAL_URL') or os.getenv('APP_PUBLIC_URL')
+if public_url:
+    origins.append(public_url.rstrip('/'))
 
 app.add_middleware(
     CORSMiddleware,
@@ -143,9 +147,18 @@ async def a1_test_page():
 
 
 @app.get('/dev/roundtable', include_in_schema=False)
-@app.get('/', include_in_schema=False)
 async def roundtable_test_page():
     return FileResponse(Path(__file__).with_name('dev_roundtable.html'))
+
+
+FRONTEND_DIST = Path(__file__).resolve().parents[1] / 'web' / 'dist'
+app.mount('/assets', StaticFiles(directory=str(FRONTEND_DIST / 'assets'), check_dir=False), name='assets')
+
+
+@app.get('/', include_in_schema=False)
+async def application_page():
+    index = FRONTEND_DIST / 'index.html'
+    return FileResponse(index if index.is_file() else Path(__file__).with_name('dev_roundtable.html'))
 
 
 class EpisodeOptions(BaseModel):
