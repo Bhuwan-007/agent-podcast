@@ -1,0 +1,15 @@
+{
+  "mode": "real models/A2A/TTS; deliberate owned-expert fault",
+  "acoustic_acceptance": false,
+  "restored_paused": true,
+  "no_automatic_replay": true,
+  "surviving_expert_audio": true,
+  "reset_ok": true,
+  "notices": [],
+  "session_id": "31647683582948b490b4db6cb161e6df",
+  "speaker_after_kill": "ai_engineer",
+  "received_bytes": 6731,
+  "end_confirmed": true,
+  "elapsed_ms": 9461.7,
+  "protocol_pass": true
+}

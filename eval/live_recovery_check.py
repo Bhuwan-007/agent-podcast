@@ -10,10 +10,11 @@ import httpx
 from websockets.asyncio.client import connect
 
 
-async def run(base):
+async def run(base, output='docs/mvp_recovery_results.json'):
     result = {'mode': 'real models/A2A/TTS; deliberate owned-expert fault',
               'acoustic_acceptance': False, 'restored_paused': False,
               'no_automatic_replay': False, 'surviving_expert_audio': False, 'reset_ok': False}
+    result['notices'] = []
     url = base.replace('http://', 'ws://').replace('https://', 'wss://') + '/ws'
     session_id = None
     killed = False
@@ -27,6 +28,7 @@ async def run(base):
                         event = json.loads(raw)
                         session_id = event.get('session_id', session_id)
                         if event['type'] == 'turn_start':
+                            result['session_id'] = session_id
                             break  # Disconnect during generation, before any confirmed speech.
                 for _ in range(20):
                     snapshot = (await client.get(base + '/api/episodes/' + session_id)).json()
@@ -37,6 +39,8 @@ async def run(base):
                     await ws.send(json.dumps({'type': 'resume_session', 'session_id': session_id, 'last_seq': 0}))
                     async for raw in ws:
                         event = json.loads(raw)
+                        if event['type'] == 'notice':
+                            result['notices'].append({'code': event['code'], 'text': event['text']})
                         if event['type'] == 'session_state':
                             break
                     snapshot = (await client.get(base + '/api/episodes/' + session_id)).json()
@@ -62,6 +66,8 @@ async def run(base):
                     speaker = None
                     async for raw in ws:
                         event = json.loads(raw)
+                        if event['type'] == 'notice':
+                            result['notices'].append({'code': event['code'], 'text': event['text']})
                         if event['type'] == 'turn_start':
                             speaker = event['agent_id']
                         if event['type'] == 'audio_chunk':
@@ -88,7 +94,7 @@ async def run(base):
     result['elapsed_ms'] = round((time.perf_counter() - began) * 1000, 1)
     result['protocol_pass'] = all(result.get(k, False) for k in
         ('restored_paused', 'no_automatic_replay', 'surviving_expert_audio', 'reset_ok', 'end_confirmed'))
-    Path('docs/live_recovery_results.json').write_text(json.dumps(result, indent=2) + '\n', encoding='utf-8')
+    Path(output).write_text(json.dumps(result, indent=2) + '\n', encoding='utf-8')
     print(json.dumps(result, indent=2))
     return result['protocol_pass']
 
@@ -96,5 +102,6 @@ async def run(base):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--base', default='http://127.0.0.1:8000')
+    parser.add_argument('--output', default='docs/mvp_recovery_results.json')
     args = parser.parse_args()
-    raise SystemExit(0 if asyncio.run(run(args.base)) else 1)
+    raise SystemExit(0 if asyncio.run(run(args.base, args.output)) else 1)

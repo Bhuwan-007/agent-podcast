@@ -1,0 +1,26 @@
+[
+  {
+    "model": "qwen/qwen3.8-27b",
+    "elapsed_ms": 1516.3,
+    "output": {
+      "intent": "build",
+      "target": "software_developer",
+      "claim_id": "c1",
+      "urgency": 0.5,
+      "novelty": 0.8,
+      "preview": "Measure defect density and revert rates to quantify net workload."
+    }
+  },
+  {
+    "model": "openai/gpt-oss-20b",
+    "elapsed_ms": 1996.5,
+    "output": {
+      "intent": "build",
+      "target": "software_developer",
+      "claim_id": null,
+      "urgency": 0.7,
+      "novelty": 0.8,
+      "preview": "Propose metrics for assessing AI\u2011generated code impact"
+    }
+  }
+]

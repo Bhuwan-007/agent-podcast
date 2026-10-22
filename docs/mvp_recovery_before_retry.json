@@ -1,0 +1,19 @@
+{
+  "mode": "real models/A2A/TTS; deliberate owned-expert fault",
+  "acoustic_acceptance": false,
+  "restored_paused": true,
+  "no_automatic_replay": true,
+  "surviving_expert_audio": false,
+  "reset_ok": true,
+  "notices": [
+    {
+      "code": "agent_timeout",
+      "text": "No eligible expert bid arrived. Check the bid deadline, provider quota and expert availability."
+    }
+  ],
+  "session_id": "c7747badb3e94791a9c336130283206e",
+  "recovery": true,
+  "end_confirmed": true,
+  "elapsed_ms": 8571.6,
+  "protocol_pass": false
+}

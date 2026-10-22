@@ -1,3 +1,36 @@
+# Person A backend status - 2026-10-22
+
+Person A's Topic 1 MVP has passed the final real-provider protocol checks below.
+This is a backend demo acceptance, not a certification of the entire frontend or
+physical microphone/audio experience. Use `http://localhost:8001/` in this workspace.
+See [current evidence and reproduction](docs/person_a_mvp.md) and [demo guide](docs/DEMO.md).
+
+| Phase | Current result | Remaining boundary |
+|---|---|---|
+| A0 scaffold | Complete | Health/config/tracing regression coverage |
+| A1 single voice | Functional | Earlier user listening check passed; no audible latency target pass |
+| A2 independent agents/floor | Functional | Three A2A processes; tested explicit 2500 ms bid window, not default 400 ms |
+| A3 multi-voice | Real transport passed | Three experts completed; current browser listening check pending |
+| A4 interruption/routing/STT | Real transport passed | Typed interruption and synthesized voice input; physical microphone unverified |
+| A5 memory/evidence | Bounded implementation passed | Only delivered sentences committed; claims remain unverified; no semantic accuracy score |
+| A6 recovery | Real fault/restore passed | Owned expert killed, survivor spoke, reset succeeded; in-memory retention only |
+| A7 speculative drafts | Optional, disabled | Earlier real speed probe failed; no speedup claimed |
+| A8 evaluation/demo | Person A protocol gates passed | Manual browser check and teammate UI integration remain |
+
+Final reports: `docs/mvp_episode_results.json`, `docs/mvp_voice_gateway_results.json`,
+`docs/mvp_recovery_results.json`. Full episode: 145453.8 ms, 2046607 audio bytes,
+all three experts, Pause/Resume, Maya question, labelled extractive closing, export, End.
+Voice gateway: 10894.6 ms. Recovery: 9461.7 ms. All use actual providers; playback
+acknowledgements are synthetic and do not measure acoustic playback.
+
+Current fixes: recoverable paused state after failure; one bounded bid retry for
+actual timeouts/errors; strict structured speech for supported Groq models; retrieved
+reference validation; backend demo copy cleanup. No shared contract or teammate hook edits.
+89 Python regressions passed before final gate; latest gate output is in docs/eval_results.md.
+AudioPlayer repair was separately authorized and merged in PR #8.
+
+## Historical milestone notes (superseded by the current status above)
+
 # STATUS-backend.md — Lane A Progress & Verification
 
 **Shipping update (2026-10-22):** A2 merged in PR #6 (`892711d`). A3/A4 live provider

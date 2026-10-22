@@ -1,0 +1,20 @@
+{
+  "mode": "real providers; synthesized user audio; synthetic playback acknowledgements",
+  "microphone_acceptance": false,
+  "acoustic_acceptance": false,
+  "routed_target": null,
+  "reply_audio_bytes": 0,
+  "resumed": false,
+  "end_confirmed": true,
+  "notices": [
+    {
+      "code": "no_speech",
+      "text": "Speech recognition failed or was unclear. Repeat, type a question, Resume the discussion, or End."
+    }
+  ],
+  "delivered_answer": [],
+  "synthetic_input_bytes": 87397,
+  "recovery": true,
+  "elapsed_ms": 25675.4,
+  "protocol_pass": false
+}

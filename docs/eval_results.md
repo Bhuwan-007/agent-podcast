@@ -6,14 +6,17 @@
 | A2 real text roundtable | PASS (diagnostic settings) | 10 turns / 3 processes; 400 ms default failed. |
 | A3 three real TTS voices | PASS (provider transport) | All three produced actual audio bytes. Acoustic quality unavailable. |
 | A3/A4 real protocol | PASS | Synthetic playback client; no acoustic or microphone acceptance. |
-| A4 microphone/STT | PARTIAL | Real Scribe transcribed synthesized speech; live microphone unverified. |
+| A4 voice-question gateway | PASS (transport) | Real synthesized input through gateway VAD/STT, named reply, resume and End; microphone unverified. |
 | A5 memory/claims | AUTOMATED ONLY | Verbatim bounded recall, unverified ledger, explicit focus shift; semantic recall not scored. |
-| A6 recovery | AUTOMATED ONLY | Failed expert failover, guarded chaos, bounded configured fallback; live chaos not certified. |
+| A6 recovery | PASS (transport) | Real disconnect/paused restore, owned expert kill, surviving expert audio and reset; no acoustic claim. |
 | A7 drafting | EXPERIMENTAL / DISABLED | Cache tests pass; real timing probe failed; no live speedup claimed. |
-| A8 submission | PARTIAL | Eval runner, traces and run guide exist; final UI acceptance, README assembly and demo video remain. |
-| Short complete episode | PASS (protocol) | Actual report: docs/live_smoke_episode_results.json; no acoustic/microphone inference. |
-| Long panel acceptance | NOT PASSED | Actual report: docs/live_episode_final_results.json; no acoustic/microphone inference. |
-| Live reconnect/expert fault | NOT PASSED | Actual report: docs/live_recovery_results.json; no acoustic/microphone inference. |
+| A8 Person A demo | PASS (protocol) | Three experts, pause/resume, Maya question, closing, export and End; final browser listening remains open. |
+| mvp_episode_results | PASS (protocol) | Actual report: docs/mvp_episode_results.json; synthetic playback acknowledgements, not microphone acceptance. |
+| mvp_recovery_results | PASS (protocol) | Actual report: docs/mvp_recovery_results.json; synthetic playback acknowledgements, not microphone acceptance. |
+| mvp_voice_gateway_results | PASS (protocol) | Actual report: docs/mvp_voice_gateway_results.json; synthetic playback acknowledgements, not microphone acceptance. |
+| Historical baseline: Short complete episode | PASS (protocol) | Actual report: docs/live_smoke_episode_results.json; no acoustic/microphone inference. |
+| Historical baseline: Long panel acceptance | NOT PASSED | Actual report: docs/live_episode_final_results.json; no acoustic/microphone inference. |
+| Historical baseline: Live reconnect/expert fault | NOT PASSED | Actual report: docs/live_recovery_results.json; no acoustic/microphone inference. |
 
 Browser automation was denied Chrome access. No microphone/audibility pass or semantic quality score is inferred.
 
@@ -22,15 +25,15 @@ Browser automation was denied Chrome access. No microphone/audibility pass or se
 ### Backend regressions: PASS
 
 ```text
-........................................................................ [ 86%]
-...........                                                              [100%]
+........................................................................ [ 80%]
+.................                                                        [100%]
 ============================== warnings summary ===============================
 ..\a1-b2-integration\.codex-local\a2-clean-venv\Lib\site-packages\starlette\testclient.py:40
   C:\Dev\Hacks\multiagent podcast\.codex-local\worktrees\a1-b2-integration\.codex-local\a2-clean-venv\Lib\site-packages\starlette\testclient.py:40: DeprecationWarning: The anyio.abc.BlockingPortal alias is deprecated, use anyio.from_thread.BlockingPortal instead.
     _PortalFactoryType = typing.Callable[[], typing.ContextManager[anyio.abc.BlockingPortal]]
 
 -- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
-83 passed, 1 warning in 5.34s
+89 passed, 1 warning in 6.58s
 
 ```
 
@@ -41,25 +44,25 @@ TAP version 13
 # Subtest: playback acks follow source start and actual queue completion
 ok 1 - playback acks follow source start and actual queue completion
   ---
-  duration_ms: 2.8852
+  duration_ms: 3.4065
   type: 'test'
   ...
 # Subtest: End during asynchronous decoding cannot start obsolete audio
 ok 2 - End during asynchronous decoding cannot start obsolete audio
   ---
-  duration_ms: 0.7707
+  duration_ms: 0.89
   type: 'test'
   ...
 # Subtest: higher epoch stops old playback and suppresses its finished acknowledgement
 ok 3 - higher epoch stops old playback and suppresses its finished acknowledgement
   ---
-  duration_ms: 0.8048
+  duration_ms: 0.9028
   type: 'test'
   ...
 # Subtest: three sentence responses play in order without overlap
 ok 4 - three sentence responses play in order without overlap
   ---
-  duration_ms: 1.1568
+  duration_ms: 1.0296
   type: 'test'
   ...
 1..4
@@ -70,7 +73,7 @@ ok 4 - three sentence responses play in order without overlap
 # cancelled 0
 # skipped 0
 # todo 0
-# duration_ms 81.1999
+# duration_ms 125.1974
 
 ```
 
@@ -81,37 +84,37 @@ TAP version 13
 # Subtest: playback acks follow source start and actual queue completion
 ok 1 - playback acks follow source start and actual queue completion
   ---
-  duration_ms: 3.1395
+  duration_ms: 3.1452
   type: 'test'
   ...
 # Subtest: End during asynchronous decoding cannot start obsolete audio
 ok 2 - End during asynchronous decoding cannot start obsolete audio
   ---
-  duration_ms: 1.055
+  duration_ms: 1.3234
   type: 'test'
   ...
 # Subtest: higher epoch stops old playback and suppresses its finished acknowledgement
 ok 3 - higher epoch stops old playback and suppresses its finished acknowledgement
   ---
-  duration_ms: 1.053
+  duration_ms: 1.264
   type: 'test'
   ...
 # Subtest: three sentence responses play in order without overlap
 ok 4 - three sentence responses play in order without overlap
   ---
-  duration_ms: 1.6419
+  duration_ms: 2.6909
   type: 'test'
   ...
 # Subtest: typed interruption rejects late chunks before a new epoch arrives
 ok 5 - typed interruption rejects late chunks before a new epoch arrives
   ---
-  duration_ms: 0.9572
+  duration_ms: 1.1122
   type: 'test'
   ...
 # Subtest: pause during decoding prevents the pending source from starting
 ok 6 - pause during decoding prevents the pending source from starting
   ---
-  duration_ms: 0.9791
+  duration_ms: 1.4104
   type: 'test'
   ...
 1..6
@@ -122,7 +125,7 @@ ok 6 - pause during decoding prevents the pending source from starting
 # cancelled 0
 # skipped 0
 # todo 0
-# duration_ms 90.8088
+# duration_ms 128.1394
 
 ```
 
@@ -133,37 +136,37 @@ TAP version 13
 # Subtest: out-of-order decoding preserves sentence order and never finishes before playback
 ok 1 - out-of-order decoding preserves sentence order and never finishes before playback
   ---
-  duration_ms: 1.906
+  duration_ms: 2.2543
   type: 'test'
   ...
 # Subtest: End during decode invalidates pending sources and late chunks of that turn
 ok 2 - End during decode invalidates pending sources and late chunks of that turn
   ---
-  duration_ms: 0.2413
+  duration_ms: 0.2644
   type: 'test'
   ...
 # Subtest: next turn starts sentence zero with clean buffers in the same epoch
 ok 3 - next turn starts sentence zero with clean buffers in the same epoch
   ---
-  duration_ms: 0.342
+  duration_ms: 0.4483
   type: 'test'
   ...
 # Subtest: epoch advance cancels pending decode and rejects old epoch chunks
 ok 4 - epoch advance cancels pending decode and rejects old epoch chunks
   ---
-  duration_ms: 0.3451
+  duration_ms: 0.4049
   type: 'test'
   ...
 # Subtest: generation completion after playback drained still reports finished once
 ok 5 - generation completion after playback drained still reports finished once
   ---
-  duration_ms: 0.2322
+  duration_ms: 0.2699
   type: 'test'
   ...
 # Subtest: a second foreground turn cannot overlap the active turn
 ok 6 - a second foreground turn cannot overlap the active turn
   ---
-  duration_ms: 0.3164
+  duration_ms: 0.3581
   type: 'test'
   ...
 1..6
@@ -174,7 +177,7 @@ ok 6 - a second foreground turn cannot overlap the active turn
 # cancelled 0
 # skipped 0
 # todo 0
-# duration_ms 439.9119
+# duration_ms 577.1499
 
 ```
 
