@@ -8,7 +8,7 @@ from pathlib import Path
 from typing import Dict, List
 
 from dotenv import load_dotenv
-from fastapi import FastAPI, WebSocket
+from fastapi import FastAPI, WebSocket, Request, HTTPException
 from fastapi.responses import FileResponse
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -36,6 +36,9 @@ async def lifespan(app: FastAPI):
         payload={"service": "ai-roundtable-gateway", "status": "running"},
     )
     yield
+    if hasattr(app.state, 'runtime'):
+        await app.state.runtime.close()
+        del app.state.runtime
     # Shutdown
     await trace_logger.log_event(
         trace_id="system_shutdown",
@@ -93,13 +96,57 @@ async def websocket_session(socket: WebSocket):
         await socket.close(code=1008)
         return
     await socket.accept()
-    await VoiceSession(socket, a1_services).run()
+    if os.getenv('ROUNDTABLE_MODE') == 'panel':
+        from gateway.panel_session import PanelSession
+        await PanelSession(socket, panel_services).run()
+    else:
+        await VoiceSession(socket, a1_services).run()
+
+
+async def panel_services(session_id, logger):
+    from gateway.runtime import AgentRuntime
+    if not hasattr(app.state, 'runtime'):
+        app.state.runtime = AgentRuntime()
+    if not hasattr(app.state, 'tts'):
+        app.state.tts = ElevenLabsTTS(TTSConfig.from_env())
+    return await app.state.runtime.pool(session_id, logger), app.state.tts
 
 
 @app.get("/dev/a1", include_in_schema=False)
 async def a1_test_page():
     """Backend-owned integration check; does not alter Lane B's frontend."""
     return FileResponse(Path(__file__).with_name("dev_a1.html"))
+
+
+@app.get('/dev/roundtable', include_in_schema=False)
+async def roundtable_test_page():
+    return FileResponse(Path(__file__).with_name('dev_roundtable.html'))
+
+
+@app.post('/admin/chaos/{agent}/{action}')
+async def chaos(agent: str, action: str, request: Request):
+    if (os.getenv('ENABLE_CHAOS') != '1' or request.headers.get('x-demo-chaos') != '1'
+            or request.client.host not in ('127.0.0.1', '::1', 'testclient')
+            or request.headers.get('origin', 'http://localhost:8000') not in
+                origins + ['http://localhost:8000', 'http://127.0.0.1:8000']):
+        raise HTTPException(403, 'Chaos controls are disabled')
+    if action not in ('kill', 'stall', 'error', 'reset') or not hasattr(app.state, 'runtime'):
+        raise HTTPException(400, 'Invalid action or runtime not started')
+    try:
+        await app.state.runtime.chaos(agent, action)
+    except Exception:
+        raise HTTPException(409, 'Could not apply chaos action') from None
+    return {'status': 'applied', 'agent': agent, 'action': action}
+
+
+@app.websocket('/ws/a1')
+async def a1_socket(socket: WebSocket):
+    allowed = origins + ['http://localhost:8000', 'http://127.0.0.1:8000']
+    if socket.headers.get('origin') and socket.headers['origin'] not in allowed:
+        await socket.close(code=1008)
+        return
+    await socket.accept()
+    await VoiceSession(socket, a1_services).run()
 
 
 if __name__ == "__main__":

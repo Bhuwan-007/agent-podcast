@@ -4,7 +4,8 @@ import vm from 'node:vm';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-const script = readFileSync(new URL('../gateway/dev_a1.html', import.meta.url), 'utf8')
+const page = process.env.PANEL_PLAYER_TEST ? '../gateway/dev_roundtable.html' : '../gateway/dev_a1.html';
+const script = readFileSync(new URL(page, import.meta.url), 'utf8')
   .split('<script>')[1].split('</script>')[0];
 const settle = async () => { for (let i = 0; i < 12; i++) await Promise.resolve(); };
 

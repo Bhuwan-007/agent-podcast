@@ -9,7 +9,8 @@ with mocked Web Audio still reproduces two failures: `finished` is emitted befor
 pending decodes complete, and starting the second sentence's decode invalidates the
 first sentence's decode. Only sentence 1 starts when 0 and 1 were expected.
 Run `node eval/check_b5_player.mjs`; see `docs/b5_player_pairing_diagnostic.json`.
-Completion acks also omit `sentence_idx`. Source review additionally shows generation
+Whole-turn completion needs no `sentence_idx`; that earlier request was incorrect.
+Source review additionally shows generation
 flags and flushed sentence IDs are not reset for each new turn. Please cover multiple
 turns in production-class tests. These are frontend pairing issues, not A2 text failures.
 Earlier B3/B4 findings below are historical; no teammate source was changed here.
@@ -28,7 +29,7 @@ B3 findings below describe the earlier snapshot. Current pairing gaps remain:
 the hook and player initialize at epoch 1 while A1 starts at 0; the player decodes
 each incoming MP3 fragment separately while A1 emits fragments of a sentence;
 End during asynchronous decode has no cancellation token unless the epoch advances;
-and playback-stopped acknowledgements omit the sentence index A1 needs for final transcripts.
+Whole-turn completion needs no index; A1 requires per-sentence playback starts instead.
 Topic configuration is logged but not applied to availability. Client latency still
 uses speaker-active receipt and barge-in still includes placeholder progress/timed VAD.
 Do not claim integrated frontend acceptance from passing simulated protocol tests.
